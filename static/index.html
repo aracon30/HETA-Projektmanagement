@@ -946,7 +946,8 @@ function renderOrderTimeline(item){
   let weekHeaderHtml = "";
   for(let i = 0; i < weekCount; i++){
     const wStart = new Date(rangeStart); wStart.setUTCDate(wStart.getUTCDate() + i * 7);
-    const label = wStart.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+    const weekNum = getISOWeek(wStart);
+    const label = `KW ${weekNum}`;
     weekHeaderHtml += `<div class="order-timeline-week" style="width:${7*DAY_W}px;">${label}</div>`;
   }
 
