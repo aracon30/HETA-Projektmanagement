@@ -62,7 +62,7 @@ def create_item():
     if item.type == "auftrag":
         item.prio = data.get("prio", "gelb")
         item.liefertermin = parse_date(data.get("liefertermin"))
-        item.auftrag_status = data.get("status", "offen")
+        item.auftrag_status = data.get("status", "neu")
     else:
         item.angebot_status = data.get("status", "in_bearbeitung")
         item.wert = data.get("wert")

@@ -31,7 +31,7 @@ class Item(db.Model):
     # Auftrag-spezifisch
     prio = db.Column(db.String(10), nullable=True)          # rot | gelb | gruen
     liefertermin = db.Column(db.Date, nullable=True)
-    auftrag_status = db.Column(db.String(20), nullable=True)  # offen | erledigt
+    auftrag_status = db.Column(db.String(20), nullable=True)  # neu | in_bearbeitung | in_fertigung | versandbereit | erledigt
 
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
