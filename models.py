@@ -42,6 +42,10 @@ class Item(db.Model):
         "VerlaufEintrag", backref="item", cascade="all, delete-orphan",
         order_by="VerlaufEintrag.created_at"
     )
+    phasen = db.relationship(
+        "Phase", backref="item", cascade="all, delete-orphan",
+        order_by="Phase.start"
+    )
 
     def to_dict(self):
         base = {
@@ -53,6 +57,7 @@ class Item(db.Model):
             "ordnerPfad": self.ordner_pfad,
             "erstelltAm": self.created_at.isoformat() if self.created_at else None,
             "verlauf": [v.to_dict() for v in self.verlauf],
+            "phasen": [p.to_dict() for p in self.phasen],
         }
         if self.type == "auftrag":
             base.update({
@@ -67,6 +72,26 @@ class Item(db.Model):
                 "wiedervorlage": self.wiedervorlage.isoformat() if self.wiedervorlage else None,
             })
         return base
+
+
+class Phase(db.Model):
+    """Ein Zeitabschnitt innerhalb eines Auftrags (z.B. Konstruktion, Fertigung),
+    für das detaillierte Gantt-Diagramm in der Auftragsansicht."""
+    __tablename__ = "phasen"
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False)
+    bezeichnung = db.Column(db.String(120), nullable=False)
+    start = db.Column(db.Date, nullable=False)
+    ende = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "bezeichnung": self.bezeichnung,
+            "start": self.start.isoformat() if self.start else None,
+            "ende": self.ende.isoformat() if self.ende else None,
+        }
 
 
 class VerlaufEintrag(db.Model):
@@ -88,6 +113,7 @@ class VerlaufEintrag(db.Model):
             "id": self.id,
             "text": self.text,
             "erstelltVon": self.erstellt_von,
+            "erstelltAm": self.created_at.isoformat() if self.created_at else None,
             "verantwortlich": self.verantwortlich,
             "faelligkeit": self.faelligkeit.isoformat() if self.faelligkeit else None,
             "status": self.status,

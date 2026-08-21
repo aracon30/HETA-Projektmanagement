@@ -1,7 +1,7 @@
 """Befüllt die Datenbank mit Beispieldaten. Aufruf: ./venv/bin/python seed.py"""
 from datetime import date
 from app import app
-from models import db, User, Item, VerlaufEintrag
+from models import db, User, Item, VerlaufEintrag, Phase
 
 NUTZER = [
     ("Heiko Hensel", "Geschäftsführung", "hensel@heta.de"),
@@ -33,6 +33,12 @@ def run():
                  lieferumfang="Dreistufige Filterkaskade inkl. Grundrahmen und Instrumentierung",
                  liefertermin="2026-09-12", status="offen",
                  ordner_pfad=r"K:\01 HETA\02 AUFTRÄGE\01 ab 2022\K-04856_26_Lanxess",
+                 phasen=[
+                     ("Konstruktion", "2026-08-15", "2026-08-26"),
+                     ("Fertigung Grundrahmen", "2026-08-24", "2026-09-02"),
+                     ("Montage & Instrumentierung", "2026-09-01", "2026-09-08"),
+                     ("Prüfung & Versand", "2026-09-08", "2026-09-12"),
+                 ],
                  verlauf=[
                      ("Technische Klärung Kaskadenstufen mit Konstruktion abgeschlossen, Freigabe Zeichnung steht noch aus.", "Erik Scharmann", "Erik Scharmann", "2026-08-22", "offen", False),
                      ("Rückfrage von Lanxess zu Werkstoffzeugnissen für die zweite Stufe eingegangen, Antwort noch offen.", "Heiko Hensel", "Sandra Voigt", "2026-08-20", "offen", True),
@@ -57,6 +63,11 @@ def run():
                  lieferumfang="Sonderanfertigung Metallfilterkerzen, NDE-Prüfung nach ASME",
                  liefertermin="2026-08-29", status="offen",
                  ordner_pfad=r"K:\01 HETA\02 AUFTRÄGE\01 ab 2022\K-04888_26_BASF",
+                 phasen=[
+                     ("Fertigung Grundkörper", "2026-08-11", "2026-08-19"),
+                     ("ASME-Prüfung", "2026-08-19", "2026-08-27"),
+                     ("Versand", "2026-08-27", "2026-08-29"),
+                 ],
                  verlauf=[
                      ("ASME-Prüfbericht liegt noch nicht vor, Rückfrage an Prüfstelle nötig.", "Thomas Berger", "Thomas Berger", "2026-08-19", "offen", True),
                      ("Fertigung Grundkörper abgeschlossen, wartet auf Prüfung.", "Markus Lindt", None, None, "erledigt", False),
@@ -138,6 +149,10 @@ def run():
                 db.session.add(VerlaufEintrag(
                     item_id=item.id, text=text, erstellt_von=von, verantwortlich=verantw,
                     faelligkeit=d(faellig), status=status, aufgabe_erstellt=aufgabe,
+                ))
+            for bezeichnung, start, ende in a.get("phasen", []):
+                db.session.add(Phase(
+                    item_id=item.id, bezeichnung=bezeichnung, start=d(start), ende=d(ende),
                 ))
 
         for a in angebote:
