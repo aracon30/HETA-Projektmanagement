@@ -404,6 +404,13 @@ function mondayOfWeekContaining(d){
 }
 function toUTCDateOnly(iso){ const d = new Date(iso + "T00:00:00Z"); return d; }
 function isoDateStr(d){ return d.toISOString().slice(0, 10); }
+function getISOWeek(date){
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+}
 
 const KIND_CONFIG = {
   auftrag: {
@@ -939,7 +946,8 @@ function renderOrderTimeline(item){
   let weekHeaderHtml = "";
   for(let i = 0; i < weekCount; i++){
     const wStart = new Date(rangeStart); wStart.setUTCDate(wStart.getUTCDate() + i * 7);
-    const label = wStart.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+    const weekNum = getISOWeek(wStart);
+    const label = `KW ${weekNum}`;
     weekHeaderHtml += `<div class="order-timeline-week" style="width:${7*DAY_W}px;">${label}</div>`;
   }
 
