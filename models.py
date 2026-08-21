@@ -113,6 +113,7 @@ class VerlaufEintrag(db.Model):
             "id": self.id,
             "text": self.text,
             "erstelltVon": self.erstellt_von,
+            "erstelltAm": self.created_at.isoformat() if self.created_at else None,
             "verantwortlich": self.verantwortlich,
             "faelligkeit": self.faelligkeit.isoformat() if self.faelligkeit else None,
             "status": self.status,

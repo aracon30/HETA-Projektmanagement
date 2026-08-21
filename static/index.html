@@ -272,18 +272,9 @@
     box-shadow:var(--shadow);
   }
   .order-timeline-bar:hover{ filter:brightness(0.92); }
-  .order-timeline-marker{
-    position:absolute;
-    top:50%;
-    width:10px;
-    height:10px;
-    background:var(--copper);
-    border:2px solid var(--panel);
-    border-radius:2px;
-    transform:translate(-50%,-50%) rotate(45deg);
-    box-shadow:var(--shadow);
-  }
-  .order-timeline-marker.erledigt{ background:var(--green); }
+  .order-timeline-bar.verlauf{ background:var(--copper); cursor:default; }
+  .order-timeline-bar.verlauf.erledigt{ background:var(--green); }
+  .order-timeline-bar.verlauf:hover{ filter:none; }
   .order-timeline-today{
     position:absolute;
     top:0; bottom:0;
@@ -756,7 +747,10 @@ function renderOrderTimeline(item){
   if(item.erstelltAm) dates.push(toUTCDateOnly(item.erstelltAm.slice(0, 10)));
   if(item.liefertermin) dates.push(toUTCDateOnly(item.liefertermin));
   phases.forEach(p => { dates.push(toUTCDateOnly(p.start)); dates.push(toUTCDateOnly(p.ende)); });
-  events.forEach(e => dates.push(toUTCDateOnly(e.faelligkeit)));
+  events.forEach(e => {
+    dates.push(toUTCDateOnly((e.erstelltAm || e.faelligkeit).slice(0, 10)));
+    dates.push(toUTCDateOnly(e.faelligkeit));
+  });
 
   const today = new Date();
   const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
@@ -796,18 +790,29 @@ function renderOrderTimeline(item){
     `;
   }).join("");
 
-  const eventsRowHtml = events.length ? `
-    <div class="order-timeline-row">
-      <div class="order-timeline-label" style="width:${LABEL_W}px;">Ereignisse</div>
-      <div class="order-timeline-track" style="width:${totalWidth}px;">
-        ${events.map(e => {
-          const left = daysBetween(rangeStart, toUTCDateOnly(e.faelligkeit)) * DAY_W;
-          const title = `${e.text} (fällig ${fmtDate(e.faelligkeit)}${e.verantwortlich ? ', ' + e.verantwortlich : ''})`.replace(/"/g, "&quot;");
-          return `<div class="order-timeline-marker ${e.status === 'erledigt' ? 'erledigt' : ''}" style="left:${left}px;" title="${title}"></div>`;
-        }).join("")}
+  const eventRowsHtml = events.map(e => {
+    const createdIso = (e.erstelltAm || e.faelligkeit).slice(0, 10);
+    const dueIso = e.faelligkeit;
+    const createdDate = toUTCDateOnly(createdIso);
+    const dueDate = toUTCDateOnly(dueIso);
+    const startDate = createdDate < dueDate ? createdDate : dueDate;
+    const endDate = createdDate < dueDate ? dueDate : createdDate;
+    const startIso = createdDate < dueDate ? createdIso : dueIso;
+    const endIso = createdDate < dueDate ? dueIso : createdIso;
+    const left = daysBetween(rangeStart, startDate) * DAY_W;
+    const width = Math.max(daysBetween(startDate, endDate) * DAY_W, 18);
+    const title = `${e.text} (angelegt ${fmtDate(startIso)}, fällig ${fmtDate(endIso)}${e.verantwortlich ? ', ' + e.verantwortlich : ''})`.replace(/"/g, "&quot;");
+    return `
+      <div class="order-timeline-row">
+        <div class="order-timeline-label" style="width:${LABEL_W}px;" title="${title}">${e.text}</div>
+        <div class="order-timeline-track" style="width:${totalWidth}px;">
+          <div class="order-timeline-bar verlauf ${e.status === 'erledigt' ? 'erledigt' : ''}" style="left:${left}px; width:${width}px;" title="${title}">
+            ${fmtDate(startIso)} – ${fmtDate(endIso)}
+          </div>
+        </div>
       </div>
-    </div>
-  ` : "";
+    `;
+  }).join("");
 
   board.innerHTML = `
     <div class="order-timeline-scroll">
@@ -819,13 +824,13 @@ function renderOrderTimeline(item){
         <div style="position:relative;">
           <div class="order-timeline-today" style="left:${LABEL_W + todayOffset}px;"></div>
           ${phaseRowsHtml}
-          ${eventsRowHtml}
+          ${eventRowsHtml}
         </div>
       </div>
     </div>
   `;
 
-  board.querySelectorAll(".order-timeline-bar").forEach(bar => {
+  board.querySelectorAll(".order-timeline-bar[data-id]").forEach(bar => {
     bar.addEventListener("click", () => {
       const phase = phases.find(p => p.id === parseInt(bar.dataset.id, 10));
       if(phase) openPhaseModal(item, phase);
