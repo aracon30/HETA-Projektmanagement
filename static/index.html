@@ -243,6 +243,14 @@
     border-left:1px solid var(--line);
     padding-left:4px;
   }
+  .order-timeline-day-header{ display:flex; margin-bottom:8px; }
+  .order-timeline-day{
+    flex-shrink:0;
+    font-size:0.62rem;
+    color:var(--slate-light);
+    text-align:center;
+    border-left:1px solid #EDEEEA;
+  }
   .order-timeline-row{ display:flex; align-items:center; height:34px; }
   .order-timeline-label{
     flex-shrink:0;
@@ -279,8 +287,14 @@
     position:absolute;
     top:0; bottom:0;
     width:2px;
-    background:var(--copper);
-    opacity:0.45;
+    background:var(--amber);
+    z-index:1;
+  }
+  .order-timeline-delivery{
+    position:absolute;
+    top:0; bottom:0;
+    width:2px;
+    background:var(--red);
     z-index:1;
   }
   .order-timeline-empty{ color:var(--slate); font-size:0.85rem; padding:6px 2px 2px; }
@@ -771,7 +785,19 @@ function renderOrderTimeline(item){
     weekHeaderHtml += `<div class="order-timeline-week" style="width:${7*DAY_W}px;">${label}</div>`;
   }
 
+  let dayHeaderHtml = "";
+  for(let i = 0; i < totalDays; i++){
+    const d = new Date(rangeStart); d.setUTCDate(d.getUTCDate() + i);
+    dayHeaderHtml += `<div class="order-timeline-day" style="width:${DAY_W}px;">${d.getUTCDate()}</div>`;
+  }
+
   const todayOffset = daysBetween(rangeStart, todayUTC) * DAY_W;
+  let deliveryLineHtml = "";
+  if(item.liefertermin){
+    const deliveryDate = toUTCDateOnly(item.liefertermin);
+    const deliveryOffset = daysBetween(rangeStart, deliveryDate) * DAY_W;
+    deliveryLineHtml = `<div class="order-timeline-delivery" style="left:${LABEL_W + deliveryOffset}px;" title="Liefertermin: ${fmtDate(item.liefertermin)}"></div>`;
+  }
 
   const phaseRowsHtml = phases.map(p => {
     const start = toUTCDateOnly(p.start);
@@ -821,8 +847,13 @@ function renderOrderTimeline(item){
           <div class="order-timeline-label-spacer" style="width:${LABEL_W}px;"></div>
           ${weekHeaderHtml}
         </div>
+        <div class="order-timeline-day-header">
+          <div class="order-timeline-label-spacer" style="width:${LABEL_W}px;"></div>
+          ${dayHeaderHtml}
+        </div>
         <div style="position:relative;">
-          <div class="order-timeline-today" style="left:${LABEL_W + todayOffset}px;"></div>
+          <div class="order-timeline-today" style="left:${LABEL_W + todayOffset}px;" title="Heute: ${fmtDate(isoDateStr(todayUTC))}"></div>
+          ${deliveryLineHtml}
           ${phaseRowsHtml}
           ${eventRowsHtml}
         </div>
