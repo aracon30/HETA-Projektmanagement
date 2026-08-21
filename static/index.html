@@ -370,6 +370,7 @@
   <div class="sidebar" id="sidebarPane">
     <div class="sidebar-controls">
       <input type="text" class="search" id="searchInput" placeholder="Suchen…" aria-label="Suchen">
+      <select class="search" id="sortSelect" aria-label="Sortieren" style="margin-top:8px;"></select>
       <div class="prio-filters" id="filterChips" role="group" aria-label="Filtern"></div>
       <button class="btn" id="newItemBtn" style="width:100%; margin-top:10px;"></button>
     </div>
@@ -391,6 +392,7 @@ let currentTab = "auftrag";
 let selectedId = { auftrag: null, angebot: null };
 let activeFilter = { auftrag: "alle", angebot: "alle" };
 let searchTerm = { auftrag: "", angebot: "" };
+let sortOrder = { auftrag: "erstellt_neu", angebot: "erstellt_neu" };
 
 // Kategoriale Farben für die Verlauf-Balken im Zeitplan (eine je Aufgabe, im
 // Kreis wiederholt ab der 5.). Bewusst fernab von Rot/Grün/Stahlblau/Amber/
@@ -421,6 +423,13 @@ const KIND_CONFIG = {
     itemLabel: "Auftrag",
     newItemLabel: "+ Neuer Auftrag",
     statusField: "prio",
+    dateField: "liefertermin",
+    sortOptions: [
+      { value:"erstellt_neu", label:"Neueste zuerst" },
+      { value:"erstellt_alt", label:"Älteste zuerst" },
+      { value:"liefertermin_auf", label:"Liefertermin aufsteigend" },
+      { value:"liefertermin_ab", label:"Liefertermin absteigend" }
+    ],
     filterChips: [
       { value:"alle", label:"Alle" },
       { value:"rot", label:"Rot", dot:"rot" },
@@ -446,6 +455,13 @@ const KIND_CONFIG = {
     itemLabel: "Angebot",
     newItemLabel: "+ Neues Angebot",
     statusField: "status",
+    dateField: "wiedervorlage",
+    sortOptions: [
+      { value:"erstellt_neu", label:"Neueste zuerst" },
+      { value:"erstellt_alt", label:"Älteste zuerst" },
+      { value:"wiedervorlage_auf", label:"Wiedervorlage aufsteigend" },
+      { value:"wiedervorlage_ab", label:"Wiedervorlage absteigend" }
+    ],
     filterChips: [
       { value:"alle", label:"Alle" },
       { value:"in_bearbeitung", label:"In Bearbeitung", dot:"in_bearbeitung" },
@@ -547,6 +563,40 @@ function renderFilterChips(){
   });
 }
 
+function renderSortSelect(){
+  const cfg = KIND_CONFIG[currentTab];
+  const sel = document.getElementById("sortSelect");
+  sel.innerHTML = cfg.sortOptions.map(o => `
+    <option value="${o.value}" ${sortOrder[currentTab] === o.value ? 'selected' : ''}>${o.label}</option>
+  `).join("");
+}
+document.getElementById("sortSelect").addEventListener("change", (ev) => {
+  sortOrder[currentTab] = ev.target.value;
+  renderList();
+});
+
+function sortItems(list){
+  const cfg = KIND_CONFIG[currentTab];
+  const order = sortOrder[currentTab];
+  const dateField = cfg.dateField;
+  const sorted = [...list];
+  if(order === "erstellt_alt"){
+    sorted.sort((a, b) => new Date(a.erstelltAm) - new Date(b.erstelltAm));
+  } else if(order === `${dateField}_auf` || order === `${dateField}_ab`){
+    const dir = order.endsWith("_auf") ? 1 : -1;
+    sorted.sort((a, b) => {
+      const av = a[dateField], bv = b[dateField];
+      if(!av && !bv) return 0;
+      if(!av) return 1;
+      if(!bv) return -1;
+      return dir * (new Date(av) - new Date(bv));
+    });
+  } else {
+    sorted.sort((a, b) => new Date(b.erstelltAm) - new Date(a.erstelltAm));
+  }
+  return sorted;
+}
+
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     currentTab = btn.dataset.tab;
@@ -568,6 +618,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 
     document.getElementById("searchInput").value = searchTerm[currentTab];
     renderFilterChips();
+    renderSortSelect();
     renderNewItemButton();
     renderList();
     renderMain();
@@ -723,6 +774,7 @@ function renderList(){
     const matchesSearch = !term || item.kommission.toLowerCase().includes(term) || item.kunde.toLowerCase().includes(term);
     return matchesFilter && matchesSearch;
   });
+  filtered = sortItems(filtered);
 
   if(filtered.length === 0){
     list.innerHTML = `<div class="empty-list">Keine Einträge gefunden.</div>`;
@@ -1575,6 +1627,7 @@ async function init(){
     return;
   }
   renderFilterChips();
+  renderSortSelect();
   renderNewItemButton();
   renderList();
   renderMain();
