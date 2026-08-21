@@ -103,6 +103,9 @@
   @media (max-width: 620px){ .order-meta-grid{grid-template-columns:1fr 1fr;} }
   .order-meta-grid .field label{ display:block; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); margin-bottom:4px; }
   .order-meta-grid .field .val{font-size:0.9rem;} .order-meta-grid .field .val.mono{font-size:0.85rem;}
+  .clickable-text{ display:inline-block; border:none; background:none; padding:0; margin:0; font:inherit; color:inherit; cursor:pointer; text-align:left; }
+  .clickable-text:hover{ color:var(--steel); text-decoration:underline; }
+  .clickable-text:focus-visible{ outline:2px solid var(--steel); outline-offset:2px; }
 
   .lieferumfang{ margin:16px 0 26px; font-size:0.92rem; color:var(--ink); line-height:1.5; }
   .lieferumfang .label{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); display:block; margin-bottom:4px; }
@@ -441,7 +444,7 @@ const KIND_CONFIG = {
     cardMetaLeft: (item) => `Termin ${fmtDate(item.liefertermin)}`,
     detailTag: (item) => `<button class="prio-tag ${item.prio} clickable" id="prioTagBtn"><span class="dot ${item.prio}"></span>Priorität ${({rot:"Rot",gelb:"Gelb",gruen:"Grün"})[item.prio]}</button>`,
     metaGrid: (item) => `
-      <div class="field"><label>Liefertermin</label><div class="val mono">${fmtDate(item.liefertermin)}</div></div>
+      <div class="field"><label>Liefertermin</label><div class="val"><button class="val mono clickable-text" id="lieferterminBtn" title="Liefertermin ändern">${fmtDate(item.liefertermin)}</button></div></div>
       <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button></div></div>
       <div class="field"><label>Projektordner</label><div class="val">${folderLink(item.ordnerPfad)}</div></div>
     `,
@@ -751,8 +754,14 @@ function openLiefertermineDialog(item){
       await apiPatch(`/items/${item.id}`, { liefertermin: newDate });
       await loadItems("auftrag");
       closeModal();
-      renderGanttBoard();
-      updateStatsForGantt();
+      if(currentTab === "gantt"){
+        renderGanttBoard();
+        updateStatsForGantt();
+      } else {
+        renderList();
+        renderMain();
+        updateStats();
+      }
       showToast("Liefertermin aktualisiert.");
     }catch(err){
       showToast("Konnte nicht aktualisiert werden.", true);
@@ -847,6 +856,7 @@ function renderMain(){
     document.getElementById("newPhaseBtn").addEventListener("click", () => openPhaseModal(item, null));
     document.getElementById("prioTagBtn").addEventListener("click", () => openPrioModal(item));
     document.getElementById("statusBadgeBtn").addEventListener("click", () => openAuftragStatusModal(item));
+    document.getElementById("lieferterminBtn").addEventListener("click", () => openLiefertermineDialog(item));
   }
 
   item.verlauf.forEach(e => {
