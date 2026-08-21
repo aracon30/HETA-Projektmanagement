@@ -578,13 +578,34 @@ document.getElementById("sortSelect").addEventListener("change", (ev) => {
   renderList();
 });
 
+// Kommission/Angebotsnummer folgt dem Schema "…-<Nummer>/<Jahr>" (z.B. K-04858/26).
+// Die Nummer steigt fortlaufend mit dem tatsächlichen Anlagedatum des Auftrags -
+// je höher die Nummer (innerhalb desselben Jahres), desto neuer der Auftrag.
+// Das ist verlässlicher als das DB-Erstelldatum, das bei nachträglich
+// importierten Altaufträgen nicht die echte Reihenfolge widerspiegelt.
+function kommissionRecency(komm){
+  const m = /(\d+)\s*\/\s*(\d{2,4})\s*$/.exec(komm || "");
+  if(!m) return null;
+  const number = parseInt(m[1], 10);
+  let year = parseInt(m[2], 10);
+  if(year < 100) year += 2000;
+  return year * 100000 + number;
+}
+
 function sortItems(list){
   const cfg = KIND_CONFIG[currentTab];
   const order = sortOrder[currentTab];
   const dateField = cfg.dateField;
   const sorted = [...list];
-  if(order === "erstellt_alt"){
-    sorted.sort((a, b) => new Date(a.erstelltAm) - new Date(b.erstelltAm));
+  if(order === "erstellt_neu" || order === "erstellt_alt"){
+    const dir = order === "erstellt_neu" ? -1 : 1;
+    sorted.sort((a, b) => {
+      const ra = kommissionRecency(a.kommission), rb = kommissionRecency(b.kommission);
+      if(ra === null && rb === null) return 0;
+      if(ra === null) return 1;
+      if(rb === null) return -1;
+      return dir * (ra - rb);
+    });
   } else if(order === `${dateField}_auf` || order === `${dateField}_ab`){
     const dir = order.endsWith("_auf") ? 1 : -1;
     sorted.sort((a, b) => {
@@ -594,8 +615,6 @@ function sortItems(list){
       if(!bv) return -1;
       return dir * (new Date(av) - new Date(bv));
     });
-  } else {
-    sorted.sort((a, b) => new Date(b.erstelltAm) - new Date(a.erstelltAm));
   }
   return sorted;
 }
