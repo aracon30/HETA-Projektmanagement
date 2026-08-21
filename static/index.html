@@ -354,6 +354,12 @@ let selectedId = { auftrag: null, angebot: null };
 let activeFilter = { auftrag: "alle", angebot: "alle" };
 let searchTerm = { auftrag: "", angebot: "" };
 
+// Kategoriale Farben für die Verlauf-Balken im Zeitplan (eine je Aufgabe, im
+// Kreis wiederholt ab der 5.). Bewusst fernab von Rot/Grün/Stahlblau/Amber/
+// Kupfer gewählt, damit sie nicht mit "überfällig", "erledigt", Phasen-Balken
+// oder der Heute-Linie verwechselt werden können.
+const TASK_COLORS = ["#5d1fbe", "#0077db", "#bb36b8", "#900b69"];
+
 /* ===================== Datumshilfen ===================== */
 function daysBetween(a, b){ return Math.round((b - a) / 86400000); }
 function mondayOfWeekContaining(d){
@@ -872,7 +878,7 @@ function renderOrderTimeline(item){
     `;
   }).join("");
 
-  const eventRowsHtml = events.map(e => {
+  const eventRowsHtml = events.map((e, idx) => {
     const createdIso = (e.erstelltAm || e.faelligkeit).slice(0, 10);
     const dueIso = e.faelligkeit;
     const createdDate = toUTCDateOnly(createdIso);
@@ -884,12 +890,14 @@ function renderOrderTimeline(item){
     const left = daysBetween(rangeStart, startDate) * DAY_W;
     const width = Math.max(daysBetween(startDate, endDate) * DAY_W, 18);
     const ueberfaellig = item.liefertermin && e.faelligkeit > item.liefertermin;
+    const erledigt = e.status === "erledigt";
+    const bg = erledigt ? "" : `background:${TASK_COLORS[idx % TASK_COLORS.length]};`;
     const title = `${e.text} (angelegt ${fmtDate(startIso)}, fällig ${fmtDate(endIso)}${e.verantwortlich ? ', ' + e.verantwortlich : ''})${ueberfaellig ? ' — nach Liefertermin!' : ''}`.replace(/"/g, "&quot;");
     return `
       <div class="order-timeline-row">
         <div class="order-timeline-label" style="width:${LABEL_W}px;" title="${title}">${e.text}</div>
         <div class="order-timeline-track" style="width:${totalWidth}px;">
-          <div class="order-timeline-bar verlauf ${e.status === 'erledigt' ? 'erledigt' : ''} ${ueberfaellig ? 'ueberfaellig' : ''}" style="left:${left}px; width:${width}px;" title="${title}">
+          <div class="order-timeline-bar verlauf ${erledigt ? 'erledigt' : ''} ${ueberfaellig ? 'ueberfaellig' : ''}" style="left:${left}px; width:${width}px; ${bg}" title="${title}">
             ${fmtDate(startIso)} – ${fmtDate(endIso)}
           </div>
         </div>
