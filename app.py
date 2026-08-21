@@ -152,8 +152,22 @@ def update_verlauf(eintrag_id):
     data = request.get_json(force=True)
     if "status" in data:
         eintrag.status = data["status"]
+    if "text" in data:
+        eintrag.text = data["text"]
+    if "verantwortlich" in data:
+        eintrag.verantwortlich = data["verantwortlich"]
+    if "faelligkeit" in data:
+        eintrag.faelligkeit = parse_date(data["faelligkeit"])
     db.session.commit()
     return jsonify(eintrag.to_dict())
+
+
+@app.route("/api/verlauf/<int:eintrag_id>", methods=["DELETE"])
+def delete_verlauf(eintrag_id):
+    eintrag = VerlaufEintrag.query.get_or_404(eintrag_id)
+    db.session.delete(eintrag)
+    db.session.commit()
+    return "", 204
 
 
 # ---------- Phasen (detailliertes Gantt je Auftrag) ----------
