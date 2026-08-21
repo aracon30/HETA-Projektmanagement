@@ -1183,6 +1183,13 @@ function openEditEntryModal(item, entry){
         </div>
         <div class="form-grid">
           <div class="form-row">
+            <label for="editEntryCreatedBy">Eintrag von (optional)</label>
+            <select id="editEntryCreatedBy">
+              <option value="">— niemand —</option>
+              ${nutzer.map(n => `<option value="${n.name}" ${n.name === entry.erstelltVon ? 'selected' : ''}>${n.name}</option>`).join("")}
+            </select>
+          </div>
+          <div class="form-row">
             <label for="editEntryUser">Verantwortlich (optional)</label>
             <select id="editEntryUser">
               <option value="">— niemand —</option>
@@ -1206,12 +1213,13 @@ function openEditEntryModal(item, entry){
   document.getElementById("editEntrySave").addEventListener("click", async () => {
     const text = document.getElementById("editEntryText").value.trim();
     if(!text){ document.getElementById("editEntryText").focus(); return; }
+    const erstelltVon = document.getElementById("editEntryCreatedBy").value || null;
     const verantwortlich = document.getElementById("editEntryUser").value || null;
     const faelligkeit = document.getElementById("editEntryDue").value || null;
     const saveBtn = document.getElementById("editEntrySave");
     saveBtn.disabled = true;
     try{
-      await apiPatch(`/verlauf/${entry.id}`, { text, verantwortlich, faelligkeit });
+      await apiPatch(`/verlauf/${entry.id}`, { text, erstelltVon, verantwortlich, faelligkeit });
       await loadItems(currentTab);
       closeModal();
       renderList();
@@ -1272,6 +1280,13 @@ function renderNewEntryForm(item){
       </div>
       <div class="form-grid">
         <div class="form-row">
+          <label for="newEntryCreatedBy">Eintrag von (optional)</label>
+          <select id="newEntryCreatedBy">
+            <option value="">— niemand —</option>
+            ${nutzer.map(n => `<option value="${n.name}">${n.name}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-row">
           <label for="newEntryUser">Verantwortlich (optional)</label>
           <select id="newEntryUser">
             <option value="">— niemand —</option>
@@ -1293,12 +1308,13 @@ function renderNewEntryForm(item){
   document.getElementById("saveEntryBtn").addEventListener("click", async () => {
     const text = document.getElementById("newEntryText").value.trim();
     if(!text){ document.getElementById("newEntryText").focus(); return; }
+    const erstelltVon = document.getElementById("newEntryCreatedBy").value || null;
     const verantwortlich = document.getElementById("newEntryUser").value || null;
     const faelligkeit = document.getElementById("newEntryDue").value || null;
     const saveBtn = document.getElementById("saveEntryBtn");
     saveBtn.disabled = true;
     try{
-      await apiPost(`/items/${item.id}/verlauf`, { text, erstelltVon: "Du", verantwortlich, faelligkeit });
+      await apiPost(`/items/${item.id}/verlauf`, { text, erstelltVon, verantwortlich, faelligkeit });
       await loadItems(currentTab);
       slot.innerHTML = "";
       renderList();
