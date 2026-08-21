@@ -49,6 +49,10 @@ Zuweisung an jeden Nutzer, kein Abteilungs-Lock), `faelligkeit`, `status`
 (offen/erledigt), `aufgabe_erstellt` (bool), `msgraph_list_id`/`msgraph_task_id`
 (gefüllt sobald To-Do-Anbindung aktiv ist).
 
+`Phase` (n:1 zu Item): `bezeichnung`, `start`, `ende` (beide Pflicht) — frei
+anlegbare Zeitabschnitte innerhalb eines Auftrags (z.B. Konstruktion,
+Fertigung, Prüfung) für das detaillierte Gantt je Auftrag.
+
 `User`: `name`, `abteilung`, `email` (Muster bei HETA: `nachname@heta.de`,
 Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
 
@@ -63,6 +67,12 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
   Ende = Liefertermin), farbig nach Priorität, Klick auf Balken öffnet
   Dialog zum Ändern des Liefertermins (kein Drag-Resize, bewusst einfach
   gehalten für Robustheit)
+- **Detailliertes Gantt je Auftrag** (im "Zeitplan"-Abschnitt der
+  Auftrags-Detailansicht, nur für Aufträge, nicht für Angebote): frei
+  anlegbare/bearbeitbare/löschbare `Phase`n als Balken (eigener Start/Ende),
+  plus die Verlaufseinträge mit Fälligkeit als Marker (Raute, grün wenn
+  erledigt) auf derselben Zeitachse. Ohne Phasen und ohne fällige
+  Verlaufseinträge erscheint ein Hinweistext statt eines leeren Diagramms.
 - Ordner-Pfad (K-Laufwerk) wird pro Auftrag/Angebot als Tooltip angezeigt
   (nur Anzeige, kein echtes Öffnen aus dem Browser)
 

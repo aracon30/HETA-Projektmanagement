@@ -217,6 +217,82 @@
     background:var(--copper);
     z-index:1;
   }
+
+  /* ===== Detailliertes Gantt je Auftrag ===== */
+  .order-timeline-scroll{
+    overflow-x:auto;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--panel);
+    padding:14px 16px 16px;
+    margin-top:16px;
+  }
+  .order-timeline-inner{ position:relative; min-width:max-content; }
+  .order-timeline-header{
+    display:flex;
+    border-bottom:1px solid var(--line);
+    padding-bottom:6px;
+    margin-bottom:6px;
+  }
+  .order-timeline-label-spacer{ flex-shrink:0; }
+  .order-timeline-week{
+    flex-shrink:0;
+    font-size:0.68rem;
+    color:var(--slate);
+    text-align:center;
+    border-left:1px solid var(--line);
+    padding-left:4px;
+  }
+  .order-timeline-row{ display:flex; align-items:center; height:34px; }
+  .order-timeline-label{
+    flex-shrink:0;
+    font-size:0.76rem;
+    padding-right:10px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .order-timeline-track{ position:relative; flex:1; height:100%; }
+  .order-timeline-bar{
+    position:absolute;
+    top:6px;
+    height:20px;
+    border-radius:4px;
+    background:var(--steel);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    padding:0 8px;
+    font-size:0.68rem;
+    font-weight:600;
+    color:#fff;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    box-shadow:var(--shadow);
+  }
+  .order-timeline-bar:hover{ filter:brightness(0.92); }
+  .order-timeline-marker{
+    position:absolute;
+    top:50%;
+    width:10px;
+    height:10px;
+    background:var(--copper);
+    border:2px solid var(--panel);
+    border-radius:2px;
+    transform:translate(-50%,-50%) rotate(45deg);
+    box-shadow:var(--shadow);
+  }
+  .order-timeline-marker.erledigt{ background:var(--green); }
+  .order-timeline-today{
+    position:absolute;
+    top:0; bottom:0;
+    width:2px;
+    background:var(--copper);
+    opacity:0.45;
+    z-index:1;
+  }
+  .order-timeline-empty{ color:var(--slate); font-size:0.85rem; padding:6px 2px 2px; }
 </style>
 </head>
 <body>
@@ -630,6 +706,13 @@ function renderMain(){
     </div>
     <div class="order-meta-grid">${cfg.metaGrid(item)}</div>
     <div class="lieferumfang"><span class="label">Lieferumfang</span>${item.lieferumfang || '—'}</div>
+    ${currentTab === "auftrag" ? `
+    <div class="timeline-head">
+      <h3>Zeitplan</h3>
+      <button class="btn" id="newPhaseBtn">+ Phase</button>
+    </div>
+    <div id="orderTimelineBoard"></div>
+    ` : ""}
     <div class="timeline-head">
       <h3>Verlauf</h3>
       <button class="btn" id="newEntryBtn">+ Neuer Eintrag</button>
@@ -641,11 +724,215 @@ function renderMain(){
   document.getElementById("deleteItemBtn").addEventListener("click", () => openDeleteConfirm(item));
   document.getElementById("newEntryBtn").addEventListener("click", () => renderNewEntryForm(item));
 
+  if(currentTab === "auftrag"){
+    renderOrderTimeline(item);
+    document.getElementById("newPhaseBtn").addEventListener("click", () => openPhaseModal(item, null));
+  }
+
   item.verlauf.forEach(e => {
     if(!e.verantwortlich || e.aufgabe) return;
     const btn = document.getElementById(`taskBtn-${e.id}`);
     if(btn) btn.addEventListener("click", () => openTaskModal(item, e));
   });
+}
+
+/* ===================== Detailliertes Gantt je Auftrag ===================== */
+function renderOrderTimeline(item){
+  const board = document.getElementById("orderTimelineBoard");
+  if(!board) return;
+
+  const phases = item.phasen || [];
+  const events = item.verlauf.filter(e => e.faelligkeit);
+
+  if(phases.length === 0 && events.length === 0){
+    board.innerHTML = `<div class="order-timeline-empty">Noch keine Phasen angelegt. Mit „+ Phase" den Zeitplan für diesen Auftrag aufbauen.</div>`;
+    return;
+  }
+
+  const DAY_W = 24;
+  const LABEL_W = 170;
+
+  const dates = [];
+  if(item.erstelltAm) dates.push(toUTCDateOnly(item.erstelltAm.slice(0, 10)));
+  if(item.liefertermin) dates.push(toUTCDateOnly(item.liefertermin));
+  phases.forEach(p => { dates.push(toUTCDateOnly(p.start)); dates.push(toUTCDateOnly(p.ende)); });
+  events.forEach(e => dates.push(toUTCDateOnly(e.faelligkeit)));
+
+  const today = new Date();
+  const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+  dates.push(todayUTC);
+
+  const rangeStart = mondayOfWeekContaining(new Date(Math.min(...dates)));
+  let rangeEnd = mondayOfWeekContaining(new Date(Math.max(...dates)));
+  rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 7);
+
+  const totalDays = Math.max(daysBetween(rangeStart, rangeEnd), 7);
+  const totalWidth = totalDays * DAY_W;
+
+  const weekCount = Math.ceil(totalDays / 7);
+  let weekHeaderHtml = "";
+  for(let i = 0; i < weekCount; i++){
+    const wStart = new Date(rangeStart); wStart.setUTCDate(wStart.getUTCDate() + i * 7);
+    const label = wStart.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+    weekHeaderHtml += `<div class="order-timeline-week" style="width:${7*DAY_W}px;">${label}</div>`;
+  }
+
+  const todayOffset = daysBetween(rangeStart, todayUTC) * DAY_W;
+
+  const phaseRowsHtml = phases.map(p => {
+    const start = toUTCDateOnly(p.start);
+    const end = toUTCDateOnly(p.ende);
+    const left = daysBetween(rangeStart, start) * DAY_W;
+    const width = Math.max(daysBetween(start, end) * DAY_W, 18);
+    return `
+      <div class="order-timeline-row">
+        <div class="order-timeline-label" style="width:${LABEL_W}px;">${p.bezeichnung}</div>
+        <div class="order-timeline-track" style="width:${totalWidth}px;">
+          <div class="order-timeline-bar" data-id="${p.id}" style="left:${left}px; width:${width}px;" title="${p.bezeichnung}: ${fmtDate(p.start)} – ${fmtDate(p.ende)}">
+            ${fmtDate(p.start)} – ${fmtDate(p.ende)}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const eventsRowHtml = events.length ? `
+    <div class="order-timeline-row">
+      <div class="order-timeline-label" style="width:${LABEL_W}px;">Ereignisse</div>
+      <div class="order-timeline-track" style="width:${totalWidth}px;">
+        ${events.map(e => {
+          const left = daysBetween(rangeStart, toUTCDateOnly(e.faelligkeit)) * DAY_W;
+          const title = `${e.text} (fällig ${fmtDate(e.faelligkeit)}${e.verantwortlich ? ', ' + e.verantwortlich : ''})`.replace(/"/g, "&quot;");
+          return `<div class="order-timeline-marker ${e.status === 'erledigt' ? 'erledigt' : ''}" style="left:${left}px;" title="${title}"></div>`;
+        }).join("")}
+      </div>
+    </div>
+  ` : "";
+
+  board.innerHTML = `
+    <div class="order-timeline-scroll">
+      <div class="order-timeline-inner">
+        <div class="order-timeline-header">
+          <div class="order-timeline-label-spacer" style="width:${LABEL_W}px;"></div>
+          ${weekHeaderHtml}
+        </div>
+        <div style="position:relative;">
+          <div class="order-timeline-today" style="left:${LABEL_W + todayOffset}px;"></div>
+          ${phaseRowsHtml}
+          ${eventsRowHtml}
+        </div>
+      </div>
+    </div>
+  `;
+
+  board.querySelectorAll(".order-timeline-bar").forEach(bar => {
+    bar.addEventListener("click", () => {
+      const phase = phases.find(p => p.id === parseInt(bar.dataset.id, 10));
+      if(phase) openPhaseModal(item, phase);
+    });
+  });
+}
+
+function openPhaseModal(item, phase){
+  const isEdit = !!phase;
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="phaseModalTitle">
+        <h3 id="phaseModalTitle">${isEdit ? "Phase bearbeiten" : "Neue Phase"}</h3>
+        <div class="sub">${item.kommission} — ${item.kunde}</div>
+        <div class="form-row">
+          <label for="phaseBezeichnung">Bezeichnung</label>
+          <input type="text" id="phaseBezeichnung" placeholder="z.B. Konstruktion" value="${isEdit ? phase.bezeichnung : ''}">
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="phaseStart">Start</label>
+            <input type="date" id="phaseStart" value="${isEdit ? phase.start : ''}">
+          </div>
+          <div class="form-row">
+            <label for="phaseEnde">Ende</label>
+            <input type="date" id="phaseEnde" value="${isEdit ? phase.ende : ''}">
+          </div>
+        </div>
+        <div class="modal-actions" style="justify-content:${isEdit ? 'space-between' : 'flex-end'};">
+          ${isEdit ? `<button class="btn text" id="phaseDelete" style="color:var(--red);">Löschen</button>` : ``}
+          <div style="display:flex; gap:10px;">
+            <button class="btn text" id="phaseCancel">Abbrechen</button>
+            <button class="btn" id="phaseSave">${isEdit ? 'Speichern' : 'Anlegen'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("phaseCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  if(isEdit){
+    document.getElementById("phaseDelete").addEventListener("click", () => openDeletePhaseConfirm(item, phase));
+  }
+  document.getElementById("phaseSave").addEventListener("click", async () => {
+    const bezeichnung = document.getElementById("phaseBezeichnung").value.trim();
+    const start = document.getElementById("phaseStart").value;
+    const ende = document.getElementById("phaseEnde").value;
+    if(!bezeichnung || !start || !ende){
+      showToast("Bezeichnung, Start und Ende sind Pflichtfelder.", true);
+      return;
+    }
+    if(ende < start){
+      showToast("Das Ende darf nicht vor dem Start liegen.", true);
+      return;
+    }
+    const saveBtn = document.getElementById("phaseSave");
+    saveBtn.disabled = true;
+    try{
+      if(isEdit){
+        await apiPatch(`/phasen/${phase.id}`, { bezeichnung, start, ende });
+      } else {
+        await apiPost(`/items/${item.id}/phasen`, { bezeichnung, start, ende });
+      }
+      await loadItems(currentTab);
+      closeModal();
+      renderMain();
+      showToast(isEdit ? "Phase aktualisiert." : "Phase angelegt.");
+    }catch(err){
+      showToast("Phase konnte nicht gespeichert werden.", true);
+      saveBtn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openDeletePhaseConfirm(item, phase){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deletePhaseTitle">
+        <h3 id="deletePhaseTitle">Phase „${phase.bezeichnung}" löschen?</h3>
+        <div class="sub">Diese Phase wird aus dem Zeitplan von ${item.kommission} entfernt. Das kann nicht rückgängig gemacht werden.</div>
+        <div class="modal-actions">
+          <button class="btn text" id="deletePhaseCancel">Abbrechen</button>
+          <button class="btn" id="deletePhaseConfirm" style="background:var(--red); border-color:var(--red);">Endgültig löschen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("deletePhaseCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("deletePhaseConfirm").addEventListener("click", async () => {
+    const btn = document.getElementById("deletePhaseConfirm");
+    btn.disabled = true;
+    try{
+      await apiDelete(`/phasen/${phase.id}`);
+      await loadItems(currentTab);
+      closeModal();
+      renderMain();
+      showToast("Phase gelöscht.");
+    }catch(err){
+      showToast("Phase konnte nicht gelöscht werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
 }
 
 function renderEntry(e){

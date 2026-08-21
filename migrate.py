@@ -30,6 +30,11 @@ def column_exists(cur, table, column):
     return any(row[1] == column for row in cur.fetchall())
 
 
+def table_exists(cur, table):
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table,))
+    return cur.fetchone() is not None
+
+
 def main():
     if not os.path.exists(DB_PATH):
         print(f"Keine Datenbank unter {DB_PATH} gefunden — nichts zu migrieren.")
@@ -55,6 +60,21 @@ def main():
         print("Spalte verlauf_eintraege.msgraph_task_id ergänzt.")
     else:
         print("Spalte verlauf_eintraege.msgraph_task_id existiert bereits.")
+
+    if not table_exists(cur, "phasen"):
+        cur.execute("""
+            CREATE TABLE phasen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL REFERENCES items(id),
+                bezeichnung VARCHAR(120) NOT NULL,
+                start DATE NOT NULL,
+                ende DATE NOT NULL,
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle phasen angelegt (für detailliertes Gantt je Auftrag).")
+    else:
+        print("Tabelle phasen existiert bereits.")
 
     # Bekannte Nutzer mit E-Mail-Adresse befüllen (nur wenn noch leer)
     cur.execute("SELECT id, name, email FROM users")

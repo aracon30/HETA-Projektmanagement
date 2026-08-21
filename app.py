@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, date
 from flask import Flask, jsonify, request, send_from_directory
-from models import db, User, Item, VerlaufEintrag
+from models import db, User, Item, VerlaufEintrag, Phase
 import graph_client
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -154,6 +154,44 @@ def update_verlauf(eintrag_id):
         eintrag.status = data["status"]
     db.session.commit()
     return jsonify(eintrag.to_dict())
+
+
+# ---------- Phasen (detailliertes Gantt je Auftrag) ----------
+@app.route("/api/items/<int:item_id>/phasen", methods=["POST"])
+def add_phase(item_id):
+    Item.query.get_or_404(item_id)
+    data = request.get_json(force=True)
+    phase = Phase(
+        item_id=item_id,
+        bezeichnung=data["bezeichnung"],
+        start=parse_date(data["start"]),
+        ende=parse_date(data["ende"]),
+    )
+    db.session.add(phase)
+    db.session.commit()
+    return jsonify(phase.to_dict()), 201
+
+
+@app.route("/api/phasen/<int:phase_id>", methods=["PATCH"])
+def update_phase(phase_id):
+    phase = Phase.query.get_or_404(phase_id)
+    data = request.get_json(force=True)
+    if "bezeichnung" in data:
+        phase.bezeichnung = data["bezeichnung"]
+    if "start" in data:
+        phase.start = parse_date(data["start"])
+    if "ende" in data:
+        phase.ende = parse_date(data["ende"])
+    db.session.commit()
+    return jsonify(phase.to_dict())
+
+
+@app.route("/api/phasen/<int:phase_id>", methods=["DELETE"])
+def delete_phase(phase_id):
+    phase = Phase.query.get_or_404(phase_id)
+    db.session.delete(phase)
+    db.session.commit()
+    return "", 204
 
 
 if __name__ == "__main__":
