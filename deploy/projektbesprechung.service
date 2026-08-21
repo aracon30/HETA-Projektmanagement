@@ -1,0 +1,23 @@
+[Unit]
+Description=HETA Projektbesprechung Tool (Gunicorn)
+After=network.target
+
+[Service]
+# Anpassen: Nutzer, unter dem der Dienst laufen soll
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/projektbesprechung
+Environment="PATH=/opt/projektbesprechung/venv/bin"
+
+# Für die Microsoft-To-Do-Anbindung: Werte von IT/Heiko eintragen.
+# Solange diese leer/auskommentiert sind, läuft das Tool normal weiter,
+# Aufgaben werden dann nur lokal markiert statt in To Do angelegt.
+# Environment="GRAPH_TENANT_ID=..."
+# Environment="GRAPH_CLIENT_ID=..."
+# Environment="GRAPH_CLIENT_SECRET=..."
+
+ExecStart=/opt/projektbesprechung/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 app:app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
