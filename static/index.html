@@ -67,7 +67,7 @@
   .order-card .komm{font-size:0.78rem; color:var(--slate); margin-bottom:3px;}
   .order-card .kunde{font-weight:600; font-size:0.92rem; margin-bottom:5px;}
   .order-card .meta{ display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:var(--slate); gap:6px; }
-  .status-badge{ font-size:0.68rem; padding:2px 7px; border-radius:20px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; white-space:nowrap; }
+  .status-badge{ font-size:0.68rem; padding:2px 7px; border-radius:20px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; white-space:nowrap; border:none; font-family:inherit; }
   .status-badge.offen{background:var(--copper-soft); color:var(--copper);}
   .status-badge.erledigt{background:var(--green-soft); color:var(--green);}
   .status-badge.in_bearbeitung{background:var(--steel-soft); color:var(--steel);}
@@ -75,6 +75,9 @@
   .status-badge.wiedervorlage{background:var(--copper-soft); color:var(--copper);}
   .status-badge.gewonnen{background:var(--green-soft); color:var(--green);}
   .status-badge.verloren{background:var(--red-soft); color:var(--red);}
+  .status-badge.clickable{ cursor:pointer; }
+  .status-badge.clickable:hover{ filter:brightness(0.95); }
+  .status-badge.clickable:focus-visible{ outline:2px solid var(--steel); outline-offset:2px; }
   .empty-list{ padding:30px 16px; color:var(--slate); font-size:0.85rem; text-align:center; }
 
   .main{ padding:28px 40px 60px; max-width:820px; overflow-y:auto; min-height:0; }
@@ -419,7 +422,7 @@ const KIND_CONFIG = {
     detailTag: (item) => `<button class="prio-tag ${item.prio} clickable" id="prioTagBtn"><span class="dot ${item.prio}"></span>Priorität ${({rot:"Rot",gelb:"Gelb",gruen:"Grün"})[item.prio]}</button>`,
     metaGrid: (item) => `
       <div class="field"><label>Liefertermin</label><div class="val mono">${fmtDate(item.liefertermin)}</div></div>
-      <div class="field"><label>Status</label><div class="val"><span class="status-badge ${item.status}">${item.status}</span></div></div>
+      <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${item.status}</button></div></div>
       <div class="field"><label>Projektordner</label><div class="val">${folderLink(item.ordnerPfad)}</div></div>
     `,
     stats: (list) => {
@@ -777,6 +780,7 @@ function renderMain(){
     renderOrderTimeline(item);
     document.getElementById("newPhaseBtn").addEventListener("click", () => openPhaseModal(item, null));
     document.getElementById("prioTagBtn").addEventListener("click", () => openPrioModal(item));
+    document.getElementById("statusBadgeBtn").addEventListener("click", () => openAuftragStatusModal(item));
   }
 
   item.verlauf.forEach(e => {
@@ -828,6 +832,49 @@ function openPrioModal(item){
       showToast("Priorität aktualisiert.");
     }catch(err){
       showToast("Priorität konnte nicht aktualisiert werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openAuftragStatusModal(item){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="statusModalTitle">
+        <h3 id="statusModalTitle">Status ändern</h3>
+        <div class="sub">${item.kommission} — ${item.kunde}</div>
+        <div class="form-row">
+          <label for="auftragStatusSelect">Status</label>
+          <select id="auftragStatusSelect">
+            <option value="offen" ${item.status === 'offen' ? 'selected' : ''}>Offen</option>
+            <option value="erledigt" ${item.status === 'erledigt' ? 'selected' : ''}>Erledigt</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="statusCancel">Abbrechen</button>
+          <button class="btn" id="statusConfirm">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("statusCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("statusConfirm").addEventListener("click", async () => {
+    const btn = document.getElementById("statusConfirm");
+    btn.disabled = true;
+    const status = document.getElementById("auftragStatusSelect").value;
+    try{
+      await apiPatch(`/items/${item.id}`, { status });
+      await loadItems(currentTab);
+      closeModal();
+      renderList();
+      renderMain();
+      updateStats();
+      showToast("Status aktualisiert.");
+    }catch(err){
+      showToast("Status konnte nicht aktualisiert werden.", true);
       btn.disabled = false;
     }
   });
