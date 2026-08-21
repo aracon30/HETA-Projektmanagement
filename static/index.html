@@ -15,6 +15,7 @@
     --red:#B0432E; --red-soft:#F6E1DC;
     --amber:#C4872A; --amber-soft:#F6EAD5;
     --green:#4B7A56; --green-soft:#DFEBE2;
+    --versand:#0077DB; --versand-soft:#DCEAF6;
     --radius:3px; --shadow:0 1px 2px rgba(27,36,48,0.06), 0 4px 14px rgba(27,36,48,0.05);
     font-size:16px;
   }
@@ -70,7 +71,10 @@
   .status-badge{ font-size:0.68rem; padding:2px 7px; border-radius:20px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; white-space:nowrap; border:none; font-family:inherit; }
   .status-badge.offen{background:var(--copper-soft); color:var(--copper);}
   .status-badge.erledigt{background:var(--green-soft); color:var(--green);}
+  .status-badge.neu{background:var(--copper-soft); color:var(--copper);}
   .status-badge.in_bearbeitung{background:var(--steel-soft); color:var(--steel);}
+  .status-badge.in_fertigung{background:var(--amber-soft); color:var(--amber);}
+  .status-badge.versandbereit{background:var(--versand-soft); color:var(--versand);}
   .status-badge.versendet{background:var(--amber-soft); color:var(--amber);}
   .status-badge.wiedervorlage{background:var(--copper-soft); color:var(--copper);}
   .status-badge.gewonnen{background:var(--green-soft); color:var(--green);}
@@ -424,16 +428,16 @@ const KIND_CONFIG = {
       { value:"gruen", label:"Grün", dot:"gruen" }
     ],
     cardClass: (item) => item.prio,
-    cardStatusBadge: (item) => `<span class="status-badge ${item.status}">${item.status}</span>`,
+    cardStatusBadge: (item) => `<span class="status-badge ${item.status}">${statusLabel(item.status)}</span>`,
     cardMetaLeft: (item) => `Termin ${fmtDate(item.liefertermin)}`,
     detailTag: (item) => `<button class="prio-tag ${item.prio} clickable" id="prioTagBtn"><span class="dot ${item.prio}"></span>Priorität ${({rot:"Rot",gelb:"Gelb",gruen:"Grün"})[item.prio]}</button>`,
     metaGrid: (item) => `
       <div class="field"><label>Liefertermin</label><div class="val mono">${fmtDate(item.liefertermin)}</div></div>
-      <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${item.status}</button></div></div>
+      <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button></div></div>
       <div class="field"><label>Projektordner</label><div class="val">${folderLink(item.ordnerPfad)}</div></div>
     `,
     stats: (list) => {
-      const offen = list.filter(o => o.status === "offen").length;
+      const offen = list.filter(o => o.status !== "erledigt").length;
       const tasks = list.flatMap(o => o.verlauf).filter(e => e.status === "offen" && e.verantwortlich).length;
       return `<span><b>${offen}</b> offene Aufträge</span><span><b>${tasks}</b> unerledigte Aufgaben</span>`;
     }
@@ -468,7 +472,10 @@ const KIND_CONFIG = {
 };
 
 function statusLabel(s){
-  return { in_bearbeitung:"In Bearbeitung", versendet:"Versendet", wiedervorlage:"Wiedervorlage", gewonnen:"Gewonnen", verloren:"Verloren" }[s] || s;
+  return {
+    offen:"Offen", neu:"Neu", in_bearbeitung:"In Bearbeitung", in_fertigung:"In Fertigung", versandbereit:"Versandbereit", erledigt:"Erledigt",
+    versendet:"Versendet", wiedervorlage:"Wiedervorlage", gewonnen:"Gewonnen", verloren:"Verloren"
+  }[s] || s;
 }
 function fmtDate(iso){
   if(!iso) return "—";
@@ -585,7 +592,7 @@ function updateStats(){
 }
 
 function updateStatsForGantt(){
-  const list = itemsCache.auftrag.filter(a => a.status === "offen");
+  const list = itemsCache.auftrag.filter(a => a.status !== "erledigt");
   document.getElementById("statBar").innerHTML =
     `<span><b>${list.length}</b> offene Aufträge im Zeitverlauf</span>`;
 }
@@ -597,7 +604,7 @@ function renderGanttBoard(){
   const WEEKS_PAST = 1;
   const WEEKS_FUTURE = 10;
 
-  const offene = itemsCache.auftrag.filter(a => a.status === "offen");
+  const offene = itemsCache.auftrag.filter(a => a.status !== "erledigt");
   const today = new Date();
   const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
 
@@ -855,7 +862,10 @@ function openAuftragStatusModal(item){
         <div class="form-row">
           <label for="auftragStatusSelect">Status</label>
           <select id="auftragStatusSelect">
-            <option value="offen" ${item.status === 'offen' ? 'selected' : ''}>Offen</option>
+            <option value="neu" ${item.status === 'neu' ? 'selected' : ''}>Neu</option>
+            <option value="in_bearbeitung" ${item.status === 'in_bearbeitung' ? 'selected' : ''}>In Bearbeitung</option>
+            <option value="in_fertigung" ${item.status === 'in_fertigung' ? 'selected' : ''}>In Fertigung</option>
+            <option value="versandbereit" ${item.status === 'versandbereit' ? 'selected' : ''}>Versandbereit</option>
             <option value="erledigt" ${item.status === 'erledigt' ? 'selected' : ''}>Erledigt</option>
           </select>
         </div>
@@ -1443,7 +1453,10 @@ function openCreateModal(kind){
         <div class="form-row">
           <label for="createStatus">Status</label>
           <select id="createStatus">
-            <option value="offen" selected>Offen</option>
+            <option value="neu" selected>Neu</option>
+            <option value="in_bearbeitung">In Bearbeitung</option>
+            <option value="in_fertigung">In Fertigung</option>
+            <option value="versandbereit">Versandbereit</option>
             <option value="erledigt">Erledigt</option>
           </select>
         </div>
