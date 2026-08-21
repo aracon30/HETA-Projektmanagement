@@ -230,8 +230,17 @@
     position:absolute;
     top:0; bottom:0;
     width:2px;
-    background:var(--copper);
+    background:var(--amber);
+    z-index:2;
+  }
+  .gantt-delivery-mark{
+    position:absolute;
+    top:4px; bottom:4px;
+    width:2px;
+    background:var(--red);
+    border-radius:1px;
     z-index:1;
+    pointer-events:none;
   }
 
   /* ===== Detailliertes Gantt je Auftrag ===== */
@@ -677,9 +686,15 @@ function renderGanttBoard(){
   const WEEKS_PAST = 1;
   const WEEKS_FUTURE = 10;
 
-  const offene = itemsCache.auftrag.filter(a => a.status !== "erledigt");
   const today = new Date();
   const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+
+  const offene = [...itemsCache.auftrag.filter(a => a.status !== "erledigt")].sort((a, b) => {
+    if(!a.liefertermin && !b.liefertermin) return 0;
+    if(!a.liefertermin) return 1;
+    if(!b.liefertermin) return -1;
+    return new Date(a.liefertermin) - new Date(b.liefertermin);
+  });
 
   const rangeStart = mondayOfWeekContaining(todayUTC);
   rangeStart.setUTCDate(rangeStart.getUTCDate() - WEEKS_PAST * 7);
@@ -692,7 +707,7 @@ function renderGanttBoard(){
   let weekHeaderHtml = "";
   for(let i = 0; i < weekCount; i++){
     const wStart = new Date(rangeStart); wStart.setUTCDate(wStart.getUTCDate() + i * 7);
-    const label = wStart.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+    const label = `KW ${getISOWeek(wStart)}`;
     weekHeaderHtml += `<div class="gantt-week" style="width:${7*DAY_W}px;">${label}</div>`;
   }
 
@@ -710,6 +725,11 @@ function renderGanttBoard(){
     } else {
       barWidth = DAY_W; // kein Termin: schmaler Marker
     }
+    let deliveryMarkHtml = "";
+    if(end){
+      const deliveryOffset = daysBetween(rangeStart, end) * DAY_W;
+      deliveryMarkHtml = `<div class="gantt-delivery-mark" style="left:${deliveryOffset}px;" title="Liefertermin: ${fmtDate(item.liefertermin)}"></div>`;
+    }
     return `
       <div class="gantt-row">
         <div class="gantt-row-label" style="width:${ROW_LABEL_W}px;">
@@ -719,6 +739,7 @@ function renderGanttBoard(){
           <div class="gantt-bar ${item.prio}" data-id="${item.id}" style="left:${barLeft}px; width:${barWidth}px;" title="${item.kommission} — ${item.kunde}">
             ${item.liefertermin ? fmtDate(item.liefertermin) : 'kein Termin'}
           </div>
+          ${deliveryMarkHtml}
         </div>
       </div>
     `;
@@ -731,7 +752,7 @@ function renderGanttBoard(){
         ${weekHeaderHtml}
       </div>
       <div style="position:relative;">
-        <div class="gantt-today-line" style="left:${ROW_LABEL_W + todayOffset}px;"></div>
+        <div class="gantt-today-line" style="left:${ROW_LABEL_W + todayOffset}px;" title="Heute: ${fmtDate(isoDateStr(todayUTC))}"></div>
         ${rowsHtml || '<div class="no-selection" style="padding-top:20px;">Keine offenen Aufträge.</div>'}
       </div>
     </div>
