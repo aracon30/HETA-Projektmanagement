@@ -225,6 +225,37 @@
   }
 
   /* ===== Detailliertes Gantt je Auftrag ===== */
+  .order-timeline-undated{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+    margin-top:16px;
+  }
+  .order-timeline-undated-label{
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--slate);
+    margin-right:2px;
+    flex-shrink:0;
+  }
+  .order-timeline-chip{
+    font-size:0.76rem;
+    font-family:inherit;
+    padding:5px 12px;
+    border-radius:20px;
+    border:1px dashed var(--slate-light);
+    background:var(--panel);
+    color:var(--ink);
+    cursor:pointer;
+    max-width:280px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .order-timeline-chip:hover{ border-color:var(--steel); border-style:solid; color:var(--steel); }
+  .order-timeline-chip:focus-visible{ outline:2px solid var(--steel); outline-offset:1px; }
   .order-timeline-scroll{
     overflow-x:auto;
     border:1px solid var(--line);
@@ -810,9 +841,27 @@ function renderOrderTimeline(item){
 
   const phases = item.phasen || [];
   const events = item.verlauf.filter(e => e.faelligkeit);
+  const undated = item.verlauf.filter(e => !e.faelligkeit && e.status !== "erledigt");
+
+  const undatedHtml = undated.length ? `
+    <div class="order-timeline-undated">
+      <span class="order-timeline-undated-label">Ohne Fälligkeit — bitte einplanen</span>
+      ${undated.map(e => `<button class="order-timeline-chip" data-entry-id="${e.id}" title="${e.text.replace(/"/g, "&quot;")}">${e.text}</button>`).join("")}
+    </div>
+  ` : "";
+
+  function wireUndatedChips(){
+    board.querySelectorAll(".order-timeline-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const entry = item.verlauf.find(v => v.id === parseInt(chip.dataset.entryId, 10));
+        if(entry) openEditEntryModal(item, entry);
+      });
+    });
+  }
 
   if(phases.length === 0 && events.length === 0){
-    board.innerHTML = `<div class="order-timeline-empty">Noch keine Phasen angelegt. Mit „+ Phase" den Zeitplan für diesen Auftrag aufbauen.</div>`;
+    board.innerHTML = undatedHtml || `<div class="order-timeline-empty">Noch keine Phasen angelegt. Mit „+ Phase" den Zeitplan für diesen Auftrag aufbauen.</div>`;
+    wireUndatedChips();
     return;
   }
 
@@ -906,6 +955,7 @@ function renderOrderTimeline(item){
   }).join("");
 
   board.innerHTML = `
+    ${undatedHtml}
     <div class="order-timeline-scroll">
       <div class="order-timeline-inner">
         <div class="order-timeline-header">
@@ -932,6 +982,7 @@ function renderOrderTimeline(item){
       if(phase) openPhaseModal(item, phase);
     });
   });
+  wireUndatedChips();
 }
 
 function openPhaseModal(item, phase){
