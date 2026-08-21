@@ -169,6 +169,17 @@
     min-height:0;
     padding:20px 24px;
   }
+  .gantt-toolbar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:14px;
+    position:sticky;
+    left:0;
+    width:fit-content;
+  }
+  .gantt-toolbar label{ font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.03em; }
+  .gantt-toolbar select{ padding:6px 9px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.82rem; font-family:inherit; background:var(--panel); color:var(--ink); }
   .gantt-inner{ position:relative; min-width:max-content; }
   .gantt-header{
     display:flex;
@@ -413,6 +424,38 @@ let selectedId = { auftrag: null, angebot: null };
 let activeFilter = { auftrag: "alle", angebot: "alle" };
 let searchTerm = { auftrag: "", angebot: "" };
 let sortOrder = { auftrag: "erstellt_neu", angebot: "erstellt_neu" };
+let ganttSortOrder = "liefertermin_auf";
+
+const GANTT_SORT_OPTIONS = [
+  { value:"liefertermin_auf", label:"Liefertermin aufsteigend" },
+  { value:"liefertermin_ab", label:"Liefertermin absteigend" },
+  { value:"kommission_auf", label:"Auftragsnummer aufsteigend" },
+  { value:"kommission_ab", label:"Auftragsnummer absteigend" },
+];
+
+function sortGanttItems(list){
+  const order = ganttSortOrder;
+  const sorted = [...list];
+  if(order === "kommission_auf" || order === "kommission_ab"){
+    const dir = order === "kommission_auf" ? 1 : -1;
+    sorted.sort((a, b) => {
+      const ra = kommissionRecency(a.kommission), rb = kommissionRecency(b.kommission);
+      if(ra === null && rb === null) return 0;
+      if(ra === null) return 1;
+      if(rb === null) return -1;
+      return dir * (ra - rb);
+    });
+  } else {
+    const dir = order === "liefertermin_ab" ? -1 : 1;
+    sorted.sort((a, b) => {
+      if(!a.liefertermin && !b.liefertermin) return 0;
+      if(!a.liefertermin) return 1;
+      if(!b.liefertermin) return -1;
+      return dir * (new Date(a.liefertermin) - new Date(b.liefertermin));
+    });
+  }
+  return sorted;
+}
 
 // Kategoriale Farben für die Verlauf-Balken im Zeitplan (eine je Aufgabe, im
 // Kreis wiederholt ab der 5.). Bewusst fernab von Rot/Grün/Stahlblau/Amber/
@@ -698,12 +741,7 @@ function renderGanttBoard(){
   const today = new Date();
   const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
 
-  const offene = [...itemsCache.auftrag.filter(a => a.status !== "erledigt")].sort((a, b) => {
-    if(!a.liefertermin && !b.liefertermin) return 0;
-    if(!a.liefertermin) return 1;
-    if(!b.liefertermin) return -1;
-    return new Date(a.liefertermin) - new Date(b.liefertermin);
-  });
+  const offene = sortGanttItems(itemsCache.auftrag.filter(a => a.status !== "erledigt"));
 
   const rangeStart = mondayOfWeekContaining(todayUTC);
   rangeStart.setUTCDate(rangeStart.getUTCDate() - WEEKS_PAST * 7);
@@ -755,6 +793,12 @@ function renderGanttBoard(){
   }).join("");
 
   board.innerHTML = `
+    <div class="gantt-toolbar">
+      <label for="ganttSortSelect">Sortierung</label>
+      <select id="ganttSortSelect">
+        ${GANTT_SORT_OPTIONS.map(o => `<option value="${o.value}" ${ganttSortOrder === o.value ? 'selected' : ''}>${o.label}</option>`).join("")}
+      </select>
+    </div>
     <div class="gantt-inner">
       <div class="gantt-header">
         <div class="row-label-spacer" style="width:${ROW_LABEL_W}px;"></div>
@@ -772,6 +816,11 @@ function renderGanttBoard(){
       const item = itemsCache.auftrag.find(a => a.id === parseInt(bar.dataset.id, 10));
       if(item) openLiefertermineDialog(item);
     });
+  });
+
+  document.getElementById("ganttSortSelect").addEventListener("change", (ev) => {
+    ganttSortOrder = ev.target.value;
+    renderGanttBoard();
   });
 
   // Standardmäßig nur 1 Woche Vergangenheit sichtbar, Rest per Scroll erreichbar.
