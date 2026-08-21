@@ -180,7 +180,7 @@
     padding-bottom:6px;
     margin-bottom:8px;
   }
-  .gantt-header .row-label-spacer{ flex-shrink:0; }
+  .gantt-header .row-label-spacer{ flex-shrink:0; position:sticky; left:0; z-index:1; background:var(--paper); }
   .gantt-week{
     flex-shrink:0;
     font-size:0.7rem;
@@ -202,6 +202,10 @@
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    position:sticky;
+    left:0;
+    z-index:1;
+    background:var(--paper);
   }
   .gantt-row-label .komm{ font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color:var(--slate); display:block; }
   .gantt-track{ position:relative; flex:1; height:100%; }
@@ -290,7 +294,7 @@
     padding-bottom:6px;
     margin-bottom:6px;
   }
-  .order-timeline-label-spacer{ flex-shrink:0; }
+  .order-timeline-label-spacer{ flex-shrink:0; position:sticky; left:0; z-index:1; background:var(--panel); }
   .order-timeline-week{
     flex-shrink:0;
     font-size:0.68rem;
@@ -315,6 +319,10 @@
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    position:sticky;
+    left:0;
+    z-index:1;
+    background:var(--panel);
   }
   .order-timeline-track{ position:relative; flex:1; height:100%; }
   .order-timeline-bar{
@@ -683,7 +691,8 @@ function renderGanttBoard(){
   const board = document.getElementById("ganttBoard");
   const DAY_W = 26;
   const ROW_LABEL_W = 220;
-  const WEEKS_PAST = 1;
+  const WEEKS_PAST = 12; // wie weit rückwärts gerendert wird (per Scroll erreichbar)
+  const WEEKS_PAST_VISIBLE = 1; // wie viel Vergangenheit standardmäßig sichtbar ist
   const WEEKS_FUTURE = 10;
 
   const today = new Date();
@@ -764,6 +773,9 @@ function renderGanttBoard(){
       if(item) openLiefertermineDialog(item);
     });
   });
+
+  // Standardmäßig nur 1 Woche Vergangenheit sichtbar, Rest per Scroll erreichbar.
+  board.scrollLeft = ROW_LABEL_W + Math.max(0, todayOffset - WEEKS_PAST_VISIBLE * 7 * DAY_W);
 }
 
 function openLiefertermineDialog(item){
@@ -1047,6 +1059,12 @@ function renderOrderTimeline(item){
   const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
   dates.push(todayUTC);
 
+  const WEEKS_PAST_VISIBLE = 1; // wie viel Vergangenheit standardmäßig sichtbar ist
+  const WEEKS_PAST_SCROLLABLE = 8; // wie weit rückwärts gerendert wird (per Scroll erreichbar)
+  const scrollableBoundary = mondayOfWeekContaining(todayUTC);
+  scrollableBoundary.setUTCDate(scrollableBoundary.getUTCDate() - WEEKS_PAST_SCROLLABLE * 7);
+  dates.push(scrollableBoundary);
+
   const rangeStart = mondayOfWeekContaining(new Date(Math.min(...dates)));
   let rangeEnd = mondayOfWeekContaining(new Date(Math.max(...dates)));
   rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 7);
@@ -1150,6 +1168,12 @@ function renderOrderTimeline(item){
     });
   });
   wireUndatedChips();
+
+  // Standardmäßig nur 1 Woche Vergangenheit sichtbar, Rest per Scroll erreichbar.
+  const scrollEl = board.querySelector(".order-timeline-scroll");
+  if(scrollEl){
+    scrollEl.scrollLeft = LABEL_W + Math.max(0, todayOffset - WEEKS_PAST_VISIBLE * 7 * DAY_W);
+  }
 }
 
 function openPhaseModal(item, phase){
