@@ -497,11 +497,15 @@ const KIND_CONFIG = {
     newItemLabel: "+ Neuer Auftrag",
     statusField: "prio",
     dateField: "liefertermin",
+    prioOrder: ["rot", "gelb", "gruen"],
+    statusOrder: ["neu", "in_bearbeitung", "in_fertigung", "versandbereit", "erledigt"],
     sortOptions: [
       { value:"erstellt_neu", label:"Neueste zuerst" },
       { value:"erstellt_alt", label:"Älteste zuerst" },
       { value:"liefertermin_auf", label:"Liefertermin aufsteigend" },
-      { value:"liefertermin_ab", label:"Liefertermin absteigend" }
+      { value:"liefertermin_ab", label:"Liefertermin absteigend" },
+      { value:"prio", label:"Priorität (Rot zuerst)" },
+      { value:"status", label:"Status (Werkstattfortschritt)" }
     ],
     filterChips: [
       { value:"alle", label:"Alle" },
@@ -529,11 +533,13 @@ const KIND_CONFIG = {
     newItemLabel: "+ Neues Angebot",
     statusField: "status",
     dateField: "wiedervorlage",
+    statusOrder: ["in_bearbeitung", "versendet", "wiedervorlage", "gewonnen", "verloren"],
     sortOptions: [
       { value:"erstellt_neu", label:"Neueste zuerst" },
       { value:"erstellt_alt", label:"Älteste zuerst" },
       { value:"wiedervorlage_auf", label:"Wiedervorlage aufsteigend" },
-      { value:"wiedervorlage_ab", label:"Wiedervorlage absteigend" }
+      { value:"wiedervorlage_ab", label:"Wiedervorlage absteigend" },
+      { value:"status", label:"Status (Bearbeitungsstand)" }
     ],
     filterChips: [
       { value:"alle", label:"Alle" },
@@ -694,6 +700,10 @@ function sortItems(list){
       if(!bv) return -1;
       return dir * (new Date(av) - new Date(bv));
     });
+  } else if(order === "prio" && cfg.prioOrder){
+    sorted.sort((a, b) => cfg.prioOrder.indexOf(a.prio) - cfg.prioOrder.indexOf(b.prio));
+  } else if(order === "status" && cfg.statusOrder){
+    sorted.sort((a, b) => cfg.statusOrder.indexOf(a.status) - cfg.statusOrder.indexOf(b.status));
   }
   return sorted;
 }
