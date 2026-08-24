@@ -114,7 +114,10 @@
 
   .folder-link{ display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--steel); text-decoration:none; border-bottom:1px solid transparent; }
   .folder-link:hover{border-bottom-color:var(--steel);} .folder-link svg{flex-shrink:0;}
-  .folder-link.clickable-text{ color:var(--steel); }
+  .folder-field{ display:inline-flex; align-items:center; gap:8px; }
+  .icon-edit-btn{ display:inline-flex; align-items:center; justify-content:center; border:none; background:none; padding:2px; margin:0; color:var(--slate-light); cursor:pointer; border-radius:3px; }
+  .icon-edit-btn:hover{ color:var(--steel); background:var(--steel-soft); }
+  .icon-edit-btn:focus-visible{ outline:2px solid var(--steel); outline-offset:1px; }
 
   .timeline-head{ display:flex; justify-content:space-between; align-items:center; margin:34px 0 4px; }
   .timeline-head h3{ font-size:0.95rem; margin:0; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); }
@@ -591,11 +594,16 @@ function fmtDate(iso){
 }
 function folderLinkEditable(path, btnId){
   const label = path ? "Ordner öffnen" : "—";
-  const title = path ? path.replace(/"/g, "&quot;") : "Ordnerpfad bearbeiten";
-  return `<button class="folder-link clickable-text" id="${btnId}" title="${title}">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.6"/></svg>
-    ${label}
-  </button>`;
+  const title = path ? path.replace(/"/g, "&quot;") : "";
+  return `<span class="folder-field">
+    <a class="folder-link" href="#" title="${title}" onclick="return false;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.6"/></svg>
+      ${label}
+    </a>
+    <button class="icon-edit-btn" id="${btnId}" title="Ordnerpfad bearbeiten" aria-label="Ordnerpfad bearbeiten">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </span>`;
 }
 
 /* ===================== API ===================== */
