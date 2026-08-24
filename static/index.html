@@ -343,15 +343,6 @@
     border-radius:4px;
     background:var(--steel);
     cursor:pointer;
-    display:flex;
-    align-items:center;
-    padding:0 8px;
-    font-size:0.68rem;
-    font-weight:600;
-    color:#fff;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
     box-shadow:var(--shadow);
   }
   .order-timeline-bar:hover{ filter:brightness(0.92); }
@@ -359,6 +350,17 @@
   .order-timeline-bar.verlauf.erledigt{ background:var(--green); }
   .order-timeline-bar.verlauf.ueberfaellig{ box-shadow:0 0 0 2px var(--red) inset, var(--shadow); }
   .order-timeline-bar.verlauf:hover{ filter:none; }
+  .order-timeline-bar-label{
+    position:absolute;
+    top:6px;
+    height:20px;
+    display:flex;
+    align-items:center;
+    font-size:0.68rem;
+    color:var(--slate);
+    white-space:nowrap;
+    pointer-events:none;
+  }
   .order-timeline-today{
     position:absolute;
     top:0; bottom:0;
@@ -1149,13 +1151,13 @@ function renderOrderTimeline(item){
     const end = toUTCDateOnly(p.ende);
     const left = daysBetween(rangeStart, start) * DAY_W;
     const width = Math.max(daysBetween(start, end) * DAY_W, 18);
+    const dateLabel = `${fmtDate(p.start)} – ${fmtDate(p.ende)}`;
     return `
       <div class="order-timeline-row">
         <div class="order-timeline-label" style="width:${LABEL_W}px;">${p.bezeichnung}</div>
         <div class="order-timeline-track" style="width:${totalWidth}px;">
-          <div class="order-timeline-bar" data-id="${p.id}" style="left:${left}px; width:${width}px;" title="${p.bezeichnung}: ${fmtDate(p.start)} – ${fmtDate(p.ende)}">
-            ${fmtDate(p.start)} – ${fmtDate(p.ende)}
-          </div>
+          <div class="order-timeline-bar" data-id="${p.id}" style="left:${left}px; width:${width}px;" title="${p.bezeichnung}: ${dateLabel}"></div>
+          <div class="order-timeline-bar-label" style="left:${left + width + 8}px;">${dateLabel}</div>
         </div>
       </div>
     `;
@@ -1176,13 +1178,13 @@ function renderOrderTimeline(item){
     const erledigt = e.status === "erledigt";
     const bg = erledigt ? "" : `background:${TASK_COLORS[idx % TASK_COLORS.length]};`;
     const title = `${e.text} (angelegt ${fmtDate(startIso)}, fällig ${fmtDate(endIso)}${e.verantwortlich ? ', ' + e.verantwortlich : ''})${ueberfaellig ? ' — nach Liefertermin!' : ''}`.replace(/"/g, "&quot;");
+    const dateLabel = `${fmtDate(startIso)} – ${fmtDate(endIso)}`;
     return `
       <div class="order-timeline-row">
         <div class="order-timeline-label" style="width:${LABEL_W}px;" title="${title}">${e.text}</div>
         <div class="order-timeline-track" style="width:${totalWidth}px;">
-          <div class="order-timeline-bar verlauf ${erledigt ? 'erledigt' : ''} ${ueberfaellig ? 'ueberfaellig' : ''}" style="left:${left}px; width:${width}px; ${bg}" title="${title}">
-            ${fmtDate(startIso)} – ${fmtDate(endIso)}
-          </div>
+          <div class="order-timeline-bar verlauf ${erledigt ? 'erledigt' : ''} ${ueberfaellig ? 'ueberfaellig' : ''}" style="left:${left}px; width:${width}px; ${bg}" title="${title}"></div>
+          <div class="order-timeline-bar-label" style="left:${left + width + 8}px;">${dateLabel}</div>
         </div>
       </div>
     `;
