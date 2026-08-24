@@ -85,6 +85,12 @@ def update_item(item_id):
             item.angebot_status = data["status"]
     if "prio" in data and item.type == "auftrag":
         item.prio = data["prio"]
+    if "wert" in data and item.type == "angebot":
+        item.wert = data.get("wert")
+    if "wiedervorlage" in data and item.type == "angebot":
+        item.wiedervorlage = parse_date(data.get("wiedervorlage"))
+    if "ordnerPfad" in data:
+        item.ordner_pfad = data.get("ordnerPfad")
     db.session.commit()
     return jsonify(item.to_dict())
 

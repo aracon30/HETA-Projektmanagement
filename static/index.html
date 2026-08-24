@@ -112,6 +112,7 @@
 
   .folder-link{ display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--steel); text-decoration:none; border-bottom:1px solid transparent; }
   .folder-link:hover{border-bottom-color:var(--steel);} .folder-link svg{flex-shrink:0;}
+  .folder-link.clickable-text{ color:var(--steel); }
 
   .timeline-head{ display:flex; justify-content:space-between; align-items:center; margin:34px 0 4px; }
   .timeline-head h3{ font-size:0.95rem; margin:0; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); }
@@ -547,9 +548,9 @@ const KIND_CONFIG = {
     cardMetaLeft: (item) => item.wiedervorlage ? `Wiedervorlage ${fmtDate(item.wiedervorlage)}` : (item.wert && item.wert !== "—" ? item.wert : "&nbsp;"),
     detailTag: (item) => `<button class="prio-tag ${item.status} clickable" id="angebotStatusTagBtn"><span class="dot ${item.status}"></span>${statusLabel(item.status)}</button>`,
     metaGrid: (item) => `
-      <div class="field"><label>Angebotswert</label><div class="val mono">${item.wert || '—'}</div></div>
-      <div class="field"><label>Wiedervorlage</label><div class="val mono">${item.wiedervorlage ? fmtDate(item.wiedervorlage) : '—'}</div></div>
-      <div class="field"><label>Angebotsordner</label><div class="val">${folderLink(item.ordnerPfad)}</div></div>
+      <div class="field"><label>Angebotswert</label><div class="val"><button class="val mono clickable-text" id="wertBtn" title="Angebotswert ändern">${item.wert || '—'}</button></div></div>
+      <div class="field"><label>Wiedervorlage</label><div class="val"><button class="val mono clickable-text" id="wiedervorlageBtn" title="Wiedervorlage ändern">${item.wiedervorlage ? fmtDate(item.wiedervorlage) : '—'}</button></div></div>
+      <div class="field"><label>Angebotsordner</label><div class="val">${folderLinkEditable(item.ordnerPfad, "ordnerBtn")}</div></div>
     `,
     stats: (list) => {
       const offen = list.filter(a => a.status !== "gewonnen" && a.status !== "verloren").length;
@@ -576,6 +577,15 @@ function folderLink(path){
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.6"/></svg>
     Ordner öffnen
   </a>`;
+}
+
+function folderLinkEditable(path, btnId){
+  const label = path ? "Ordner öffnen" : "—";
+  const title = path ? path.replace(/"/g, "&quot;") : "Ordnerpfad bearbeiten";
+  return `<button class="folder-link clickable-text" id="${btnId}" title="${title}">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.6"/></svg>
+    ${label}
+  </button>`;
 }
 
 /* ===================== API ===================== */
@@ -971,6 +981,9 @@ function renderMain(){
     document.getElementById("lieferterminBtn").addEventListener("click", () => openLiefertermineDialog(item));
   } else if(currentTab === "angebot"){
     document.getElementById("angebotStatusTagBtn").addEventListener("click", () => openAngebotStatusModal(item));
+    document.getElementById("wertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"wert", label:"Angebotswert", inputType:"text", placeholder:"z.B. 42.000 €" }));
+    document.getElementById("wiedervorlageBtn").addEventListener("click", () => openFieldEditModal(item, { field:"wiedervorlage", label:"Wiedervorlage", inputType:"date" }));
+    document.getElementById("ordnerBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }));
   }
 
   item.verlauf.forEach(e => {
@@ -1146,6 +1159,49 @@ function openWonOfferPrompt(angebot){
       lieferumfang: angebot.lieferumfang,
       ordnerPfad: angebot.ordnerPfad,
     });
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openFieldEditModal(item, opts){
+  // opts: { field, label, inputType ('text'|'date'), placeholder }
+  const root = document.getElementById("modalRoot");
+  const currentValue = item[opts.field] || "";
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fieldEditTitle">
+        <h3 id="fieldEditTitle">${opts.label} ändern</h3>
+        <div class="sub">${item.kommission} — ${item.kunde}</div>
+        <div class="form-row">
+          <label for="fieldEditInput">${opts.label}</label>
+          <input type="${opts.inputType}" id="fieldEditInput" value="${currentValue}" ${opts.placeholder ? `placeholder="${opts.placeholder}"` : ""}>
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="fieldEditCancel">Abbrechen</button>
+          <button class="btn" id="fieldEditConfirm">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("fieldEditCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("fieldEditInput").focus();
+  document.getElementById("fieldEditConfirm").addEventListener("click", async () => {
+    const btn = document.getElementById("fieldEditConfirm");
+    btn.disabled = true;
+    const value = document.getElementById("fieldEditInput").value.trim() || null;
+    try{
+      await apiPatch(`/items/${item.id}`, { [opts.field]: value });
+      await loadItems(currentTab);
+      closeModal();
+      renderList();
+      renderMain();
+      updateStats();
+      showToast(`${opts.label} aktualisiert.`);
+    }catch(err){
+      showToast(`${opts.label} konnte nicht aktualisiert werden.`, true);
+      btn.disabled = false;
+    }
   });
   document.addEventListener("keydown", escCloseOnce);
 }
