@@ -56,6 +56,8 @@
   .dot.rot{background:var(--red);} .dot.gelb{background:var(--amber);} .dot.gruen{background:var(--green);}
   .dot.in_bearbeitung{background:var(--steel);} .dot.versendet{background:var(--amber);}
   .dot.wiedervorlage{background:var(--copper);} .dot.gewonnen{background:var(--green);} .dot.verloren{background:var(--red);}
+  .dot.neu{background:var(--copper);} .dot.in_fertigung{background:var(--amber);}
+  .dot.versandbereit{background:var(--versand);} .dot.erledigt{background:var(--green);}
 
   .order-list{ overflow-y:auto; flex:1; padding:8px; }
   .order-card{ width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-left:3px solid transparent; border-radius:var(--radius); padding:12px 13px; margin-bottom:7px; cursor:pointer; display:block; }
@@ -413,6 +415,7 @@
       <input type="text" class="search" id="searchInput" placeholder="Suchen…" aria-label="Suchen">
       <select class="search" id="sortSelect" aria-label="Sortieren" style="margin-top:8px;"></select>
       <div class="prio-filters" id="filterChips" role="group" aria-label="Filtern"></div>
+      <div class="prio-filters" id="statusFilterChips" role="group" aria-label="Nach Status filtern" style="margin-top:6px;"></div>
       <button class="btn" id="newItemBtn" style="width:100%; margin-top:10px;"></button>
     </div>
     <div class="order-list" id="orderList"></div>
@@ -432,6 +435,7 @@ let itemsCache = { auftrag: [], angebot: [] };
 let currentTab = "auftrag";
 let selectedId = { auftrag: null, angebot: null };
 let activeFilter = { auftrag: "alle", angebot: "alle" };
+let activeStatusFilter = { auftrag: "alle" };
 let searchTerm = { auftrag: "", angebot: "" };
 let sortOrder = { auftrag: "erstellt_neu", angebot: "erstellt_neu" };
 let ganttSortOrder = "liefertermin_auf";
@@ -512,6 +516,14 @@ const KIND_CONFIG = {
       { value:"rot", label:"Rot", dot:"rot" },
       { value:"gelb", label:"Gelb", dot:"gelb" },
       { value:"gruen", label:"Grün", dot:"gruen" }
+    ],
+    statusFilterChips: [
+      { value:"alle", label:"Alle" },
+      { value:"neu", label:"Neu", dot:"neu" },
+      { value:"in_bearbeitung", label:"In Bearbeitung", dot:"in_bearbeitung" },
+      { value:"in_fertigung", label:"In Fertigung", dot:"in_fertigung" },
+      { value:"versandbereit", label:"Versandbereit", dot:"versandbereit" },
+      { value:"erledigt", label:"Erledigt", dot:"erledigt" }
     ],
     cardClass: (item) => item.prio,
     cardStatusBadge: (item) => `<span class="status-badge ${item.status}">${statusLabel(item.status)}</span>`,
@@ -645,6 +657,24 @@ function renderFilterChips(){
   box.querySelectorAll(".chip").forEach(chip => {
     chip.addEventListener("click", () => {
       activeFilter[currentTab] = chip.dataset.value;
+      renderFilterChips();
+      renderList();
+    });
+  });
+
+  const statusBox = document.getElementById("statusFilterChips");
+  if(!cfg.statusFilterChips){
+    statusBox.innerHTML = "";
+    return;
+  }
+  statusBox.innerHTML = cfg.statusFilterChips.map(f => `
+    <button class="chip ${activeStatusFilter[currentTab] === f.value ? 'active' : ''}" data-value="${f.value}">
+      ${f.dot ? `<span class="dot ${f.dot}"></span>` : ''}${f.label}
+    </button>
+  `).join("");
+  statusBox.querySelectorAll(".chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      activeStatusFilter[currentTab] = chip.dataset.value;
       renderFilterChips();
       renderList();
     });
@@ -908,12 +938,14 @@ function renderList(){
   const cfg = KIND_CONFIG[currentTab];
   const list = document.getElementById("orderList");
   const filterVal = activeFilter[currentTab];
+  const statusFilterVal = activeStatusFilter[currentTab] || "alle";
   const term = searchTerm[currentTab].trim().toLowerCase();
 
   let filtered = itemsCache[currentTab].filter(item => {
     const matchesFilter = filterVal === "alle" || item[cfg.statusField] === filterVal;
+    const matchesStatusFilter = !cfg.statusFilterChips || statusFilterVal === "alle" || item.status === statusFilterVal;
     const matchesSearch = !term || item.kommission.toLowerCase().includes(term) || item.kunde.toLowerCase().includes(term);
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesStatusFilter && matchesSearch;
   });
   filtered = sortItems(filtered);
 
