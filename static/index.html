@@ -545,7 +545,7 @@ const KIND_CONFIG = {
     cardClass: (item) => item.status,
     cardStatusBadge: (item) => `<span class="status-badge ${item.status}">${statusLabel(item.status)}</span>`,
     cardMetaLeft: (item) => item.wiedervorlage ? `Wiedervorlage ${fmtDate(item.wiedervorlage)}` : (item.wert && item.wert !== "—" ? item.wert : "&nbsp;"),
-    detailTag: (item) => `<span class="prio-tag ${item.status}"><span class="dot ${item.status}"></span>${statusLabel(item.status)}</span>`,
+    detailTag: (item) => `<button class="prio-tag ${item.status} clickable" id="angebotStatusTagBtn"><span class="dot ${item.status}"></span>${statusLabel(item.status)}</button>`,
     metaGrid: (item) => `
       <div class="field"><label>Angebotswert</label><div class="val mono">${item.wert || '—'}</div></div>
       <div class="field"><label>Wiedervorlage</label><div class="val mono">${item.wiedervorlage ? fmtDate(item.wiedervorlage) : '—'}</div></div>
@@ -969,6 +969,8 @@ function renderMain(){
     document.getElementById("prioTagBtn").addEventListener("click", () => openPrioModal(item));
     document.getElementById("statusBadgeBtn").addEventListener("click", () => openAuftragStatusModal(item));
     document.getElementById("lieferterminBtn").addEventListener("click", () => openLiefertermineDialog(item));
+  } else if(currentTab === "angebot"){
+    document.getElementById("angebotStatusTagBtn").addEventListener("click", () => openAngebotStatusModal(item));
   }
 
   item.verlauf.forEach(e => {
@@ -1068,6 +1070,82 @@ function openAuftragStatusModal(item){
       showToast("Status konnte nicht aktualisiert werden.", true);
       btn.disabled = false;
     }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openAngebotStatusModal(item){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="angebotStatusModalTitle">
+        <h3 id="angebotStatusModalTitle">Status ändern</h3>
+        <div class="sub">${item.kommission} — ${item.kunde}</div>
+        <div class="form-row">
+          <label for="angebotStatusSelect">Status</label>
+          <select id="angebotStatusSelect">
+            <option value="in_bearbeitung" ${item.status === 'in_bearbeitung' ? 'selected' : ''}>In Bearbeitung</option>
+            <option value="versendet" ${item.status === 'versendet' ? 'selected' : ''}>Versendet</option>
+            <option value="wiedervorlage" ${item.status === 'wiedervorlage' ? 'selected' : ''}>Wiedervorlage</option>
+            <option value="gewonnen" ${item.status === 'gewonnen' ? 'selected' : ''}>Gewonnen</option>
+            <option value="verloren" ${item.status === 'verloren' ? 'selected' : ''}>Verloren</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="angebotStatusCancel">Abbrechen</button>
+          <button class="btn" id="angebotStatusConfirm">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("angebotStatusCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("angebotStatusConfirm").addEventListener("click", async () => {
+    const btn = document.getElementById("angebotStatusConfirm");
+    btn.disabled = true;
+    const newStatus = document.getElementById("angebotStatusSelect").value;
+    const wasGewonnen = item.status === "gewonnen";
+    try{
+      await apiPatch(`/items/${item.id}`, { status: newStatus });
+      await loadItems(currentTab);
+      closeModal();
+      renderList();
+      renderMain();
+      updateStats();
+      showToast("Status aktualisiert.");
+      if(newStatus === "gewonnen" && !wasGewonnen){
+        openWonOfferPrompt(item);
+      }
+    }catch(err){
+      showToast("Status konnte nicht aktualisiert werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openWonOfferPrompt(angebot){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wonPromptTitle">
+        <h3 id="wonPromptTitle">Angebot gewonnen</h3>
+        <div class="sub">Jetzt direkt einen Auftrag daraus anlegen? Kunde, Lieferumfang und Ordnerpfad werden übernommen.</div>
+        <div class="modal-actions">
+          <button class="btn text" id="wonPromptSkip">Nein, danke</button>
+          <button class="btn" id="wonPromptCreate">Auftrag anlegen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("wonPromptSkip").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("wonPromptCreate").addEventListener("click", () => {
+    openCreateModal("auftrag", {
+      kunde: angebot.kunde,
+      lieferumfang: angebot.lieferumfang,
+      ordnerPfad: angebot.ordnerPfad,
+    });
   });
   document.addEventListener("keydown", escCloseOnce);
 }
@@ -1622,7 +1700,7 @@ function openDeleteConfirm(item){
 }
 
 /* ===================== Neuer Auftrag / Neues Angebot ===================== */
-function openCreateModal(kind){
+function openCreateModal(kind, prefill){
   const root = document.getElementById("modalRoot");
   const isAuftrag = kind === "auftrag";
   const kindFields = isAuftrag ? `
@@ -1680,16 +1758,16 @@ function openCreateModal(kind){
         </div>
         <div class="form-row">
           <label for="createKunde">Kunde</label>
-          <input type="text" id="createKunde" placeholder="Firmenname">
+          <input type="text" id="createKunde" placeholder="Firmenname" value="${prefill?.kunde ? prefill.kunde.replace(/"/g, "&quot;") : ""}">
         </div>
         <div class="form-row">
           <label for="createLieferumfang">Lieferumfang / Beschreibung</label>
-          <textarea id="createLieferumfang" rows="2"></textarea>
+          <textarea id="createLieferumfang" rows="2">${prefill?.lieferumfang || ""}</textarea>
         </div>
         ${kindFields}
         <div class="form-row">
           <label for="createOrdner">Ordnerpfad (optional)</label>
-          <input type="text" id="createOrdner" placeholder="K:\\01 HETA\\...">
+          <input type="text" id="createOrdner" placeholder="K:\\01 HETA\\..." value="${prefill?.ordnerPfad ? prefill.ordnerPfad.replace(/"/g, "&quot;") : ""}">
         </div>
         <div class="modal-actions">
           <button class="btn text" id="createCancel">Abbrechen</button>
@@ -1701,6 +1779,7 @@ function openCreateModal(kind){
 
   document.getElementById("createCancel").addEventListener("click", closeModal);
   document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("createKommission").focus();
   document.getElementById("createConfirm").addEventListener("click", async () => {
     const kommission = document.getElementById("createKommission").value.trim();
     const kunde = document.getElementById("createKunde").value.trim();
