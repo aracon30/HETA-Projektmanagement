@@ -595,17 +595,43 @@ function fmtDate(iso){
 function folderLinkEditable(path, btnId){
   const label = path ? "Ordner öffnen" : "—";
   const title = path ? path.replace(/"/g, "&quot;") : "";
-  const href = path ? "file:///" + encodeURI(path.replace(/\\/g, "/")) : "#";
+  const copyBtn = path ? `<button class="icon-edit-btn copy-path-btn" data-path="${title}" title="Pfad kopieren" aria-label="Pfad kopieren">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M6 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V6" stroke="currentColor" stroke-width="1.6"/></svg>
+    </button>` : "";
   return `<span class="folder-field">
-    <a class="folder-link" href="${href}" title="${title}" ${path ? "" : 'onclick="return false;"'}>
+    <a class="folder-link" href="#" title="${title}" onclick="return false;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.6"/></svg>
       ${label}
     </a>
+    ${copyBtn}
     <button class="icon-edit-btn" id="${btnId}" title="Ordnerpfad bearbeiten" aria-label="Ordnerpfad bearbeiten">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
   </span>`;
 }
+
+function copyToClipboard(text){
+  if(navigator.clipboard && window.isSecureContext){
+    return navigator.clipboard.writeText(text);
+  }
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand("copy"); } finally { document.body.removeChild(ta); }
+  return Promise.resolve();
+}
+
+document.addEventListener("click", (ev) => {
+  const btn = ev.target.closest(".copy-path-btn");
+  if(!btn) return;
+  const path = btn.dataset.path;
+  copyToClipboard(path)
+    .then(() => showToast("Pfad kopiert."))
+    .catch(() => showToast("Pfad konnte nicht kopiert werden.", true));
+});
 
 /* ===================== API ===================== */
 async function apiGet(path){
