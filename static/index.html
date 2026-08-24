@@ -532,7 +532,7 @@ const KIND_CONFIG = {
     metaGrid: (item) => `
       <div class="field"><label>Liefertermin</label><div class="val"><button class="val mono clickable-text" id="lieferterminBtn" title="Liefertermin ändern">${fmtDate(item.liefertermin)}</button></div></div>
       <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button></div></div>
-      <div class="field"><label>Projektordner</label><div class="val">${folderLink(item.ordnerPfad)}</div></div>
+      <div class="field"><label>Projektordner</label><div class="val">${folderLinkEditable(item.ordnerPfad, "ordnerBtn")}</div></div>
     `,
     stats: (list) => {
       const offen = list.filter(o => o.status !== "erledigt").length;
@@ -589,14 +589,6 @@ function fmtDate(iso){
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric" });
 }
-function folderLink(path){
-  if(!path) return "—";
-  return `<a class="folder-link" href="#" title="${path}" onclick="return false;">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.6"/></svg>
-    Ordner öffnen
-  </a>`;
-}
-
 function folderLinkEditable(path, btnId){
   const label = path ? "Ordner öffnen" : "—";
   const title = path ? path.replace(/"/g, "&quot;") : "Ordnerpfad bearbeiten";
@@ -1021,6 +1013,7 @@ function renderMain(){
     document.getElementById("prioTagBtn").addEventListener("click", () => openPrioModal(item));
     document.getElementById("statusBadgeBtn").addEventListener("click", () => openAuftragStatusModal(item));
     document.getElementById("lieferterminBtn").addEventListener("click", () => openLiefertermineDialog(item));
+    document.getElementById("ordnerBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }));
   } else if(currentTab === "angebot"){
     document.getElementById("angebotStatusTagBtn").addEventListener("click", () => openAngebotStatusModal(item));
     document.getElementById("wertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"wert", label:"Angebotswert", inputType:"text", placeholder:"z.B. 42.000 €" }));
