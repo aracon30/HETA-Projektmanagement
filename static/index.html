@@ -205,6 +205,7 @@
     align-items:center;
     height:38px;
     border-bottom:1px solid #EDEEEA;
+    position:relative;
   }
   .gantt-row-label{
     flex-shrink:0;
@@ -217,6 +218,9 @@
     left:0;
     z-index:1;
     background:var(--paper);
+    height:100%;
+    display:flex;
+    align-items:center;
   }
   .gantt-row-label .komm{ font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color:var(--slate); display:block; }
   .gantt-track{ position:relative; flex:1; height:100%; }
@@ -322,7 +326,7 @@
     text-align:center;
     border-left:1px solid #EDEEEA;
   }
-  .order-timeline-row{ display:flex; align-items:center; height:34px; }
+  .order-timeline-row{ display:flex; align-items:center; height:34px; position:relative; }
   .order-timeline-label{
     flex-shrink:0;
     font-size:0.76rem;
@@ -334,6 +338,9 @@
     left:0;
     z-index:1;
     background:var(--panel);
+    height:100%;
+    display:flex;
+    align-items:center;
   }
   .order-timeline-track{ position:relative; flex:1; height:100%; }
   .order-timeline-bar{
