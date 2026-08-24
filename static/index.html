@@ -833,7 +833,9 @@ function renderGanttBoard(){
   });
 
   // Standardmäßig nur 1 Woche Vergangenheit sichtbar, Rest per Scroll erreichbar.
-  board.scrollLeft = ROW_LABEL_W + Math.max(0, todayOffset - WEEKS_PAST_VISIBLE * 7 * DAY_W);
+  // (ROW_LABEL_W nicht addieren: die sticky Beschriftung deckt bereits die ersten
+  // ROW_LABEL_W Pixel ab jeder scrollLeft-Position ab.)
+  board.scrollLeft = Math.max(0, todayOffset - WEEKS_PAST_VISIBLE * 7 * DAY_W);
 }
 
 function openLiefertermineDialog(item){
@@ -1228,9 +1230,11 @@ function renderOrderTimeline(item){
   wireUndatedChips();
 
   // Standardmäßig nur 1 Woche Vergangenheit sichtbar, Rest per Scroll erreichbar.
+  // (LABEL_W nicht addieren: die sticky Beschriftung deckt bereits die ersten
+  // LABEL_W Pixel ab jeder scrollLeft-Position ab.)
   const scrollEl = board.querySelector(".order-timeline-scroll");
   if(scrollEl){
-    scrollEl.scrollLeft = LABEL_W + Math.max(0, todayOffset - WEEKS_PAST_VISIBLE * 7 * DAY_W);
+    scrollEl.scrollLeft = Math.max(0, todayOffset - WEEKS_PAST_VISIBLE * 7 * DAY_W);
   }
 }
 
