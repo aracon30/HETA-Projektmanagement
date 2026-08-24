@@ -595,8 +595,9 @@ function fmtDate(iso){
 function folderLinkEditable(path, btnId){
   const label = path ? "Ordner öffnen" : "—";
   const title = path ? path.replace(/"/g, "&quot;") : "";
+  const href = path ? "file:///" + encodeURI(path.replace(/\\/g, "/")) : "#";
   return `<span class="folder-field">
-    <a class="folder-link" href="#" title="${title}" onclick="return false;">
+    <a class="folder-link" href="${href}" title="${title}" ${path ? "" : 'onclick="return false;"'}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.6"/></svg>
       ${label}
     </a>
