@@ -92,3 +92,24 @@ def create_task(user_email, title, body_text=None, due_date_iso=None):
     res.raise_for_status()
     task = res.json()
     return list_id, task["id"]
+
+
+def get_task_status(user_email, list_id, task_id):
+    """
+    Fragt den aktuellen Status einer bereits angelegten To-Do-Aufgabe ab.
+    Gibt True zurück, wenn die Aufgabe in Outlook/To Do als erledigt markiert
+    wurde, sonst False. Gibt None zurück, wenn die Integration nicht
+    konfiguriert ist. Wirft eine Exception bei einem echten API-Fehler.
+    """
+    if not is_configured():
+        return None
+
+    token = _get_token()
+    headers = {"Authorization": f"Bearer {token}"}
+    res = requests.get(
+        f"{GRAPH_BASE}/users/{user_email}/todo/lists/{list_id}/tasks/{task_id}",
+        headers=headers,
+        timeout=10,
+    )
+    res.raise_for_status()
+    return res.json().get("status") == "completed"

@@ -168,6 +168,40 @@ def update_verlauf(eintrag_id):
     return jsonify(eintrag.to_dict())
 
 
+@app.route("/api/sync-aufgaben", methods=["POST"])
+def sync_aufgaben():
+    """Fragt bei Microsoft To Do nach, ob mit einer echten To-Do-Aufgabe
+    verknüpfte Verlaufseinträge dort inzwischen als erledigt markiert wurden,
+    und übernimmt das lokal (einseitig: To Do -> Auftragspipeline)."""
+    if not graph_client.is_configured():
+        return jsonify({"error": "Microsoft-To-Do-Anbindung ist nicht konfiguriert."}), 400
+
+    kandidaten = VerlaufEintrag.query.filter(
+        VerlaufEintrag.aufgabe_erstellt.is_(True),
+        VerlaufEintrag.msgraph_task_id.isnot(None),
+        VerlaufEintrag.status != "erledigt",
+    ).all()
+
+    aktualisiert = 0
+    fehler = 0
+    for eintrag in kandidaten:
+        user = User.query.filter_by(name=eintrag.verantwortlich).first()
+        if not user or not user.email:
+            continue
+        try:
+            erledigt = graph_client.get_task_status(
+                user.email, eintrag.msgraph_list_id, eintrag.msgraph_task_id
+            )
+            if erledigt:
+                eintrag.status = "erledigt"
+                aktualisiert += 1
+        except Exception:
+            fehler += 1
+
+    db.session.commit()
+    return jsonify({"geprueft": len(kandidaten), "aktualisiert": aktualisiert, "fehler": fehler})
+
+
 @app.route("/api/verlauf/<int:eintrag_id>", methods=["DELETE"])
 def delete_verlauf(eintrag_id):
     eintrag = VerlaufEintrag.query.get_or_404(eintrag_id)
