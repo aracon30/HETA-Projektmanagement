@@ -102,7 +102,9 @@ class VerlaufEintrag(db.Model):
     erstellt_von = db.Column(db.String(120), nullable=True)
     verantwortlich = db.Column(db.String(120), nullable=True)
     faelligkeit = db.Column(db.Date, nullable=True)
-    status = db.Column(db.String(20), default="offen")  # offen | erledigt
+    # Auftrag: offen | in_bearbeitung | wartet_intern | wartet_extern | erledigt
+    # Angebot: offen | in_bearbeitung | wartet_kunde | erledigt
+    status = db.Column(db.String(20), default="offen")
     aufgabe_erstellt = db.Column(db.Boolean, default=False)
     msgraph_list_id = db.Column(db.String(200), nullable=True)
     msgraph_task_id = db.Column(db.String(200), nullable=True)

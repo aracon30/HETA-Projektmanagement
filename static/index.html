@@ -77,6 +77,9 @@
   .status-badge.in_bearbeitung{background:var(--steel-soft); color:var(--steel);}
   .status-badge.in_fertigung{background:var(--amber-soft); color:var(--amber);}
   .status-badge.versandbereit{background:var(--versand-soft); color:var(--versand);}
+  .status-badge.wartet_intern{background:var(--amber-soft); color:var(--amber);}
+  .status-badge.wartet_extern{background:var(--red-soft); color:var(--red);}
+  .status-badge.wartet_kunde{background:var(--red-soft); color:var(--red);}
   .status-badge.versendet{background:var(--amber-soft); color:var(--amber);}
   .status-badge.wiedervorlage{background:var(--copper-soft); color:var(--copper);}
   .status-badge.gewonnen{background:var(--green-soft); color:var(--green);}
@@ -134,8 +137,10 @@
   .pipeline::before{ content:""; position:absolute; left:6px; top:6px; bottom:6px; width:2px; background:var(--line); }
   .entry{ position:relative; padding-bottom:26px; } .entry:last-child{padding-bottom:0;}
   .entry .node{ position:absolute; left:-26px; top:2px; width:14px; height:14px; border-radius:50%; background:var(--panel); border:2px solid var(--slate-light); }
+  .entry.in_bearbeitung .node{border-color:var(--steel); background:var(--steel-soft);}
+  .entry.wartet_intern .node{border-color:var(--amber); background:var(--amber-soft);}
+  .entry.wartet_extern .node, .entry.wartet_kunde .node{border-color:var(--red); background:var(--red-soft);}
   .entry.erledigt .node{border-color:var(--green); background:var(--green-soft);}
-  .entry.hat-aufgabe .node{border-color:var(--copper);}
   .entry-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:13px 15px; }
   .entry-top{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:6px; }
   .entry-meta{ font-size:0.72rem; color:var(--slate); } .entry-meta b{color:var(--ink); font-weight:600;}
@@ -175,6 +180,37 @@
     min-height:0;
     padding:20px 24px;
   }
+  .waiting-board{
+    grid-column: 1 / -1;
+    overflow-y:auto;
+    min-height:0;
+    padding:28px 40px 60px;
+    max-width:960px;
+  }
+  @media (max-width: 880px){ .waiting-board{padding:20px;} }
+  .waiting-row{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:13px 15px;
+    margin-bottom:8px;
+    cursor:pointer;
+    text-align:left;
+    width:100%;
+    font-family:inherit;
+  }
+  .waiting-row:hover{border-color:var(--slate-light);}
+  .waiting-row:focus-visible{outline:2px solid var(--steel); outline-offset:2px;}
+  .waiting-row .waiting-main{flex:1; min-width:0;}
+  .waiting-row .waiting-komm{font-size:0.72rem; color:var(--slate); font-family:'IBM Plex Mono', monospace;}
+  .waiting-row .waiting-kunde{font-weight:600; font-size:0.88rem; margin:1px 0 4px;}
+  .waiting-row .waiting-text{font-size:0.85rem; color:var(--ink); line-height:1.4;}
+  .waiting-row .waiting-meta{font-size:0.72rem; color:var(--slate); margin-top:6px; display:flex; gap:12px; flex-wrap:wrap;}
+  .waiting-row .waiting-meta .warn{color:var(--red); font-weight:600;}
+  .waiting-row .status-badge{flex-shrink:0;}
   .gantt-toolbar{
     display:flex;
     align-items:center;
@@ -411,6 +447,7 @@
     <button class="tab-btn active" data-tab="auftrag" role="tab" aria-selected="true">Aufträge</button>
     <button class="tab-btn" data-tab="angebot" role="tab" aria-selected="false">Angebote</button>
     <button class="tab-btn" data-tab="gantt" role="tab" aria-selected="false">Gantt</button>
+    <button class="tab-btn" data-tab="wartend" role="tab" aria-selected="false">Wartend</button>
   </div>
 
   <div class="sidebar" id="sidebarPane">
@@ -426,6 +463,7 @@
 
   <div class="main" id="main"></div>
   <div class="gantt-board" id="ganttBoard" style="display:none;"></div>
+  <div class="waiting-board" id="waitingBoard" style="display:none;"></div>
 </div>
 
 <div id="modalRoot"></div>
@@ -539,7 +577,7 @@ const KIND_CONFIG = {
     `,
     stats: (list) => {
       const offen = list.filter(o => o.status !== "erledigt").length;
-      const tasks = list.flatMap(o => o.verlauf).filter(e => e.status === "offen" && e.verantwortlich).length;
+      const tasks = list.flatMap(o => o.verlauf).filter(e => e.status !== "erledigt" && e.verantwortlich).length;
       return `<span><b>${offen}</b> offene Aufträge</span><span><b>${tasks}</b> unerledigte Aufgaben</span>`;
     }
   },
@@ -585,6 +623,32 @@ function statusLabel(s){
   return {
     offen:"Offen", neu:"Neu", in_bearbeitung:"In Bearbeitung", in_fertigung:"In Fertigung", versandbereit:"Versandbereit", erledigt:"Erledigt",
     versendet:"Versendet", wiedervorlage:"Wiedervorlage", gewonnen:"Gewonnen", verloren:"Verloren"
+  }[s] || s;
+}
+
+// Status einzelner Aufgaben (Verlaufseinträge) — je Auftrag/Angebot unterschiedliche
+// Stufen, da die typischen Blocker unterschiedlich sind (intern/extern vs. Kunde).
+const TASK_STATUS_CONFIG = {
+  auftrag: [
+    { value:"offen", label:"Offen" },
+    { value:"in_bearbeitung", label:"In Bearbeitung" },
+    { value:"wartet_intern", label:"Wartet auf Intern" },
+    { value:"wartet_extern", label:"Wartet auf Extern" },
+    { value:"erledigt", label:"Erledigt" }
+  ],
+  angebot: [
+    { value:"offen", label:"Offen" },
+    { value:"in_bearbeitung", label:"In Bearbeitung" },
+    { value:"wartet_kunde", label:"Wartet auf Kunde" },
+    { value:"erledigt", label:"Erledigt" }
+  ]
+};
+const WARTET_STATUSES = ["wartet_intern", "wartet_extern", "wartet_kunde"];
+function taskStatusLabel(s){
+  return {
+    offen:"Offen", in_bearbeitung:"In Bearbeitung",
+    wartet_intern:"Wartet auf Intern", wartet_extern:"Wartet auf Extern", wartet_kunde:"Wartet auf Kunde",
+    erledigt:"Erledigt"
   }[s] || s;
 }
 function fmtDate(iso){
@@ -765,33 +829,43 @@ function sortItems(list){
   return sorted;
 }
 
-document.querySelectorAll(".tab-btn").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    currentTab = btn.dataset.tab;
-    document.querySelectorAll(".tab-btn").forEach(b => {
-      b.classList.toggle("active", b === btn);
-      b.setAttribute("aria-selected", b === btn ? "true" : "false");
-    });
-
-    const isGantt = currentTab === "gantt";
-    document.getElementById("sidebarPane").style.display = isGantt ? "none" : "flex";
-    document.getElementById("main").style.display = isGantt ? "none" : "block";
-    document.getElementById("ganttBoard").style.display = isGantt ? "flex" : "none";
-
-    if(isGantt){
-      renderGanttBoard();
-      updateStatsForGantt();
-      return;
-    }
-
-    document.getElementById("searchInput").value = searchTerm[currentTab];
-    renderFilterChips();
-    renderSortSelect();
-    renderNewItemButton();
-    renderList();
-    renderMain();
-    updateStats();
+function activateTab(tab){
+  currentTab = tab;
+  document.querySelectorAll(".tab-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === tab);
+    b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false");
   });
+
+  const isGantt = tab === "gantt";
+  const isWartend = tab === "wartend";
+  const isBoardTab = isGantt || isWartend;
+  document.getElementById("sidebarPane").style.display = isBoardTab ? "none" : "flex";
+  document.getElementById("main").style.display = isBoardTab ? "none" : "block";
+  document.getElementById("ganttBoard").style.display = isGantt ? "flex" : "none";
+  document.getElementById("waitingBoard").style.display = isWartend ? "block" : "none";
+
+  if(isGantt){
+    renderGanttBoard();
+    updateStatsForGantt();
+    return;
+  }
+  if(isWartend){
+    renderWaitingBoard();
+    updateStatsForWaiting();
+    return;
+  }
+
+  document.getElementById("searchInput").value = searchTerm[tab];
+  renderFilterChips();
+  renderSortSelect();
+  renderNewItemButton();
+  renderList();
+  renderMain();
+  updateStats();
+}
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
 
 function renderNewItemButton(){
@@ -814,6 +888,64 @@ function updateStatsForGantt(){
   const list = itemsCache.auftrag.filter(a => a.status !== "erledigt");
   document.getElementById("statBar").innerHTML =
     `<span><b>${list.length}</b> offene Aufträge im Zeitverlauf</span>`;
+}
+
+function collectWaitingRows(){
+  const rows = [];
+  ["auftrag", "angebot"].forEach(type => {
+    itemsCache[type].forEach(item => {
+      item.verlauf.forEach(e => {
+        if(WARTET_STATUSES.includes(e.status)) rows.push({ item, e, type });
+      });
+    });
+  });
+  rows.sort((a, b) => {
+    if(!a.e.faelligkeit && !b.e.faelligkeit) return 0;
+    if(!a.e.faelligkeit) return 1;
+    if(!b.e.faelligkeit) return -1;
+    return new Date(a.e.faelligkeit) - new Date(b.e.faelligkeit);
+  });
+  return rows;
+}
+
+function updateStatsForWaiting(){
+  const count = collectWaitingRows().length;
+  document.getElementById("statBar").innerHTML = `<span><b>${count}</b> wartende Aufgaben</span>`;
+}
+
+function renderWaitingBoard(){
+  const board = document.getElementById("waitingBoard");
+  const rows = collectWaitingRows();
+
+  if(rows.length === 0){
+    board.innerHTML = `<div class="no-selection">Keine wartenden Aufgaben — alles im Fluss.</div>`;
+    return;
+  }
+
+  board.innerHTML = rows.map(({item, e, type}) => {
+    const ueberfaellig = item.liefertermin && e.faelligkeit && e.faelligkeit > item.liefertermin;
+    return `
+      <button class="waiting-row" data-item-id="${item.id}" data-type="${type}">
+        <div class="waiting-main">
+          <div class="waiting-komm">${item.kommission} — ${item.kunde}</div>
+          <div class="waiting-text">${e.text}</div>
+          <div class="waiting-meta">
+            ${e.verantwortlich ? `<span>Verantwortlich: ${e.verantwortlich}</span>` : ''}
+            <span class="${ueberfaellig ? 'warn' : ''}">${e.faelligkeit ? 'Fällig ' + fmtDate(e.faelligkeit) : 'Keine Fälligkeit'}${ueberfaellig ? ' · nach Liefertermin!' : ''}</span>
+          </div>
+        </div>
+        <span class="status-badge ${e.status}">${taskStatusLabel(e.status)}</span>
+      </button>
+    `;
+  }).join("");
+
+  board.querySelectorAll(".waiting-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const type = row.dataset.type;
+      selectedId[type] = parseInt(row.dataset.itemId, 10);
+      activateTab(type);
+    });
+  });
 }
 
 function renderGanttBoard(){
@@ -1061,6 +1193,8 @@ function renderMain(){
     if(editBtn) editBtn.addEventListener("click", () => openEditEntryModal(item, e));
     const deleteBtn = document.getElementById(`deleteEntryBtn-${e.id}`);
     if(deleteBtn) deleteBtn.addEventListener("click", () => openDeleteVerlaufConfirm(item, e));
+    const statusBtn = document.getElementById(`entryStatusBtn-${e.id}`);
+    if(statusBtn) statusBtn.addEventListener("click", () => openEntryStatusModal(item, e));
     if(!e.verantwortlich || e.aufgabe) return;
     const btn = document.getElementById(`taskBtn-${e.id}`);
     if(btn) btn.addEventListener("click", () => openTaskModal(item, e));
@@ -1276,6 +1410,51 @@ function openFieldEditModal(item, opts){
   document.addEventListener("keydown", escCloseOnce);
 }
 
+function openEntryStatusModal(item, entry){
+  const options = TASK_STATUS_CONFIG[item.type];
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="entryStatusModalTitle">
+        <h3 id="entryStatusModalTitle">Aufgaben-Status ändern</h3>
+        <div class="sub">${entry.text}</div>
+        <div class="form-row">
+          <label for="entryStatusSelect">Status</label>
+          <select id="entryStatusSelect">
+            ${options.map(o => `<option value="${o.value}" ${entry.status === o.value ? 'selected' : ''}>${o.label}</option>`).join("")}
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="entryStatusCancel">Abbrechen</button>
+          <button class="btn" id="entryStatusConfirm">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("entryStatusCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("entryStatusConfirm").addEventListener("click", async () => {
+    const btn = document.getElementById("entryStatusConfirm");
+    btn.disabled = true;
+    const status = document.getElementById("entryStatusSelect").value;
+    try{
+      await apiPatch(`/verlauf/${entry.id}`, { status });
+      await loadItems(item.type);
+      closeModal();
+      if(currentTab === item.type){
+        renderList();
+        renderMain();
+        updateStats();
+      }
+      showToast("Aufgaben-Status aktualisiert.");
+    }catch(err){
+      showToast("Status konnte nicht aktualisiert werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
 /* ===================== Detailliertes Gantt je Auftrag ===================== */
 function renderOrderTimeline(item){
   const board = document.getElementById("orderTimelineBoard");
@@ -1389,8 +1568,12 @@ function renderOrderTimeline(item){
     const width = Math.max(daysBetween(startDate, endDate) * DAY_W, 18);
     const ueberfaellig = item.liefertermin && e.faelligkeit > item.liefertermin;
     const erledigt = e.status === "erledigt";
-    const bg = erledigt ? "" : `background:${TASK_COLORS[idx % TASK_COLORS.length]};`;
-    const title = `${e.text} (angelegt ${fmtDate(startIso)}, fällig ${fmtDate(endIso)}${e.verantwortlich ? ', ' + e.verantwortlich : ''})${ueberfaellig ? ' — nach Liefertermin!' : ''}`.replace(/"/g, "&quot;");
+    let bg;
+    if(erledigt) bg = "";
+    else if(e.status === "wartet_extern" || e.status === "wartet_kunde") bg = `background:var(--red);`;
+    else if(e.status === "wartet_intern") bg = `background:var(--amber);`;
+    else bg = `background:${TASK_COLORS[idx % TASK_COLORS.length]};`;
+    const title = `${e.text} (${taskStatusLabel(e.status)}, angelegt ${fmtDate(startIso)}, fällig ${fmtDate(endIso)}${e.verantwortlich ? ', ' + e.verantwortlich : ''})${ueberfaellig ? ' — nach Liefertermin!' : ''}`.replace(/"/g, "&quot;");
     const dateLabel = `${fmtDate(startIso)} – ${fmtDate(endIso)}`;
     return `
       <div class="order-timeline-row">
@@ -1545,9 +1728,7 @@ function openDeletePhaseConfirm(item, phase){
 }
 
 function renderEntry(e, item){
-  const classes = ["entry"];
-  if(e.status === "erledigt") classes.push("erledigt");
-  if(e.aufgabe) classes.push("hat-aufgabe");
+  const classes = ["entry", e.status];
   const ueberfaellig = item && item.liefertermin && e.faelligkeit && e.faelligkeit > item.liefertermin;
   return `
     <div class="${classes.join(' ')}">
@@ -1556,6 +1737,7 @@ function renderEntry(e, item){
         <div class="entry-top">
           <div class="entry-meta">von <b>${e.erstelltVon || 'Unbekannt'}</b>${e.verantwortlich ? ` · verantwortlich <b>${e.verantwortlich}</b>` : ''}</div>
           <div class="entry-actions">
+            <button class="status-badge ${e.status} clickable" id="entryStatusBtn-${e.id}">${taskStatusLabel(e.status)}</button>
             <button class="btn text" id="editEntryBtn-${e.id}">Bearbeiten</button>
             <button class="btn text" id="deleteEntryBtn-${e.id}" style="color:var(--red);">Löschen</button>
           </div>
