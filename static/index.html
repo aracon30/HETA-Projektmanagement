@@ -16,6 +16,7 @@
     --amber:#C4872A; --amber-soft:#F6EAD5;
     --green:#4B7A56; --green-soft:#DFEBE2;
     --versand:#0077DB; --versand-soft:#DCEAF6;
+    --lieferant:#7E62A1; --lieferant-soft:#EBE4F6;
     --radius:3px; --shadow:0 1px 2px rgba(27,36,48,0.06), 0 4px 14px rgba(27,36,48,0.05);
     font-size:16px;
   }
@@ -83,6 +84,7 @@
   .status-badge.wartet_intern{background:var(--amber-soft); color:var(--amber);}
   .status-badge.wartet_extern{background:var(--red-soft); color:var(--red);}
   .status-badge.wartet_kunde{background:var(--red-soft); color:var(--red);}
+  .status-badge.wartet_lieferant{background:var(--lieferant-soft); color:var(--lieferant);}
   .status-badge.versendet{background:var(--amber-soft); color:var(--amber);}
   .status-badge.wiedervorlage{background:var(--copper-soft); color:var(--copper);}
   .status-badge.gewonnen{background:var(--green-soft); color:var(--green);}
@@ -143,6 +145,7 @@
   .entry.in_bearbeitung .node{border-color:var(--steel); background:var(--steel-soft);}
   .entry.wartet_intern .node{border-color:var(--amber); background:var(--amber-soft);}
   .entry.wartet_extern .node, .entry.wartet_kunde .node{border-color:var(--red); background:var(--red-soft);}
+  .entry.wartet_lieferant .node{border-color:var(--lieferant); background:var(--lieferant-soft);}
   .entry.erledigt .node{border-color:var(--green); background:var(--green-soft);}
   .entry-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:13px 15px; }
   .entry-top{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:6px; }
@@ -638,20 +641,23 @@ const TASK_STATUS_CONFIG = {
     { value:"in_bearbeitung", label:"In Bearbeitung" },
     { value:"wartet_intern", label:"Wartet auf Intern" },
     { value:"wartet_extern", label:"Wartet auf Extern" },
+    { value:"wartet_lieferant", label:"Wartet auf Lieferant" },
     { value:"erledigt", label:"Erledigt" }
   ],
   angebot: [
     { value:"offen", label:"Offen" },
     { value:"in_bearbeitung", label:"In Bearbeitung" },
     { value:"wartet_kunde", label:"Wartet auf Kunde" },
+    { value:"wartet_lieferant", label:"Wartet auf Lieferant" },
     { value:"erledigt", label:"Erledigt" }
   ]
 };
-const WARTET_STATUSES = ["wartet_intern", "wartet_extern", "wartet_kunde"];
+const WARTET_STATUSES = ["wartet_intern", "wartet_extern", "wartet_kunde", "wartet_lieferant"];
 function taskStatusLabel(s){
   return {
     offen:"Offen", in_bearbeitung:"In Bearbeitung",
     wartet_intern:"Wartet auf Intern", wartet_extern:"Wartet auf Extern", wartet_kunde:"Wartet auf Kunde",
+    wartet_lieferant:"Wartet auf Lieferant",
     erledigt:"Erledigt"
   }[s] || s;
 }
@@ -1602,6 +1608,7 @@ function renderOrderTimeline(item){
     if(erledigt) bg = "";
     else if(e.status === "wartet_extern" || e.status === "wartet_kunde") bg = `background:var(--red);`;
     else if(e.status === "wartet_intern") bg = `background:var(--amber);`;
+    else if(e.status === "wartet_lieferant") bg = `background:var(--lieferant);`;
     else bg = `background:${TASK_COLORS[idx % TASK_COLORS.length]};`;
     const title = `${e.text} (${taskStatusLabel(e.status)}, angelegt ${fmtDate(startIso)}, fällig ${fmtDate(endIso)}${e.verantwortlich ? ', ' + e.verantwortlich : ''})${ueberfaellig ? ' — nach Liefertermin!' : ''}`.replace(/"/g, "&quot;");
     const dateLabel = `${fmtDate(startIso)} – ${fmtDate(endIso)}`;
