@@ -61,6 +61,13 @@ def main():
     else:
         print("Spalte verlauf_eintraege.msgraph_task_id existiert bereits.")
 
+    if not column_exists(cur, "verlauf_eintraege", "status_changed_at"):
+        cur.execute("ALTER TABLE verlauf_eintraege ADD COLUMN status_changed_at DATETIME")
+        cur.execute("UPDATE verlauf_eintraege SET status_changed_at = created_at WHERE status_changed_at IS NULL")
+        print("Spalte verlauf_eintraege.status_changed_at ergänzt (mit created_at befüllt).")
+    else:
+        print("Spalte verlauf_eintraege.status_changed_at existiert bereits.")
+
     if not table_exists(cur, "phasen"):
         cur.execute("""
             CREATE TABLE phasen (

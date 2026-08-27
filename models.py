@@ -109,13 +109,15 @@ class VerlaufEintrag(db.Model):
     msgraph_list_id = db.Column(db.String(200), nullable=True)
     msgraph_task_id = db.Column(db.String(200), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status_changed_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return {
             "id": self.id,
             "text": self.text,
             "erstelltVon": self.erstellt_von,
-            "erstelltAm": self.created_at.isoformat() if self.created_at else None,
+            "erstelltAm": self.created_at.isoformat() + "Z" if self.created_at else None,
+            "statusGeaendertAm": self.status_changed_at.isoformat() + "Z" if self.status_changed_at else None,
             "verantwortlich": self.verantwortlich,
             "faelligkeit": self.faelligkeit.isoformat() if self.faelligkeit else None,
             "status": self.status,

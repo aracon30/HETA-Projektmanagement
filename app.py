@@ -156,8 +156,9 @@ def create_aufgabe(eintrag_id):
 def update_verlauf(eintrag_id):
     eintrag = VerlaufEintrag.query.get_or_404(eintrag_id)
     data = request.get_json(force=True)
-    if "status" in data:
+    if "status" in data and data["status"] != eintrag.status:
         eintrag.status = data["status"]
+        eintrag.status_changed_at = datetime.utcnow()
     if "text" in data:
         eintrag.text = data["text"]
     if "verantwortlich" in data:
@@ -194,6 +195,7 @@ def sync_aufgaben():
             )
             if erledigt:
                 eintrag.status = "erledigt"
+                eintrag.status_changed_at = datetime.utcnow()
                 aktualisiert += 1
         except Exception:
             fehler += 1
