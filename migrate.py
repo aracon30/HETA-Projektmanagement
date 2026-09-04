@@ -68,6 +68,24 @@ def main():
     else:
         print("Spalte verlauf_eintraege.status_changed_at existiert bereits.")
 
+    if not column_exists(cur, "items", "anfrage_status"):
+        cur.execute("ALTER TABLE items ADD COLUMN anfrage_status VARCHAR(20)")
+        print("Spalte items.anfrage_status ergänzt.")
+    else:
+        print("Spalte items.anfrage_status existiert bereits.")
+
+    if not column_exists(cur, "items", "zustaendig"):
+        cur.execute("ALTER TABLE items ADD COLUMN zustaendig VARCHAR(120)")
+        print("Spalte items.zustaendig ergänzt.")
+    else:
+        print("Spalte items.zustaendig existiert bereits.")
+
+    if not column_exists(cur, "items", "ablehnungsgrund"):
+        cur.execute("ALTER TABLE items ADD COLUMN ablehnungsgrund VARCHAR(300)")
+        print("Spalte items.ablehnungsgrund ergänzt.")
+    else:
+        print("Spalte items.ablehnungsgrund existiert bereits.")
+
     if not table_exists(cur, "phasen"):
         cur.execute("""
             CREATE TABLE phasen (

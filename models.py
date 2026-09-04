@@ -16,11 +16,11 @@ class User(db.Model):
 
 
 class Item(db.Model):
-    """Ein Auftrag oder ein Angebot (type unterscheidet)."""
+    """Eine Anfrage, ein Angebot oder ein Auftrag (type unterscheidet)."""
     __tablename__ = "items"
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(20), nullable=False)  # 'auftrag' | 'angebot'
-    kommission = db.Column(db.String(60), nullable=False)
+    type = db.Column(db.String(20), nullable=False)  # 'anfrage' | 'angebot' | 'auftrag'
+    kommission = db.Column(db.String(60), nullable=False)  # bei Anfragen leer (bekommen erst bei Annahme eine Angebotsnummer)
     kunde = db.Column(db.String(200), nullable=False)
     lieferumfang = db.Column(db.Text, nullable=True)
     ordner_pfad = db.Column(db.String(500), nullable=True)
@@ -37,6 +37,11 @@ class Item(db.Model):
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
     wert = db.Column(db.String(40), nullable=True)
     wiedervorlage = db.Column(db.Date, nullable=True)
+
+    # Anfrage-spezifisch
+    anfrage_status = db.Column(db.String(20), nullable=True)  # neu | in_pruefung | angenommen | abgelehnt
+    zustaendig = db.Column(db.String(120), nullable=True)
+    ablehnungsgrund = db.Column(db.String(300), nullable=True)
 
     verlauf = db.relationship(
         "VerlaufEintrag", backref="item", cascade="all, delete-orphan",
@@ -65,11 +70,17 @@ class Item(db.Model):
                 "liefertermin": self.liefertermin.isoformat() if self.liefertermin else None,
                 "status": self.auftrag_status,
             })
-        else:
+        elif self.type == "angebot":
             base.update({
                 "status": self.angebot_status,
                 "wert": self.wert,
                 "wiedervorlage": self.wiedervorlage.isoformat() if self.wiedervorlage else None,
+            })
+        else:
+            base.update({
+                "status": self.anfrage_status,
+                "zustaendig": self.zustaendig,
+                "ablehnungsgrund": self.ablehnungsgrund,
             })
         return base
 

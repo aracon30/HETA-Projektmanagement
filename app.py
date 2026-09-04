@@ -63,10 +63,12 @@ def create_item():
         item.prio = data.get("prio", "gelb")
         item.liefertermin = parse_date(data.get("liefertermin"))
         item.auftrag_status = data.get("status", "neu")
-    else:
+    elif item.type == "angebot":
         item.angebot_status = data.get("status", "in_bearbeitung")
         item.wert = data.get("wert")
         item.wiedervorlage = parse_date(data.get("wiedervorlage"))
+    else:
+        item.anfrage_status = data.get("status", "neu")
     db.session.add(item)
     db.session.commit()
     return jsonify(item.to_dict()), 201
@@ -81,14 +83,20 @@ def update_item(item_id):
     if "status" in data:
         if item.type == "auftrag":
             item.auftrag_status = data["status"]
-        else:
+        elif item.type == "angebot":
             item.angebot_status = data["status"]
+        else:
+            item.anfrage_status = data["status"]
     if "prio" in data and item.type == "auftrag":
         item.prio = data["prio"]
     if "wert" in data and item.type == "angebot":
         item.wert = data.get("wert")
     if "wiedervorlage" in data and item.type == "angebot":
         item.wiedervorlage = parse_date(data.get("wiedervorlage"))
+    if "zustaendig" in data and item.type == "anfrage":
+        item.zustaendig = data.get("zustaendig")
+    if "ablehnungsgrund" in data and item.type == "anfrage":
+        item.ablehnungsgrund = data.get("ablehnungsgrund")
     if "ordnerPfad" in data:
         item.ordner_pfad = data.get("ordnerPfad")
     db.session.commit()

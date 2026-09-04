@@ -62,6 +62,7 @@
   .dot.wiedervorlage{background:var(--copper);} .dot.gewonnen{background:var(--green);} .dot.verloren{background:var(--red);}
   .dot.neu{background:var(--copper);} .dot.in_fertigung{background:var(--amber);}
   .dot.versandbereit{background:var(--versand);} .dot.erledigt{background:var(--green);}
+  .dot.in_pruefung{background:var(--amber);} .dot.angenommen{background:var(--green);} .dot.abgelehnt{background:var(--red);}
 
   .order-list{ overflow-y:auto; flex:1; padding:8px; }
   .order-card{ width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-left:3px solid transparent; border-radius:var(--radius); padding:12px 13px; margin-bottom:7px; cursor:pointer; display:block; }
@@ -71,6 +72,8 @@
   .order-card.rot{border-left-color:var(--red);} .order-card.gelb{border-left-color:var(--amber);} .order-card.gruen{border-left-color:var(--green);}
   .order-card.in_bearbeitung{border-left-color:var(--steel);} .order-card.versendet{border-left-color:var(--amber);}
   .order-card.wiedervorlage{border-left-color:var(--copper);} .order-card.gewonnen{border-left-color:var(--green);} .order-card.verloren{border-left-color:var(--red);}
+  .order-card.neu{border-left-color:var(--copper);} .order-card.in_pruefung{border-left-color:var(--amber);}
+  .order-card.angenommen{border-left-color:var(--green);} .order-card.abgelehnt{border-left-color:var(--red);}
   .order-card .komm{font-size:0.78rem; color:var(--slate); margin-bottom:3px;}
   .order-card .kunde{font-weight:600; font-size:0.92rem; margin-bottom:5px;}
   .order-card .meta{ display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:var(--slate); gap:6px; }
@@ -89,6 +92,9 @@
   .status-badge.wiedervorlage{background:var(--copper-soft); color:var(--copper);}
   .status-badge.gewonnen{background:var(--green-soft); color:var(--green);}
   .status-badge.verloren{background:var(--red-soft); color:var(--red);}
+  .status-badge.in_pruefung{background:var(--amber-soft); color:var(--amber);}
+  .status-badge.angenommen{background:var(--green-soft); color:var(--green);}
+  .status-badge.abgelehnt{background:var(--red-soft); color:var(--red);}
   .status-badge.clickable{ cursor:pointer; }
   .status-badge.clickable:hover{ filter:brightness(0.95); }
   .status-badge.clickable:focus-visible{ outline:2px solid var(--steel); outline-offset:2px; }
@@ -105,6 +111,8 @@
   .prio-tag.rot{background:var(--red-soft); color:var(--red);} .prio-tag.gelb{background:var(--amber-soft); color:var(--amber);} .prio-tag.gruen{background:var(--green-soft); color:var(--green);}
   .prio-tag.in_bearbeitung{background:var(--steel-soft); color:var(--steel);} .prio-tag.versendet{background:var(--amber-soft); color:var(--amber);}
   .prio-tag.wiedervorlage{background:var(--copper-soft); color:var(--copper);} .prio-tag.gewonnen{background:var(--green-soft); color:var(--green);} .prio-tag.verloren{background:var(--red-soft); color:var(--red);}
+  .prio-tag.neu{background:var(--copper-soft); color:var(--copper);} .prio-tag.in_pruefung{background:var(--amber-soft); color:var(--amber);}
+  .prio-tag.angenommen{background:var(--green-soft); color:var(--green);} .prio-tag.abgelehnt{background:var(--red-soft); color:var(--red);}
   .prio-tag.clickable{ cursor:pointer; }
   .prio-tag.clickable:hover{ filter:brightness(0.95); }
   .prio-tag.clickable:focus-visible{ outline:2px solid var(--steel); outline-offset:2px; }
@@ -452,6 +460,7 @@
   </div>
 
   <div class="tabbar" role="tablist" aria-label="Bereich wählen">
+    <button class="tab-btn" data-tab="anfrage" role="tab" aria-selected="false">Anfragen</button>
     <button class="tab-btn active" data-tab="auftrag" role="tab" aria-selected="true">Aufträge</button>
     <button class="tab-btn" data-tab="angebot" role="tab" aria-selected="false">Angebote</button>
     <button class="tab-btn" data-tab="gantt" role="tab" aria-selected="false">Gantt</button>
@@ -480,13 +489,13 @@
 <script>
 const API = "/api";
 let nutzer = [];
-let itemsCache = { auftrag: [], angebot: [] };
+let itemsCache = { anfrage: [], auftrag: [], angebot: [] };
 let currentTab = "auftrag";
-let selectedId = { auftrag: null, angebot: null };
-let activeFilter = { auftrag: "alle", angebot: "alle" };
+let selectedId = { anfrage: null, auftrag: null, angebot: null };
+let activeFilter = { anfrage: "alle", auftrag: "alle", angebot: "alle" };
 let activeStatusFilter = { auftrag: "alle" };
-let searchTerm = { auftrag: "", angebot: "" };
-let sortOrder = { auftrag: "erstellt_neu", angebot: "erstellt_neu" };
+let searchTerm = { anfrage: "", auftrag: "", angebot: "" };
+let sortOrder = { anfrage: "erstellt_neu", auftrag: "erstellt_neu", angebot: "erstellt_neu" };
 let ganttSortOrder = "liefertermin_auf";
 
 const GANTT_SORT_OPTIONS = [
@@ -624,13 +633,48 @@ const KIND_CONFIG = {
       const faellig = list.filter(a => a.wiedervorlage).length;
       return `<span><b>${offen}</b> laufende Angebote</span><span><b>${faellig}</b> Wiedervorlagen</span>`;
     }
+  },
+  anfrage: {
+    itemLabel: "Anfrage",
+    newItemLabel: "+ Neue Anfrage",
+    statusField: "status",
+    useKommissionRecency: false,
+    statusOrder: ["neu", "in_pruefung", "angenommen", "abgelehnt"],
+    sortOptions: [
+      { value:"erstellt_neu", label:"Neueste zuerst" },
+      { value:"erstellt_alt", label:"Älteste zuerst" },
+      { value:"status", label:"Status (Bearbeitungsstand)" }
+    ],
+    filterChips: [
+      { value:"alle", label:"Alle" },
+      { value:"neu", label:"Neu", dot:"neu" },
+      { value:"in_pruefung", label:"In Prüfung", dot:"in_pruefung" },
+      { value:"angenommen", label:"Angenommen", dot:"angenommen" },
+      { value:"abgelehnt", label:"Abgelehnt", dot:"abgelehnt" }
+    ],
+    cardClass: (item) => item.status,
+    cardStatusBadge: (item) => `<span class="status-badge ${item.status}">${statusLabel(item.status)}</span>`,
+    cardMetaLeft: (item) => `Eingang ${fmtDate((item.erstelltAm || '').slice(0, 10))}`,
+    detailTag: (item) => `<button class="prio-tag ${item.status} clickable" id="anfrageStatusTagBtn"><span class="dot ${item.status}"></span>${statusLabel(item.status)}</button>`,
+    metaGrid: (item) => `
+      <div class="field"><label>Eingang</label><div class="val mono">${fmtDate((item.erstelltAm || '').slice(0, 10))}</div></div>
+      <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button></div></div>
+      <div class="field"><label>Zuständig</label><div class="val"><button class="val mono clickable-text" id="zustaendigBtn" title="Zuständigkeit ändern">${item.zustaendig || '—'}</button></div></div>
+      ${item.status === 'abgelehnt' ? `<div class="field"><label>Ablehnungsgrund</label><div class="val">${item.ablehnungsgrund || '—'}</div></div>` : ''}
+    `,
+    stats: (list) => {
+      const offen = list.filter(a => a.status === "neu" || a.status === "in_pruefung").length;
+      const angenommen = list.filter(a => a.status === "angenommen").length;
+      return `<span><b>${offen}</b> zu entscheiden</span><span><b>${angenommen}</b> angenommen</span>`;
+    }
   }
 };
 
 function statusLabel(s){
   return {
     offen:"Offen", neu:"Neu", in_bearbeitung:"In Bearbeitung", in_fertigung:"In Fertigung", versandbereit:"Versandbereit", erledigt:"Erledigt",
-    versendet:"Versendet", wiedervorlage:"Wiedervorlage", gewonnen:"Gewonnen", verloren:"Verloren"
+    versendet:"Versendet", wiedervorlage:"Wiedervorlage", gewonnen:"Gewonnen", verloren:"Verloren",
+    in_pruefung:"In Prüfung", angenommen:"Angenommen", abgelehnt:"Abgelehnt"
   }[s] || s;
 }
 
@@ -650,6 +694,12 @@ const TASK_STATUS_CONFIG = {
     { value:"in_bearbeitung", label:"In Bearbeitung" },
     { value:"wartet_kunde", label:"Wartet auf Kunde" },
     { value:"wartet_lieferant", label:"Wartet auf Lieferant" },
+    { value:"erledigt", label:"Erledigt" }
+  ],
+  anfrage: [
+    { value:"offen", label:"Offen" },
+    { value:"in_bearbeitung", label:"In Bearbeitung" },
+    { value:"wartet_kunde", label:"Wartet auf Kunde" },
     { value:"erledigt", label:"Erledigt" }
   ]
 };
@@ -823,13 +873,17 @@ function sortItems(list){
   const sorted = [...list];
   if(order === "erstellt_neu" || order === "erstellt_alt"){
     const dir = order === "erstellt_neu" ? -1 : 1;
-    sorted.sort((a, b) => {
-      const ra = kommissionRecency(a.kommission), rb = kommissionRecency(b.kommission);
-      if(ra === null && rb === null) return 0;
-      if(ra === null) return 1;
-      if(rb === null) return -1;
-      return dir * (ra - rb);
-    });
+    if(cfg.useKommissionRecency === false){
+      sorted.sort((a, b) => dir * (new Date(a.erstelltAm) - new Date(b.erstelltAm)));
+    } else {
+      sorted.sort((a, b) => {
+        const ra = kommissionRecency(a.kommission), rb = kommissionRecency(b.kommission);
+        if(ra === null && rb === null) return 0;
+        if(ra === null) return 1;
+        if(rb === null) return -1;
+        return dir * (ra - rb);
+      });
+    }
   } else if(order === `${dateField}_auf` || order === `${dateField}_ab`){
     const dir = order.endsWith("_auf") ? 1 : -1;
     sorted.sort((a, b) => {
@@ -906,8 +960,8 @@ document.getElementById("syncTodoBtn").addEventListener("click", async () => {
     const res = await fetch(API + "/sync-aufgaben", { method: "POST" });
     const result = await res.json();
     if(!res.ok) throw new Error(result.error || "Abgleich fehlgeschlagen.");
-    await Promise.all([loadItems("auftrag"), loadItems("angebot")]);
-    if(currentTab === "auftrag" || currentTab === "angebot"){
+    await Promise.all([loadItems("anfrage"), loadItems("auftrag"), loadItems("angebot")]);
+    if(currentTab === "anfrage" || currentTab === "auftrag" || currentTab === "angebot"){
       renderList(); renderMain(); updateStats();
     } else if(currentTab === "gantt"){
       renderGanttBoard(); updateStatsForGantt();
@@ -936,7 +990,7 @@ function updateStatsForGantt(){
 
 function collectWaitingRows(){
   const rows = [];
-  ["auftrag", "angebot"].forEach(type => {
+  ["anfrage", "auftrag", "angebot"].forEach(type => {
     itemsCache[type].forEach(item => {
       item.verlauf.forEach(e => {
         if(WARTET_STATUSES.includes(e.status)) rows.push({ item, e, type });
@@ -971,7 +1025,7 @@ function renderWaitingBoard(){
     return `
       <button class="waiting-row" data-item-id="${item.id}" data-type="${type}">
         <div class="waiting-main">
-          <div class="waiting-komm">${item.kommission} — ${item.kunde}</div>
+          <div class="waiting-komm">${item.kommission ? item.kommission + ' — ' : ''}${item.kunde}</div>
           <div class="waiting-text">${e.text}</div>
           <div class="waiting-meta">
             ${e.verantwortlich ? `<span>Verantwortlich: ${e.verantwortlich}</span>` : ''}
@@ -1159,7 +1213,7 @@ function renderList(){
 
   list.innerHTML = filtered.map(item => `
     <button class="order-card ${cfg.cardClass(item)} ${item.id === selectedId[currentTab] ? 'selected' : ''}" data-id="${item.id}">
-      <div class="komm mono">${item.kommission}</div>
+      ${item.kommission ? `<div class="komm mono">${item.kommission}</div>` : ""}
       <div class="kunde">${item.kunde}</div>
       <div class="meta">
         <span>${cfg.cardMetaLeft(item)}</span>
@@ -1190,7 +1244,7 @@ function renderMain(){
   main.innerHTML = `
     <div class="order-head">
       <div>
-        <div class="komm mono">${item.kommission}</div>
+        ${item.kommission ? `<div class="komm mono">${item.kommission}</div>` : ""}
         <h2 class="display">${item.kunde}</h2>
       </div>
       <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
@@ -1199,7 +1253,7 @@ function renderMain(){
       </div>
     </div>
     <div class="order-meta-grid">${cfg.metaGrid(item)}</div>
-    <div class="lieferumfang"><span class="label">Lieferumfang</span>${item.lieferumfang || '—'}</div>
+    <div class="lieferumfang"><span class="label">${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"}</span>${item.lieferumfang || '—'}</div>
     ${currentTab === "auftrag" ? `
     <div class="timeline-head">
       <h3>Zeitplan</h3>
@@ -1230,6 +1284,10 @@ function renderMain(){
     document.getElementById("wertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"wert", label:"Angebotswert", inputType:"text", placeholder:"z.B. 42.000 €" }));
     document.getElementById("wiedervorlageBtn").addEventListener("click", () => openFieldEditModal(item, { field:"wiedervorlage", label:"Wiedervorlage", inputType:"date" }));
     document.getElementById("ordnerBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }));
+  } else if(currentTab === "anfrage"){
+    document.getElementById("anfrageStatusTagBtn").addEventListener("click", () => openAnfrageStatusModal(item));
+    document.getElementById("statusBadgeBtn").addEventListener("click", () => openAnfrageStatusModal(item));
+    document.getElementById("zustaendigBtn").addEventListener("click", () => openFieldEditModal(item, { field:"zustaendig", label:"Zuständig", inputType:"select", options: nutzer.map(n => n.name) }));
   }
 
   item.verlauf.forEach(e => {
@@ -1411,18 +1469,146 @@ function openWonOfferPrompt(angebot){
   document.addEventListener("keydown", escCloseOnce);
 }
 
+const ABLEHNUNGSGRUENDE = [
+  "Keine Kapazität",
+  "Fachlich nicht machbar",
+  "Preislich/wirtschaftlich nicht interessant",
+  "Bonität/Zahlungsprobleme beim Kunden"
+];
+
+function openAnfrageStatusModal(item){
+  const root = document.getElementById("modalRoot");
+  const grundIstBekannt = ABLEHNUNGSGRUENDE.includes(item.ablehnungsgrund);
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="anfrageStatusModalTitle">
+        <h3 id="anfrageStatusModalTitle">Status ändern</h3>
+        <div class="sub">${item.kunde}</div>
+        <div class="form-row">
+          <label for="anfrageStatusSelect">Status</label>
+          <select id="anfrageStatusSelect">
+            <option value="neu" ${item.status === 'neu' ? 'selected' : ''}>Neu</option>
+            <option value="in_pruefung" ${item.status === 'in_pruefung' ? 'selected' : ''}>In Prüfung</option>
+            <option value="angenommen" ${item.status === 'angenommen' ? 'selected' : ''}>Angenommen</option>
+            <option value="abgelehnt" ${item.status === 'abgelehnt' ? 'selected' : ''}>Abgelehnt</option>
+          </select>
+        </div>
+        <div class="form-row" id="anfrageZustaendigRow" style="display:${item.status === 'angenommen' ? 'block' : 'none'};">
+          <label for="anfrageZustaendigSelect">Zuständig</label>
+          <select id="anfrageZustaendigSelect">
+            <option value="">— niemand —</option>
+            ${nutzer.map(n => `<option value="${n.name}" ${item.zustaendig === n.name ? 'selected' : ''}>${n.name}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-row" id="anfrageGrundRow" style="display:${item.status === 'abgelehnt' ? 'block' : 'none'};">
+          <label for="anfrageGrundSelect">Ablehnungsgrund</label>
+          <select id="anfrageGrundSelect">
+            ${ABLEHNUNGSGRUENDE.map(g => `<option value="${g}" ${item.ablehnungsgrund === g ? 'selected' : ''}>${g}</option>`).join("")}
+            <option value="__sonstiges__" ${!grundIstBekannt && item.ablehnungsgrund ? 'selected' : ''}>Sonstiges</option>
+          </select>
+        </div>
+        <div class="form-row" id="anfrageGrundTextRow" style="display:${item.status === 'abgelehnt' && !grundIstBekannt && item.ablehnungsgrund ? 'block' : 'none'};">
+          <label for="anfrageGrundText">Grund (frei)</label>
+          <input type="text" id="anfrageGrundText" value="${!grundIstBekannt ? (item.ablehnungsgrund || '').replace(/"/g, '&quot;') : ''}">
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="anfrageStatusCancel">Abbrechen</button>
+          <button class="btn" id="anfrageStatusConfirm">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  function syncVisibility(){
+    const status = document.getElementById("anfrageStatusSelect").value;
+    document.getElementById("anfrageZustaendigRow").style.display = status === "angenommen" ? "block" : "none";
+    document.getElementById("anfrageGrundRow").style.display = status === "abgelehnt" ? "block" : "none";
+    const isSonstiges = document.getElementById("anfrageGrundSelect").value === "__sonstiges__";
+    document.getElementById("anfrageGrundTextRow").style.display = (status === "abgelehnt" && isSonstiges) ? "block" : "none";
+  }
+  document.getElementById("anfrageStatusSelect").addEventListener("change", syncVisibility);
+  document.getElementById("anfrageGrundSelect").addEventListener("change", syncVisibility);
+
+  document.getElementById("anfrageStatusCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("anfrageStatusConfirm").addEventListener("click", async () => {
+    const btn = document.getElementById("anfrageStatusConfirm");
+    btn.disabled = true;
+    const newStatus = document.getElementById("anfrageStatusSelect").value;
+    const wasAngenommen = item.status === "angenommen";
+    const body = { status: newStatus };
+    if(newStatus === "angenommen"){
+      body.zustaendig = document.getElementById("anfrageZustaendigSelect").value || null;
+    }
+    if(newStatus === "abgelehnt"){
+      const grundVal = document.getElementById("anfrageGrundSelect").value;
+      body.ablehnungsgrund = grundVal === "__sonstiges__"
+        ? (document.getElementById("anfrageGrundText").value.trim() || null)
+        : grundVal;
+    }
+    try{
+      await apiPatch(`/items/${item.id}`, body);
+      await loadItems("anfrage");
+      closeModal();
+      renderList();
+      renderMain();
+      updateStats();
+      showToast("Status aktualisiert.");
+      if(newStatus === "angenommen" && !wasAngenommen){
+        openAcceptedAnfragePrompt(item);
+      }
+    }catch(err){
+      showToast("Status konnte nicht aktualisiert werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openAcceptedAnfragePrompt(anfrage){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="acceptedPromptTitle">
+        <h3 id="acceptedPromptTitle">Anfrage angenommen</h3>
+        <div class="sub">Jetzt direkt ein Angebot daraus anlegen? Kunde, Beschreibung und Ordnerpfad werden übernommen.</div>
+        <div class="modal-actions">
+          <button class="btn text" id="acceptedPromptSkip">Nein, danke</button>
+          <button class="btn" id="acceptedPromptCreate">Angebot anlegen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("acceptedPromptSkip").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("acceptedPromptCreate").addEventListener("click", () => {
+    openCreateModal("angebot", {
+      kunde: anfrage.kunde,
+      lieferumfang: anfrage.lieferumfang,
+      ordnerPfad: anfrage.ordnerPfad,
+    });
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
 function openFieldEditModal(item, opts){
-  // opts: { field, label, inputType ('text'|'date'), placeholder }
+  // opts: { field, label, inputType ('text'|'date'|'select'), placeholder, options }
   const root = document.getElementById("modalRoot");
   const currentValue = item[opts.field] || "";
+  const inputHtml = opts.inputType === "select" ? `
+    <select id="fieldEditInput">
+      <option value="">— niemand —</option>
+      ${opts.options.map(o => `<option value="${o}" ${currentValue === o ? 'selected' : ''}>${o}</option>`).join("")}
+    </select>
+  ` : `<input type="${opts.inputType}" id="fieldEditInput" value="${currentValue}" ${opts.placeholder ? `placeholder="${opts.placeholder}"` : ""}>`;
   root.innerHTML = `
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fieldEditTitle">
         <h3 id="fieldEditTitle">${opts.label} ändern</h3>
-        <div class="sub">${item.kommission} — ${item.kunde}</div>
+        <div class="sub">${item.kommission ? item.kommission + ' — ' : ''}${item.kunde}</div>
         <div class="form-row">
           <label for="fieldEditInput">${opts.label}</label>
-          <input type="${opts.inputType}" id="fieldEditInput" value="${currentValue}" ${opts.placeholder ? `placeholder="${opts.placeholder}"` : ""}>
+          ${inputHtml}
         </div>
         <div class="modal-actions">
           <button class="btn text" id="fieldEditCancel">Abbrechen</button>
@@ -1810,7 +1996,7 @@ function openEditEntryModal(item, entry){
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editEntryModalTitle">
         <h3 id="editEntryModalTitle">Verlaufseintrag bearbeiten</h3>
-        <div class="sub">${item.kommission} — ${item.kunde}</div>
+        <div class="sub">${item.kommission ? item.kommission + ' — ' : ''}${item.kunde}</div>
         <div class="form-row">
           <label for="editEntryText">Kommentar / Aufgabenbeschreibung</label>
           <textarea id="editEntryText" rows="3">${entry.text}</textarea>
@@ -1874,7 +2060,7 @@ function openDeleteVerlaufConfirm(item, entry){
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteEntryTitle">
         <h3 id="deleteEntryTitle">Verlaufseintrag löschen?</h3>
-        <div class="sub">Dieser Eintrag wird aus dem Verlauf von ${item.kommission} entfernt. Das kann nicht rückgängig gemacht werden.</div>
+        <div class="sub">Dieser Eintrag wird aus dem Verlauf von ${item.kommission || item.kunde} entfernt. Das kann nicht rückgängig gemacht werden.</div>
         <div class="modal-actions">
           <button class="btn text" id="deleteEntryCancel">Abbrechen</button>
           <button class="btn" id="deleteEntryConfirm" style="background:var(--red); border-color:var(--red);">Endgültig löschen</button>
@@ -2026,7 +2212,7 @@ function openDeleteConfirm(item){
   root.innerHTML = `
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
-        <h3 id="deleteModalTitle">${item.kommission} löschen?</h3>
+        <h3 id="deleteModalTitle">${item.kommission || item.kunde} löschen?</h3>
         <div class="sub">${item.kunde} wird inklusive des gesamten Verlaufs unwiderruflich gelöscht. Das kann nicht rückgängig gemacht werden.</div>
         <div class="modal-actions">
           <button class="btn text" id="deleteCancel">Abbrechen</button>
@@ -2061,6 +2247,8 @@ function openDeleteConfirm(item){
 function openCreateModal(kind, prefill){
   const root = document.getElementById("modalRoot");
   const isAuftrag = kind === "auftrag";
+  const isAngebot = kind === "angebot";
+  const isAnfrage = kind === "anfrage";
   const kindFields = isAuftrag ? `
         <div class="form-row">
           <label for="createPrio">Priorität</label>
@@ -2084,7 +2272,7 @@ function openCreateModal(kind, prefill){
             <option value="erledigt">Erledigt</option>
           </select>
         </div>
-  ` : `
+  ` : isAngebot ? `
         <div class="form-row">
           <label for="createStatus">Status</label>
           <select id="createStatus">
@@ -2103,23 +2291,27 @@ function openCreateModal(kind, prefill){
           <label for="createWiedervorlage">Wiedervorlage (optional)</label>
           <input type="date" id="createWiedervorlage">
         </div>
+  ` : ``;
+
+  const kommissionField = isAnfrage ? "" : `
+        <div class="form-row">
+          <label for="createKommission">${isAuftrag ? 'Kommission' : 'Angebotsnummer'}</label>
+          <input type="text" id="createKommission" placeholder="${isAuftrag ? 'z.B. K-04999/26' : 'z.B. A-05200/26'}">
+        </div>
   `;
 
   root.innerHTML = `
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
         <h3 id="createModalTitle">${KIND_CONFIG[kind].newItemLabel.replace('+ ', '')}</h3>
-        <div class="sub">Legt einen neuen ${isAuftrag ? 'Auftrag' : 'Angebotsvorgang'} in der Übersicht an.</div>
-        <div class="form-row">
-          <label for="createKommission">${isAuftrag ? 'Kommission' : 'Angebotsnummer'}</label>
-          <input type="text" id="createKommission" placeholder="${isAuftrag ? 'z.B. K-04999/26' : 'z.B. A-05200/26'}">
-        </div>
+        <div class="sub">Legt ${isAuftrag ? 'einen neuen Auftrag' : isAngebot ? 'einen neuen Angebotsvorgang' : 'eine neue Anfrage'} in der Übersicht an.</div>
+        ${kommissionField}
         <div class="form-row">
           <label for="createKunde">Kunde</label>
           <input type="text" id="createKunde" placeholder="Firmenname" value="${prefill?.kunde ? prefill.kunde.replace(/"/g, "&quot;") : ""}">
         </div>
         <div class="form-row">
-          <label for="createLieferumfang">Lieferumfang / Beschreibung</label>
+          <label for="createLieferumfang">${isAnfrage ? 'Beschreibung' : 'Lieferumfang / Beschreibung'}</label>
           <textarea id="createLieferumfang" rows="2">${prefill?.lieferumfang || ""}</textarea>
         </div>
         ${kindFields}
@@ -2137,12 +2329,12 @@ function openCreateModal(kind, prefill){
 
   document.getElementById("createCancel").addEventListener("click", closeModal);
   document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
-  document.getElementById("createKommission").focus();
+  document.getElementById(isAnfrage ? "createKunde" : "createKommission").focus();
   document.getElementById("createConfirm").addEventListener("click", async () => {
-    const kommission = document.getElementById("createKommission").value.trim();
+    const kommission = isAnfrage ? "" : document.getElementById("createKommission").value.trim();
     const kunde = document.getElementById("createKunde").value.trim();
-    if(!kommission || !kunde){
-      showToast(isAuftrag ? "Kommission und Kunde sind Pflichtfelder." : "Angebotsnummer und Kunde sind Pflichtfelder.", true);
+    if((!isAnfrage && !kommission) || !kunde){
+      showToast(isAuftrag ? "Kommission und Kunde sind Pflichtfelder." : isAngebot ? "Angebotsnummer und Kunde sind Pflichtfelder." : "Kunde ist ein Pflichtfeld.", true);
       return;
     }
     const confirmBtn = document.getElementById("createConfirm");
@@ -2154,12 +2346,13 @@ function openCreateModal(kind, prefill){
       kunde,
       lieferumfang: document.getElementById("createLieferumfang").value.trim(),
       ordnerPfad: document.getElementById("createOrdner").value.trim() || null,
-      status: document.getElementById("createStatus").value,
     };
     if(isAuftrag){
+      body.status = document.getElementById("createStatus").value;
       body.prio = document.getElementById("createPrio").value;
       body.liefertermin = document.getElementById("createLiefertermin").value || null;
-    } else {
+    } else if(isAngebot){
+      body.status = document.getElementById("createStatus").value;
       body.wert = document.getElementById("createWert").value.trim() || null;
       body.wiedervorlage = document.getElementById("createWiedervorlage").value || null;
     }
@@ -2172,7 +2365,7 @@ function openCreateModal(kind, prefill){
       renderList();
       renderMain();
       updateStats();
-      showToast(isAuftrag ? "Auftrag angelegt." : "Angebot angelegt.");
+      showToast(isAuftrag ? "Auftrag angelegt." : isAngebot ? "Angebot angelegt." : "Anfrage angelegt.");
     }catch(err){
       showToast("Konnte nicht angelegt werden.", true);
       confirmBtn.disabled = false;
@@ -2194,7 +2387,7 @@ function showToast(msg, isError){
 async function init(){
   document.getElementById("main").innerHTML = `<div class="no-selection">Lädt…</div>`;
   try{
-    await Promise.all([loadUsers(), loadItems("auftrag"), loadItems("angebot")]);
+    await Promise.all([loadUsers(), loadItems("anfrage"), loadItems("auftrag"), loadItems("angebot")]);
   }catch(err){
     document.getElementById("main").innerHTML = `<div class="no-selection">Daten konnten nicht geladen werden. Läuft der Server?</div>`;
     return;
