@@ -815,8 +815,27 @@ async function loadUsers(){
 async function loadItems(kind){
   itemsCache[kind] = await apiGet("/items?type=" + kind);
   if(!selectedId[kind] && itemsCache[kind].length){
-    selectedId[kind] = itemsCache[kind][0].id;
+    selectedId[kind] = newestItemId(kind, itemsCache[kind]);
   }
+}
+
+// Wählt beim ersten Laden den neuesten Eintrag aus - nach Kommissions-/Angebotsnummer
+// (siehe kommissionRecency), nicht nach DB-Erstelldatum, damit nachträglich importierte
+// Altaufträge das nicht verfälschen. Fällt auf erstelltAm zurück, wenn keine Nummer passt.
+function newestItemId(kind, list){
+  const cfg = KIND_CONFIG[kind];
+  const byErstelltAm = () => list.reduce((best, item) =>
+    (!best || new Date(item.erstelltAm) > new Date(best.erstelltAm)) ? item : best
+  ).id;
+  if(cfg.useKommissionRecency === false){
+    return byErstelltAm();
+  }
+  let best = null, bestRec = -Infinity;
+  for(const item of list){
+    const rec = kommissionRecency(item.kommission);
+    if(rec !== null && rec > bestRec){ bestRec = rec; best = item; }
+  }
+  return best ? best.id : byErstelltAm();
 }
 
 /* ===================== Tabs & filters ===================== */
