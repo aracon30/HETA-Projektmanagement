@@ -251,17 +251,18 @@
   .gantt-toolbar label{ font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.03em; }
   .gantt-toolbar select{ padding:6px 9px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.82rem; font-family:inherit; background:var(--panel); color:var(--ink); }
   .gantt-inner{ position:relative; min-width:max-content; }
+  .gantt-header-group{ position:sticky; top:0; z-index:2; background:var(--paper); }
   .gantt-header{
     display:flex;
-    position:sticky;
-    top:0;
-    background:var(--paper);
-    z-index:2;
+    padding-bottom:4px;
+  }
+  .gantt-day-header{
+    display:flex;
     border-bottom:1px solid var(--line);
     padding-bottom:6px;
     margin-bottom:8px;
   }
-  .gantt-header .row-label-spacer{ flex-shrink:0; position:sticky; left:0; z-index:1; background:var(--paper); }
+  .gantt-header .row-label-spacer, .gantt-day-header .row-label-spacer{ flex-shrink:0; position:sticky; left:0; z-index:1; background:var(--paper); }
   .gantt-week{
     flex-shrink:0;
     font-size:0.7rem;
@@ -269,6 +270,13 @@
     text-align:center;
     border-left:1px solid var(--line);
     padding-left:4px;
+  }
+  .gantt-day{
+    flex-shrink:0;
+    font-size:0.62rem;
+    color:var(--slate-light);
+    text-align:center;
+    border-left:1px solid #EDEEEA;
   }
   .gantt-row{
     display:flex;
@@ -1204,6 +1212,12 @@ function renderGanttBoard(){
     weekHeaderHtml += `<div class="gantt-week" style="width:${7*DAY_W}px;">${label}</div>`;
   }
 
+  let dayHeaderHtml = "";
+  for(let i = 0; i < totalDays; i++){
+    const d = new Date(rangeStart); d.setUTCDate(d.getUTCDate() + i);
+    dayHeaderHtml += `<div class="gantt-day" style="width:${DAY_W}px;">${d.getUTCDate()}</div>`;
+  }
+
   const todayOffset = daysBetween(rangeStart, todayUTC) * DAY_W;
 
   const rowsHtml = offene.map(item => {
@@ -1246,9 +1260,15 @@ function renderGanttBoard(){
       </select>
     </div>
     <div class="gantt-inner">
-      <div class="gantt-header">
-        <div class="row-label-spacer" style="width:${ROW_LABEL_W}px;"></div>
-        ${weekHeaderHtml}
+      <div class="gantt-header-group">
+        <div class="gantt-header">
+          <div class="row-label-spacer" style="width:${ROW_LABEL_W}px;"></div>
+          ${weekHeaderHtml}
+        </div>
+        <div class="gantt-day-header">
+          <div class="row-label-spacer" style="width:${ROW_LABEL_W}px;"></div>
+          ${dayHeaderHtml}
+        </div>
       </div>
       <div style="position:relative;">
         <div class="gantt-today-line" style="left:${ROW_LABEL_W + todayOffset}px;" title="Heute: ${fmtDate(isoDateStr(todayUTC))}"></div>
