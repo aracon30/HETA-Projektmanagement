@@ -177,6 +177,14 @@
 
   .modal-backdrop{ position:fixed; inset:0; background:rgba(27,36,48,0.45); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; }
   .modal{ background:var(--panel); border-radius:var(--radius); max-width:440px; width:100%; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,0.25); }
+  .modal.wide{ max-width:720px; }
+  .import-list{ max-height:420px; overflow-y:auto; border:1px solid var(--line); border-radius:8px; }
+  .import-row{ display:flex; gap:12px; padding:10px 12px; border-bottom:1px solid var(--line); align-items:flex-start; }
+  .import-row:last-child{ border-bottom:none; }
+  .import-row input[type="checkbox"]{ margin-top:3px; }
+  .import-row .komm{ font-weight:600; }
+  .import-row .meta{ font-size:0.8rem; color:var(--slate); }
+  .import-row .lieferumfang{ font-size:0.78rem; color:var(--slate); margin-top:4px; white-space:pre-line; max-height:60px; overflow-y:auto; }
   .modal h3{margin:0 0 4px; font-size:1.05rem;} .modal .sub{font-size:0.8rem; color:var(--slate); margin-bottom:18px;}
   .modal .form-row label{display:block; margin-bottom:4px;} .modal .form-row{margin-bottom:14px;}
   .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:20px;}
@@ -457,6 +465,8 @@
     <span class="sub">Projektbesprechung · HETA Verfahrenstechnik</span>
     <div class="stat" id="statBar"></div>
     <button class="sync-btn" id="syncTodoBtn" title="Bei Microsoft To Do nachfragen, ob verknüpfte Aufgaben dort erledigt wurden">↻ To Do abgleichen</button>
+    <button class="sync-btn" id="importErpBtn" title="Neue Aufträge aus der Positionsansicht Auftrag.xlsm erkennen">⇪ Aufträge aus Excel</button>
+    <input type="file" id="importErpFile" accept=".xlsm,.xlsx" style="display:none;">
   </div>
 
   <div class="tabbar" role="tablist" aria-label="Bereich wählen">
@@ -976,6 +986,98 @@ document.getElementById("syncTodoBtn").addEventListener("click", async () => {
     btn.textContent = originalText;
   }
 });
+
+document.getElementById("importErpBtn").addEventListener("click", () => {
+  document.getElementById("importErpFile").click();
+});
+document.getElementById("importErpFile").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0];
+  ev.target.value = "";
+  if(!file) return;
+  const btn = document.getElementById("importErpBtn");
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Lese Datei…";
+  try{
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(API + "/import/auftraege/preview", { method: "POST", body: formData });
+    const result = await res.json();
+    if(!res.ok) throw new Error(result.error || "Datei konnte nicht gelesen werden.");
+    openImportReviewModal(result);
+  }catch(err){
+    showToast(err.message, true);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+});
+
+function openImportReviewModal(result){
+  const root = document.getElementById("modalRoot");
+  const { neu, uebersprungen } = result;
+  if(!neu.length){
+    showToast(uebersprungen ? `Keine neuen Aufträge — ${uebersprungen} bereits vorhanden.` : "Keine Aufträge in der Datei gefunden.");
+    return;
+  }
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
+        <h3 id="importModalTitle">${neu.length} neue Aufträge gefunden</h3>
+        <div class="sub">${uebersprungen ? `${uebersprungen} bereits im Tool vorhanden — übersprungen. ` : ""}Bitte prüfen und auswählen, was übernommen werden soll.</div>
+        <div style="margin-bottom:10px;">
+          <button class="btn text" id="importSelectAll" type="button">Alle auswählen</button>
+          <button class="btn text" id="importSelectNone" type="button">Keine</button>
+        </div>
+        <div class="import-list">
+          ${neu.map((k, idx) => `
+            <label class="import-row">
+              <input type="checkbox" class="import-check" data-idx="${idx}" checked>
+              <div style="flex:1;">
+                <div class="komm">${k.kommission} — ${k.kunde || "(kein Kunde erkannt)"}</div>
+                <div class="meta">${k.positionsAnzahl} Position(en)${k.liefertermin ? " · Liefertermin " + fmtDate(k.liefertermin) : ""}${k.statusWerte && k.statusWerte.length ? " · Status: " + k.statusWerte.join(", ") : ""}</div>
+                ${k.lieferumfang ? `<div class="lieferumfang">${k.lieferumfang.replace(/</g, "&lt;")}</div>` : ""}
+              </div>
+            </label>
+          `).join("")}
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="importCancel">Abbrechen</button>
+          <button class="btn" id="importConfirm">Ausgewählte importieren</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("importCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("importSelectAll").addEventListener("click", () => {
+    root.querySelectorAll(".import-check").forEach(cb => cb.checked = true);
+  });
+  document.getElementById("importSelectNone").addEventListener("click", () => {
+    root.querySelectorAll(".import-check").forEach(cb => cb.checked = false);
+  });
+  document.getElementById("importConfirm").addEventListener("click", async () => {
+    const confirmBtn = document.getElementById("importConfirm");
+    const selected = [...root.querySelectorAll(".import-check")]
+      .filter(cb => cb.checked)
+      .map(cb => neu[parseInt(cb.dataset.idx, 10)]);
+    if(!selected.length){ showToast("Keine Aufträge ausgewählt.", true); return; }
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Importiere…";
+    try{
+      const created = await apiPost("/import/auftraege/confirm", { items: selected });
+      await loadItems("auftrag");
+      if(currentTab === "auftrag"){ renderList(); renderMain(); updateStats(); }
+      else if(currentTab === "gantt"){ renderGanttBoard(); updateStatsForGantt(); }
+      closeModal();
+      showToast(`${created.length} Auftrag/Aufträge importiert.`);
+    }catch(err){
+      showToast(err.message, true);
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Ausgewählte importieren";
+    }
+  });
+}
 
 function updateStats(){
   const cfg = KIND_CONFIG[currentTab];

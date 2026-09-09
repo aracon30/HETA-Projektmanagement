@@ -3,6 +3,7 @@ from datetime import datetime, date
 from flask import Flask, jsonify, request, send_from_directory
 from models import db, User, Item, VerlaufEintrag, Phase
 import graph_client
+from erp_import import parse_positionsansicht_auftrag
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -109,6 +110,61 @@ def delete_item(item_id):
     db.session.delete(item)
     db.session.commit()
     return "", 204
+
+
+# ---------- Excel-Import (Positionsansicht Auftrag) ----------
+@app.route("/api/import/auftraege/preview", methods=["POST"])
+def import_auftraege_preview():
+    """Liest eine hochgeladene 'Positionsansicht Auftrag.xlsm' ein und liefert
+    die daraus erkannten Aufträge, die noch nicht im Tool angelegt sind."""
+    upload = request.files.get("file")
+    if not upload or not upload.filename:
+        return jsonify({"error": "Keine Datei hochgeladen."}), 400
+    try:
+        kandidaten = parse_positionsansicht_auftrag(upload.stream)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": "Datei konnte nicht gelesen werden: " + str(exc)}), 400
+
+    bestehende_ab = {
+        i.erp_ab_nummer for i in Item.query.filter(Item.erp_ab_nummer.isnot(None)).all()
+    }
+    bestehende_kommission = {i.kommission for i in Item.query.filter_by(type="auftrag").all()}
+
+    neu = []
+    uebersprungen = 0
+    for k in kandidaten:
+        if k["erpAbNummer"] in bestehende_ab or k["kommission"] in bestehende_kommission:
+            uebersprungen += 1
+            continue
+        neu.append({**k, "liefertermin": k["liefertermin"].isoformat() if k["liefertermin"] else None})
+
+    return jsonify({"neu": neu, "uebersprungen": uebersprungen})
+
+
+@app.route("/api/import/auftraege/confirm", methods=["POST"])
+def import_auftraege_confirm():
+    """Legt die vom Nutzer ausgewählten Import-Kandidaten als Aufträge an."""
+    data = request.get_json(force=True)
+    erstellt = []
+    for k in data.get("items", []):
+        item = Item(
+            type="auftrag",
+            kommission=k["kommission"],
+            kunde=k["kunde"],
+            lieferumfang=k.get("lieferumfang"),
+            ordner_pfad=k.get("ordnerPfad"),
+            erp_ab_nummer=k.get("erpAbNummer"),
+            quelle="erp-import",
+            prio="gelb",
+            liefertermin=parse_date(k.get("liefertermin")),
+            auftrag_status="neu",
+        )
+        db.session.add(item)
+        erstellt.append(item)
+    db.session.commit()
+    return jsonify([i.to_dict() for i in erstellt]), 201
 
 
 # ---------- Verlaufseinträge ----------
