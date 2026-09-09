@@ -40,6 +40,14 @@ def _parse_excel_date(value):
     return None
 
 
+def hat_offene_position(kandidat):
+    """True, wenn mindestens eine Position des Auftrags den Status 'offen' hat.
+    Excel blendet abgeschlossene/historische Positionen per Filter aus, aber
+    openpyxl liest ausgefilterte Zeilen trotzdem mit - dieser Check ersetzt
+    den Excel-Filter beim Import, sonst kommen jahrelange Altaufträge mit."""
+    return any(s.strip().lower() == "offen" for s in kandidat["statusWerte"])
+
+
 def _find_header_row(sheet):
     for row in sheet.iter_rows(min_row=1, max_row=30):
         header_map = {}
@@ -139,6 +147,8 @@ def parse_positionsansicht_auftrag(file):
         kommission = f"K-{ab_number:05d}/{jahr % 100:02d}"
         results.append({
             "erpAbNummer": g["erpAbNummer"],
+            "abNummer": ab_number,
+            "jahr": jahr,
             "kommission": kommission,
             "kunde": g["kunde"],
             "lieferumfang": "\n".join(g["positionen"]),
