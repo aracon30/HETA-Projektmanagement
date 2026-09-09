@@ -188,6 +188,8 @@
   .modal .form-row label{display:block; margin-bottom:4px;} .modal .form-row{margin-bottom:14px;}
   .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:20px;}
 
+  .lt-inline-history{ margin:18px 0; }
+  .lt-inline-history .label{ font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); display:block; margin-bottom:8px; }
   .lt-history-list{ max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
   .lt-history-row{ background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:10px 13px; }
   .lt-history-change{ font-size:0.85rem; color:var(--ink); font-family:'IBM Plex Mono', monospace; }
@@ -1310,9 +1312,6 @@ function openLiefertermineDialog(item){
           <label for="dueCommentInput">Kommentar (optional)</label>
           <textarea id="dueCommentInput" rows="2" placeholder="z.B. Grund der Verschiebung"></textarea>
         </div>
-        ${item.lieferterminHistorie && item.lieferterminHistorie.length ? `
-        <button class="btn text" id="dueHistoryBtn" style="margin-bottom:10px;">Bisherige Termine anzeigen (${item.lieferterminHistorie.length})</button>
-        ` : ""}
         <div class="modal-actions">
           <button class="btn text" id="dueCancel">Abbrechen</button>
           <button class="btn" id="dueConfirm">Übernehmen</button>
@@ -1322,8 +1321,6 @@ function openLiefertermineDialog(item){
   `;
   document.getElementById("dueCancel").addEventListener("click", closeModal);
   document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
-  const historyBtn = document.getElementById("dueHistoryBtn");
-  if(historyBtn) historyBtn.addEventListener("click", () => openLieferterminHistorieModal(item));
   document.getElementById("dueConfirm").addEventListener("click", async () => {
     const btn = document.getElementById("dueConfirm");
     btn.disabled = true;
@@ -1350,9 +1347,9 @@ function openLiefertermineDialog(item){
   document.addEventListener("keydown", escCloseOnce);
 }
 
-function openLieferterminHistorieModal(item){
-  const root = document.getElementById("modalRoot");
+function renderLtHistorySection(item){
   const historie = [...(item.lieferterminHistorie || [])].reverse();
+  if(!historie.length) return "";
   const rowsHtml = historie.map(h => `
     <div class="lt-history-row">
       <div class="lt-history-change">${h.alterTermin ? fmtDate(h.alterTermin) : 'Kein Termin'} → <b>${fmtDate(h.neuerTermin)}</b></div>
@@ -1360,21 +1357,12 @@ function openLieferterminHistorieModal(item){
       ${h.kommentar ? `<div class="lt-history-comment">${h.kommentar}</div>` : ''}
     </div>
   `).join("");
-  root.innerHTML = `
-    <div class="modal-backdrop" id="modalBackdrop">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ltHistoryTitle">
-        <h3 id="ltHistoryTitle">Liefertermin-Historie</h3>
-        <div class="sub">${item.kommission} — ${item.kunde}</div>
-        <div class="lt-history-list">${rowsHtml || '<div class="no-selection" style="padding:10px 0;">Keine Änderungen protokolliert.</div>'}</div>
-        <div class="modal-actions">
-          <button class="btn text" id="ltHistoryClose">Schließen</button>
-        </div>
-      </div>
+  return `
+    <div class="lt-inline-history">
+      <span class="label">Liefertermin-Historie</span>
+      <div class="lt-history-list">${rowsHtml}</div>
     </div>
   `;
-  document.getElementById("ltHistoryClose").addEventListener("click", closeModal);
-  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
-  document.addEventListener("keydown", escCloseOnce);
 }
 
 /* ===================== List rendering ===================== */
@@ -1440,6 +1428,7 @@ function renderMain(){
       </div>
     </div>
     <div class="order-meta-grid">${cfg.metaGrid(item)}</div>
+    ${currentTab === "auftrag" ? renderLtHistorySection(item) : ""}
     <div class="lieferumfang"><span class="label">${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"}</span>${item.lieferumfang || '—'}</div>
     ${currentTab === "auftrag" ? `
     <div class="timeline-head">
