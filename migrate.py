@@ -86,6 +86,19 @@ def main():
     else:
         print("Spalte items.ablehnungsgrund existiert bereits.")
 
+    if not column_exists(cur, "items", "erp_ab_nummer"):
+        cur.execute("ALTER TABLE items ADD COLUMN erp_ab_nummer VARCHAR(60)")
+        print("Spalte items.erp_ab_nummer ergänzt.")
+    else:
+        print("Spalte items.erp_ab_nummer existiert bereits.")
+
+    if not column_exists(cur, "items", "quelle"):
+        cur.execute("ALTER TABLE items ADD COLUMN quelle VARCHAR(20)")
+        cur.execute("UPDATE items SET quelle = 'manuell' WHERE quelle IS NULL")
+        print("Spalte items.quelle ergänzt (bestehende Einträge als 'manuell' markiert).")
+    else:
+        print("Spalte items.quelle existiert bereits.")
+
     if not table_exists(cur, "phasen"):
         cur.execute("""
             CREATE TABLE phasen (
