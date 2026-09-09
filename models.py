@@ -51,6 +51,10 @@ class Item(db.Model):
         "Phase", backref="item", cascade="all, delete-orphan",
         order_by="Phase.start"
     )
+    liefertermin_historie = db.relationship(
+        "LieferterminHistorie", backref="item", cascade="all, delete-orphan",
+        order_by="LieferterminHistorie.created_at"
+    )
 
     def to_dict(self):
         base = {
@@ -69,6 +73,7 @@ class Item(db.Model):
                 "prio": self.prio,
                 "liefertermin": self.liefertermin.isoformat() if self.liefertermin else None,
                 "status": self.auftrag_status,
+                "lieferterminHistorie": [h.to_dict() for h in self.liefertermin_historie],
             })
         elif self.type == "angebot":
             base.update({
@@ -102,6 +107,27 @@ class Phase(db.Model):
             "bezeichnung": self.bezeichnung,
             "start": self.start.isoformat() if self.start else None,
             "ende": self.ende.isoformat() if self.ende else None,
+        }
+
+
+class LieferterminHistorie(db.Model):
+    """Protokolliert jede Änderung des Liefertermins eines Auftrags, damit der
+    ursprüngliche (und jeder zwischenzeitliche) Termin nachvollziehbar bleibt."""
+    __tablename__ = "liefertermin_historie"
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False)
+    alter_termin = db.Column(db.Date, nullable=True)
+    neuer_termin = db.Column(db.Date, nullable=True)
+    kommentar = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "alterTermin": self.alter_termin.isoformat() if self.alter_termin else None,
+            "neuerTermin": self.neuer_termin.isoformat() if self.neuer_termin else None,
+            "kommentar": self.kommentar,
+            "erstelltAm": self.created_at.isoformat() + "Z" if self.created_at else None,
         }
 
 
