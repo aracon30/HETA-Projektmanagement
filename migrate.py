@@ -114,6 +114,21 @@ def main():
     else:
         print("Tabelle phasen existiert bereits.")
 
+    if not table_exists(cur, "liefertermin_historie"):
+        cur.execute("""
+            CREATE TABLE liefertermin_historie (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL REFERENCES items(id),
+                alter_termin DATE,
+                neuer_termin DATE,
+                kommentar TEXT,
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle liefertermin_historie angelegt (Versionierung des Liefertermins).")
+    else:
+        print("Tabelle liefertermin_historie existiert bereits.")
+
     # Bekannte Nutzer mit E-Mail-Adresse befüllen (nur wenn noch leer)
     cur.execute("SELECT id, name, email FROM users")
     updated = 0

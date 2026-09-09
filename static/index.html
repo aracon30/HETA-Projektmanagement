@@ -188,6 +188,12 @@
   .modal .form-row label{display:block; margin-bottom:4px;} .modal .form-row{margin-bottom:14px;}
   .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:20px;}
 
+  .lt-history-list{ max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+  .lt-history-row{ background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:10px 13px; }
+  .lt-history-change{ font-size:0.85rem; color:var(--ink); font-family:'IBM Plex Mono', monospace; }
+  .lt-history-meta{ font-size:0.7rem; color:var(--slate-light); margin-top:3px; }
+  .lt-history-comment{ font-size:0.82rem; color:var(--slate); margin-top:6px; line-height:1.4; white-space:pre-wrap; }
+
   .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--steel-deep); color:#EDEFEA; padding:12px 20px; border-radius:var(--radius); font-size:0.85rem; box-shadow:var(--shadow); z-index:60; display:flex; align-items:center; gap:10px; }
   .toast.error{background:var(--red);}
 
@@ -1261,6 +1267,13 @@ function openLiefertermineDialog(item){
           <label for="dueDateInput">Neuer Liefertermin</label>
           <input type="date" id="dueDateInput" value="${item.liefertermin || ''}">
         </div>
+        <div class="form-row">
+          <label for="dueCommentInput">Kommentar (optional)</label>
+          <textarea id="dueCommentInput" rows="2" placeholder="z.B. Grund der Verschiebung"></textarea>
+        </div>
+        ${item.lieferterminHistorie && item.lieferterminHistorie.length ? `
+        <button class="btn text" id="dueHistoryBtn" style="margin-bottom:10px;">Bisherige Termine anzeigen (${item.lieferterminHistorie.length})</button>
+        ` : ""}
         <div class="modal-actions">
           <button class="btn text" id="dueCancel">Abbrechen</button>
           <button class="btn" id="dueConfirm">Übernehmen</button>
@@ -1270,12 +1283,15 @@ function openLiefertermineDialog(item){
   `;
   document.getElementById("dueCancel").addEventListener("click", closeModal);
   document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  const historyBtn = document.getElementById("dueHistoryBtn");
+  if(historyBtn) historyBtn.addEventListener("click", () => openLieferterminHistorieModal(item));
   document.getElementById("dueConfirm").addEventListener("click", async () => {
     const btn = document.getElementById("dueConfirm");
     btn.disabled = true;
     const newDate = document.getElementById("dueDateInput").value || null;
+    const kommentar = document.getElementById("dueCommentInput").value.trim() || null;
     try{
-      await apiPatch(`/items/${item.id}`, { liefertermin: newDate });
+      await apiPatch(`/items/${item.id}`, { liefertermin: newDate, lieferterminKommentar: kommentar });
       await loadItems("auftrag");
       closeModal();
       if(currentTab === "gantt"){
@@ -1292,6 +1308,33 @@ function openLiefertermineDialog(item){
       btn.disabled = false;
     }
   });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openLieferterminHistorieModal(item){
+  const root = document.getElementById("modalRoot");
+  const historie = [...(item.lieferterminHistorie || [])].reverse();
+  const rowsHtml = historie.map(h => `
+    <div class="lt-history-row">
+      <div class="lt-history-change">${h.alterTermin ? fmtDate(h.alterTermin) : 'Kein Termin'} → <b>${fmtDate(h.neuerTermin)}</b></div>
+      <div class="lt-history-meta">${fmtDateTime(h.erstelltAm)}</div>
+      ${h.kommentar ? `<div class="lt-history-comment">${h.kommentar}</div>` : ''}
+    </div>
+  `).join("");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ltHistoryTitle">
+        <h3 id="ltHistoryTitle">Liefertermin-Historie</h3>
+        <div class="sub">${item.kommission} — ${item.kunde}</div>
+        <div class="lt-history-list">${rowsHtml || '<div class="no-selection" style="padding:10px 0;">Keine Änderungen protokolliert.</div>'}</div>
+        <div class="modal-actions">
+          <button class="btn text" id="ltHistoryClose">Schließen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("ltHistoryClose").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
   document.addEventListener("keydown", escCloseOnce);
 }
 

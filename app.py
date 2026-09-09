@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, date
 from flask import Flask, jsonify, request, send_from_directory
-from models import db, User, Item, VerlaufEintrag, Phase
+from models import db, User, Item, VerlaufEintrag, Phase, LieferterminHistorie
 import graph_client
 from erp_import import parse_positionsansicht_auftrag, hat_offene_position
 
@@ -80,7 +80,15 @@ def update_item(item_id):
     item = Item.query.get_or_404(item_id)
     data = request.get_json(force=True)
     if "liefertermin" in data:
-        item.liefertermin = parse_date(data.get("liefertermin"))
+        neuer_termin = parse_date(data.get("liefertermin"))
+        if neuer_termin != item.liefertermin:
+            db.session.add(LieferterminHistorie(
+                item_id=item.id,
+                alter_termin=item.liefertermin,
+                neuer_termin=neuer_termin,
+                kommentar=data.get("lieferterminKommentar") or None,
+            ))
+            item.liefertermin = neuer_termin
     if "status" in data:
         if item.type == "auftrag":
             item.auftrag_status = data["status"]
