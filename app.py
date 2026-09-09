@@ -3,7 +3,7 @@ from datetime import datetime, date
 from flask import Flask, jsonify, request, send_from_directory
 from models import db, User, Item, VerlaufEintrag, Phase
 import graph_client
-from erp_import import parse_positionsansicht_auftrag
+from erp_import import parse_positionsansicht_auftrag, hat_offene_position
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -134,13 +134,22 @@ def import_auftraege_preview():
 
     neu = []
     uebersprungen = 0
+    historisch = 0
     for k in kandidaten:
+        if not hat_offene_position(k):
+            historisch += 1
+            continue
         if k["erpAbNummer"] in bestehende_ab or k["kommission"] in bestehende_kommission:
             uebersprungen += 1
             continue
         neu.append({**k, "liefertermin": k["liefertermin"].isoformat() if k["liefertermin"] else None})
 
-    return jsonify({"neu": neu, "uebersprungen": uebersprungen})
+    neu.sort(key=lambda k: (k["jahr"], k["abNummer"]), reverse=True)
+    for k in neu:
+        del k["jahr"]
+        del k["abNummer"]
+
+    return jsonify({"neu": neu, "uebersprungen": uebersprungen, "historisch": historisch})
 
 
 @app.route("/api/import/auftraege/confirm", methods=["POST"])

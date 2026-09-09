@@ -1015,16 +1015,20 @@ document.getElementById("importErpFile").addEventListener("change", async (ev) =
 
 function openImportReviewModal(result){
   const root = document.getElementById("modalRoot");
-  const { neu, uebersprungen } = result;
+  const { neu, uebersprungen, historisch } = result;
+  const zusatzInfo = [
+    uebersprungen ? `${uebersprungen} bereits im Tool vorhanden` : null,
+    historisch ? `${historisch} abgeschlossen/historisch (keine offene Position)` : null,
+  ].filter(Boolean).join(" · ");
   if(!neu.length){
-    showToast(uebersprungen ? `Keine neuen Aufträge — ${uebersprungen} bereits vorhanden.` : "Keine Aufträge in der Datei gefunden.");
+    showToast(zusatzInfo ? `Keine neuen Aufträge — ${zusatzInfo}.` : "Keine Aufträge in der Datei gefunden.");
     return;
   }
   root.innerHTML = `
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
         <h3 id="importModalTitle">${neu.length} neue Aufträge gefunden</h3>
-        <div class="sub">${uebersprungen ? `${uebersprungen} bereits im Tool vorhanden — übersprungen. ` : ""}Bitte prüfen und auswählen, was übernommen werden soll.</div>
+        <div class="sub">${zusatzInfo ? `${zusatzInfo} — übersprungen. ` : ""}Bitte prüfen und auswählen, was übernommen werden soll.</div>
         <div style="margin-bottom:10px;">
           <button class="btn text" id="importSelectAll" type="button">Alle auswählen</button>
           <button class="btn text" id="importSelectNone" type="button">Keine</button>
