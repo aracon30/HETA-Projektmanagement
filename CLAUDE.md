@@ -100,6 +100,14 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
    Liste (aktuell bewusst nicht umgesetzt, siehe `graph_client.py`
    Docstring).
 
+## Prozessaufnahme / Reiter „Prozesse“ (in Konzeption)
+
+Konzept: `docs/KONZEPT-PROZESSE.md`. **Sprachregelung:** intern und in der
+Oberfläche immer „mögliche Einführung eines ERP-Systems“ — keinen
+Produktnamen (ERPNext) verwenden, keine Entscheidung vorwegnehmen.
+Struktur spiegelt die Excel-Vorlage `HETA_Prozessaufnahme.xlsx`.
+Es heißt **Frau Häfer**.
+
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 
 - **Nach jedem `sudo cp ... /opt/projektbesprechung/...` sofort**

@@ -1,238 +1,292 @@
-# Konzept: Reiter „Prozesse“ – Prozessdokumentation zur ERPNext-Einführung
+# Konzept: Reiter „Prozesse“ – Prozessaufnahme zur Vorbereitung einer möglichen ERP-Einführung
 
-**Status:** Entwurf v0.1 zur Abstimmung (noch nicht umgesetzt)
-**Ziel:** Jede:r Mitarbeiter:in kann beschreiben, wie Arbeit *heute* tatsächlich
-abläuft. Am Ende steht eine Übersicht **von grob bis fein**, die direkt als
-Grundlage für die ERPNext-Einführung (Fit-Gap-Analyse, Customizing,
-Schulung) dient.
+**Status:** Entwurf v0.2 zur Abstimmung (noch nicht umgesetzt)
+**Änderung zu v0.1:** Stand der parallel laufenden Prozessaufnahme eingearbeitet
+(Organigramm 08/2026, Excel-Vorlage `HETA_Prozessaufnahme.xlsx`, vorhandene
+Arbeitsanweisungen, Angebotsprozess). Sprachregelung angepasst.
 
----
-
-## 1. Leitgedanken
-
-1. **Ist vor Soll.** Zuerst dokumentieren, wie es wirklich läuft – inkl.
-   Excel-Listen, Outlook-Ordner, Zettel, Zurufe. Erst danach entscheiden, wie
-   es in ERPNext laufen soll. Wer gleich „Soll“ schreibt, beschreibt Wunschdenken.
-2. **Grob → fein, top-down vorgegeben, bottom-up befüllt.** Die obersten
-   Ebenen (Prozesslandkarte) legt die Geschäftsführung mit den
-   Abteilungsleitungen fest. Die feinen Ebenen (Schritte) schreiben die Leute,
-   die die Arbeit machen.
-3. **Niedrige Hürde.** Ein Schritt muss in 2 Minuten erfassbar sein. Pflicht
-   sind nur *Was* und *Wer*; alles andere darf später ergänzt werden.
-4. **Ein Prozess – eine verantwortliche Person.** Jede:r darf beitragen, aber
-   der/die Prozessverantwortliche gibt frei.
-5. **ERPNext-Bezug von Anfang an mitdenken, aber nicht erzwingen.** Jeder
-   Schritt bekommt ein (optionales) Feld „Wie in ERPNext?“.
-6. **Kein Kanban** (siehe CLAUDE.md) – Darstellung als Baum, Tabelle und
-   Swimlane-Ansicht.
+> **Sprachregelung:** Intern – also auch überall in der Oberfläche des Tools –
+> heißt es **„mögliche Einführung eines ERP-Systems“**. Kein Produktname
+> (ERPNext o.ä.), keine vorweggenommene Entscheidung. Ein konkretes System
+> taucht höchstens als optionales, später befüllbares Feld auf.
 
 ---
 
-## 2. Gliederung: vier Ebenen von grob bis fein
+## 1. Ziel
 
-| Ebene | Name | Beispiel | Wer legt an? |
-|---|---|---|---|
-| **0** | Prozesslandkarte (Kategorie) | *Kernprozesse* | GF (fix, 3 Stück) |
-| **1** | Hauptprozess | *1.2 Auftragsabwicklung* | GF + Abteilungsleitungen |
-| **2** | Teilprozess | *1.2.3 Bestellung Zukaufteile* | Prozessverantwortliche:r |
-| **3** | Prozessschritt | *Bestellanforderung aus Stückliste erzeugen* | alle Mitarbeitenden |
+Schnell einen strukturierten, **von den Beteiligten bestätigten** Überblick
+über die tatsächlichen Abläufe bei HETA bekommen – von grob (Prozesslandkarte)
+bis fein (einzelner Arbeitsschritt) – und daraus Anforderungen an ein mögliches
+ERP-System ableiten.
 
-Optional **Ebene 4 „Arbeitsanweisung/Checkliste“** als Freitext bzw. Anhang
-an einem Schritt (z.B. „So lege ich einen Lieferanten im alten System an“) –
-wichtig für ERPNext-Schulungsunterlagen, aber kein eigenes Objekt.
+Die Aufnahme beantwortet:
 
-Nummerierung wird automatisch vergeben (`1.2.3`), damit man in der
-Projektbesprechung eindeutig darauf verweisen kann.
+- Welche Prozesse und Arbeitsschritte gibt es?
+- Wer führt aus, wer entscheidet, wer gibt frei?
+- Welche Informationen und Unterlagen werden benötigt?
+- Welche Programme, Excel-Listen, E-Mails, Papierunterlagen und Ablagen werden genutzt?
+- Wie laufen Übergaben zwischen Personen und Bereichen?
+- Wo entstehen Wartezeiten, Rückfragen, doppelte Eingaben?
+- Welche Anforderungen ergeben sich für ein mögliches ERP-System?
 
-### Vorschlag Prozesslandkarte HETA (Startgerüst, zum Diskutieren)
-
-**Führungsprozesse**
-- F1 Unternehmenssteuerung & Controlling
-- F2 Qualitätsmanagement (Audits, Reklamationen, KVP)
-
-**Kernprozesse** (Wertschöpfungskette – entspricht grob Anfrage → Angebot → Auftrag im Tool)
-- K1 Vertrieb: Anfrage bis Angebot
-- K2 Auftragsklärung & Auftragsbestätigung
-- K3 Konstruktion / Engineering (inkl. Stückliste)
-- K4 Einkauf & Beschaffung
-- K5 Fertigung / Montage
-- K6 Prüfung, Abnahme & Dokumentation
-- K7 Versand, Lieferung & Inbetriebnahme
-- K8 Service, Ersatzteile & Reklamation
-
-**Unterstützungsprozesse**
-- U1 Rechnungsstellung & Buchhaltung
-- U2 Lager & Materialwirtschaft
-- U3 Personal & Zeiterfassung
-- U4 IT & Stammdatenpflege (Kunden, Lieferanten, Artikel)
+**Grundprinzip: Ist zuerst.** Probleme, Verbesserungsideen und ERP-Anforderungen
+werden **getrennt** vom Ablauf erfasst (eigene Listen), damit die
+Ist-Beschreibung nicht mit Wunschdenken vermischt wird.
 
 ---
 
-## 3. Was wird pro Ebene erfasst?
+## 2. Rolle des Tools neben der Excel-Vorlage
 
-### Haupt-/Teilprozess (Ebene 1 + 2)
+Die Excel-Vorlage `HETA_Prozessaufnahme.xlsx` ist das Arbeitsmittel für die
+schnelle Erstaufnahme (3-Tage-Plan, Interviews). Das Tool übernimmt **dieselbe
+Struktur**, damit nichts doppelt gedacht werden muss:
 
-| Feld | Pflicht | Hinweis |
+| Excel-Arbeitsblatt | Im Tool |
+|---|---|
+| Prozessübersicht | Prozess (Baum, Ebenen 1–2) |
+| Ablaufschritte | Prozessschritte (Ebene 3) |
+| Probleme | Liste „Probleme & Anforderungen“ |
+| Offene Fragen | Liste „Offene Fragen“ (mit To-Do-Aufgabe wie beim Verlauf) |
+| Systeme und Daten | Liste „Systeme & Daten“ |
+| Ausfüllhilfe | Hilfetext/Gesprächsleitfaden direkt im Reiter |
+
+Mehrwert des Tools gegenüber Excel: gemeinsames, gleichzeitiges Arbeiten,
+Änderungshistorie, Landkarte mit Fortschritt, Verknüpfung mit den
+Arbeitsanweisungen und mit realen Aufträgen/Angeboten als Beispielvorgänge.
+
+**Übergang:** Excel-Import (einmalig, pro Arbeitsblatt) und Excel/CSV-Export
+in genau diesem Format, damit beide Wege parallel funktionieren, solange das
+Tool noch nicht von allen genutzt wird.
+
+---
+
+## 3. Gliederung von grob bis fein
+
+| Ebene | Name | Beispiel |
 |---|---|---|
-| Bezeichnung | ✔ | |
-| Übergeordneter Prozess | ✔ | ergibt den Baum |
-| Prozessverantwortliche:r | ✔ | Nutzer aus der bestehenden `users`-Tabelle |
-| Beteiligte Abteilungen | | Mehrfachauswahl |
-| Zweck / Ziel | | 1–2 Sätze |
-| Auslöser (Start) | | „Kunde schickt Anfrage per Mail“ |
-| Ergebnis (Ende) | | „Angebot ist beim Kunden“ |
-| Häufigkeit | | z.B. „ca. 15× pro Woche“ |
-| Status | ✔ | siehe Abschnitt 5 |
-| ERPNext-Modul | | CRM, Verkauf, Einkauf, Lager, Fertigung, Projekte, Buchhaltung, Qualität … |
+| **0** | Kategorie | Kernprozesse |
+| **1** | Hauptprozess | K1 Vertrieb |
+| **2** | Teilprozess / Variante | K1.1 Angebotserstellung (Variante: Ersatzteil / Fertigung) |
+| **3** | Arbeitsschritt | „Kundenstatus prüfen (Neu-/Bestandskunde)“ |
+| (4) | Arbeitsanweisung | verknüpftes Dokument, z.B. AA K1_01 Werk4 |
 
-### Prozessschritt (Ebene 3) – das Herzstück
+### Prozesslandkarte: vorhandene QM-Nummerierung übernehmen
 
-| Feld | Pflicht | Beispiel |
-|---|---|---|
-| Was passiert? | ✔ | „Preise der Zukaufteile beim Lieferanten anfragen“ |
-| Wer (Rolle/Abteilung)? | ✔ | Einkauf |
-| Womit? (Systeme heute) | | Excel „Preisliste.xlsx“, Outlook, K-Laufwerk |
-| Input / benötigt | | Stückliste aus Konstruktion |
-| Output / Ergebnis | | Preise in Angebotskalkulation |
-| Übergabe an | | nächster Schritt / anderer Teilprozess |
-| Dauer (ca.) | | 30 min |
-| **Probleme / Ärgernisse** | | „Stückliste kommt oft unvollständig“ |
-| **Verbesserungsidee** | | |
-| ERPNext-Abbildung | | Doctype, z.B. *Request for Quotation* |
-| ERPNext-Abdeckung | | *Standard* / *Anpassung nötig* / *Lücke* / *entfällt* / *unklar* |
-| Reihenfolge | ✔ | per Hoch/Runter-Pfeil (kein Drag & Drop nötig) |
+Die Dokumentnummern der vorhandenen Arbeitsanweisungen (`AA K1_01`,
+`AA F4.6_02`, `AA U4_01`) deuten stark darauf hin, dass es im QM bereits eine
+Prozesslandkarte mit **F = Führungs-, K = Kern-, U = Unterstützungsprozessen**
+gibt. **Statt eine eigene Landkarte zu erfinden, übernehmen wir diese
+Nummerierung** (bei Frau Häfer als QMB bzw. Petra Hamp erfragen). Dann passen
+Tool, QM-Handbuch und Arbeitsanweisungen ohne Umschlüsselung zusammen.
 
-„Probleme“ und „Verbesserungsidee“ sind bewusst prominente Felder: Sie sind
-für die ERPNext-Einführung das Wertvollste, was die Mitarbeitenden liefern.
+Bis das geklärt ist, dient als Arbeitsvorschlag die Wertschöpfungskette
+entlang eines Auftrags:
+
+Anfrage → Angebot → Auftragsbearbeitung → Auslegung/Kalkulation →
+Konstruktion → Einkauf/Bestellung → Wareneingang/Lager → Fertigung/Schweißen
+→ Prüfung/Dokumentation → Versand → Rechnung (+ Standard-/Ersatzteilgeschäft
+als eigene, kürzere Variante)
 
 ---
 
-## 4. Ansichten im Reiter „Prozesse“
+## 4. Personen und Rollen
 
-1. **Landkarte (Startseite des Reiters)** – drei Spalten (Führung / Kern /
-   Unterstützung), jede Hauptprozess-Kachel zeigt Verantwortliche:n,
-   Fortschrittsbalken (wie viele Teilprozesse beschrieben/freigegeben) und
-   Anzahl offener Fragen. *Das ist die „grobe“ Übersicht.*
-2. **Baum** – links aufklappbare Gliederung 1 → 1.2 → 1.2.3, rechts das
-   Detail des gewählten Knotens. Suchfeld wie in den anderen Tabs.
-3. **Prozess-Detail (Teilprozess)** – Kopfdaten + Schritt-Tabelle, darunter
-   eine automatisch erzeugte **Swimlane-Ansicht** (eine Zeile je Abteilung,
-   Schritte als Kästchen von links nach rechts, Übergaben zwischen Bahnen
-   sichtbar). Nur Anzeige, wird aus der Tabelle generiert – niemand muss
-   Diagramme zeichnen.
-4. **Diskussion / offene Fragen** je Prozess – funktioniert wie der
-   bestehende Verlauf (`VerlaufEintrag`): Text, Verantwortliche:r,
-   Fälligkeit, erledigt; „Aufgabe erstellen“ → Microsoft To Do.
-5. **ERPNext-Fit-Gap-Übersicht** – Tabelle aller Schritte, filterbar nach
-   Modul und Abdeckung. Beantwortet: *Wo reicht Standard, wo brauchen wir
-   Anpassung, wo gibt es Lücken?* Export als CSV/Excel für den
-   ERPNext-Implementierungspartner.
-6. **Druck-/Exportansicht** – gesamtes Prozesshandbuch als eine lange Seite
-   (Browser-Druck → PDF), gegliedert grob → fein.
+Grundlage ist das **Organigramm Stand 08/2026**. Da viele Personen mehrere
+Funktionen haben, wird an jedem Arbeitsschritt **Person *und* Rolle**
+erfasst („Linker als Vertriebsadministration“, nicht nur „Linker“).
+
+- Neue Tabelle **Rolle/Funktion** (aus dem Organigramm: Geschäftsleitung,
+  Vertrieb, Projekte, Standard- und Ersatzteile, Vertriebsadministration,
+  Projektmanagement, Auslegung und Kalkulation, Entwicklung/Konstruktion,
+  Fertigung, Schweißaufsicht, Dokumentation, Einkauf, Buchhaltung,
+  Auftragsabwicklung, IT, QMB/QM).
+- Zuordnung Person ↔ Rolle (n:m) in der Nutzerverwaltung.
+- **Wareneingang, Lager, Versand, Service** stehen nicht im Organigramm →
+  zunächst als Rolle „ungeklärt“ anlegen; wird bei der Aufnahme geklärt und
+  landet automatisch in „Offene Fragen“.
+
+Je Arbeitsschritt drei Rollenfelder (einfaches RACI):
+**führt aus** · **entscheidet/gibt frei** · **wird informiert/übernimmt danach**.
 
 ---
 
-## 5. Status & Freigabe (Workflow)
+## 5. Was wird erfasst?
+
+### Prozess (Ebene 1–2) – entspricht Excel „Prozessübersicht“
+
+Prozess-ID · Name · Bereich/Variante · Prozessverantwortliche:r · Auslöser ·
+Ergebnis · Beteiligte · Systeme · Beispielvorgang · **Aufnahmestatus** ·
+Prüfung (wer/wann bestätigt) · Vorgänge pro Monat · verknüpfte
+Arbeitsanweisungen.
+
+### Arbeitsschritt (Ebene 3) – entspricht Excel „Ablaufschritte“
+
+| Feld | Pflicht |
+|---|---|
+| Schritt-Nr. (automatisch, verschiebbar per Pfeil) | ✔ |
+| Tätigkeit | ✔ |
+| führt aus (Person + Rolle) | ✔ |
+| Eingaben / benötigte Informationen | |
+| System / Liste / Ablage | |
+| Ergebnis | |
+| Übergabe an wen, auf welchem Weg (Mail, Dashboard, Zuruf, Papier) | |
+| Freigabe durch | |
+| Ausnahme / was passiert bei fehlenden Angaben | |
+| Bearbeitungszeit · Wartezeit | |
+| **Quelle / Nachweis** | ✔ |
+
+**Quelle / Nachweis** ist neu und zentral: *laut Arbeitsanweisung* /
+*im Gespräch mit X am …* / *an Beispielvorgang nachvollzogen* /
+*von Beteiligten bestätigt*. So bleibt jederzeit sichtbar, wie belastbar
+eine Beschreibung ist.
+
+### Probleme & Anforderungen (getrennte Liste) – Excel „Probleme“
+
+Problem-ID · Prozess-/Schrittbezug · Ist-Problem · Beispiel · Auswirkung ·
+Häufigkeit · Verbesserung / **Anforderung an mögliches ERP-System** ·
+Priorität · zuständig · Status.
+
+Hinweis im Formular: *„Klärungsbedarf ist kein Problem – dafür gibt es
+‚Offene Fragen‘.“*
+
+### Offene Fragen – Excel „Offene Fragen“
+
+Frage-ID · Bezug · Frage · Klärung durch · nächster Schritt · Fälligkeit ·
+Status · Antwort/Entscheidung · Nachweis. Technisch wie der bestehende
+Verlauf, inkl. „Aufgabe erstellen“ → Microsoft To Do.
+
+### Systeme & Daten – Excel „Systeme und Daten“
+
+System/Datei/Ablage · Inhalt · Prozessbezug · Pflegeverantwortliche:r ·
+führende Datenquelle · Speicherort · Übertragungswege · Datenqualität ·
+Migrationsbedarf. Beispiele: Dashboard, Kalkulationsvorlage,
+Angebotsvorlagen DE/EN, Projektordner K-Laufwerk, E-Mail-Ablage.
+
+### Dokumente (Arbeitsanweisungen)
+
+Dokumentnummer · Titel · Revision · letzte Änderung · Ersteller:in ·
+Prüfer:in · Ablageort · Geltungsbereich (z.B. „Werk4“ – Aktualität offen) ·
+**Auswertungsstatus** (nicht gesichtet / gesichtet / in Schritte übernommen).
+n:m mit Prozessen, inkl. „mitgeltende Dokumente“.
+
+---
+
+## 6. Aufnahmestatus (Workflow)
 
 ```
-Leer → In Arbeit → Zur Prüfung → Freigegeben (Ist)
-                                     │
-                                     └─→ Soll definiert (ERPNext) → Umgesetzt
+Vorgeschlagen
+  → Laut Arbeitsanweisung – Praxisabgleich offen
+  → Im Gespräch aufgenommen
+  → Von Beteiligten bestätigt (Ist)
+  → Anforderungen abgeleitet
 ```
 
-- **Leer**: nur Überschrift angelegt (von GF/Abteilungsleitung vorgegeben).
-- **In Arbeit**: jemand beschreibt gerade.
-- **Zur Prüfung**: Beschreibung fertig, Prozessverantwortliche:r prüft.
-- **Freigegeben (Ist)**: gilt als korrekte Beschreibung des heutigen Ablaufs.
-- **Soll definiert / Umgesetzt**: Phase 2 der ERPNext-Einführung.
+- *Vorgeschlagen*: nur Überschrift / Arbeitshypothese.
+- *Laut Arbeitsanweisung – Praxisabgleich offen*: aus AA übernommen, aber
+  nicht geprüft, ob es heute so gemacht wird.
+- *Im Gespräch aufgenommen*: mit den tatsächlich Bearbeitenden durchgegangen.
+- *Von Beteiligten bestätigt*: Beteiligte haben die Beschreibung geprüft.
+- *Anforderungen abgeleitet*: Probleme/Anforderungen sind vollständig erfasst.
 
-Jede Änderung wird in einer **Änderungshistorie** protokolliert (wer, wann,
-welches Feld) – analog zur bestehenden `LieferterminHistorie`. Da es noch kein
-Login gibt, wählt man wie beim Verlauf den eigenen Namen aus.
-
----
-
-## 6. Ist und Soll: wie wird der Übergang abgebildet?
-
-Empfehlung: **Kein zweites, paralleles Prozessmodell.** Stattdessen hat jeder
-Schritt zusätzlich die Felder „ERPNext-Abbildung“ und „Abdeckung“. Wenn sich
-ein Ablauf durch ERPNext grundlegend ändert, wird der Schritt als *entfällt*
-markiert und ein neuer Schritt mit Kennzeichen *Soll* hinzugefügt. So bleibt
-der Ist-Stand nachvollziehbar und die Soll-Welt entsteht in derselben Struktur.
+Alle Änderungen landen in einer Änderungshistorie (wer, wann, welches Feld) –
+wie `LieferterminHistorie`. Ohne Login wählt man den eigenen Namen aus.
 
 ---
 
-## 7. Datenmodell (Entwurf, additiv – bestehende Tabellen bleiben unverändert)
+## 7. Ansichten im Reiter „Prozesse“
+
+1. **Landkarte** (grob): Kacheln je Hauptprozess, farbig nach Aufnahmestatus,
+   Zähler für Schritte, offene Fragen, Probleme.
+2. **Baum + Detail**: aufklappbare Gliederung, rechts Steckbrief und
+   Schritt-Tabelle.
+3. **Swimlane-Ansicht** (fein): automatisch aus den Schritten erzeugt, eine
+   Bahn je Rolle – zeigt Übergaben und Medienbrüche. Nur Anzeige.
+4. **Durchgängiger Ablauf „Anfrage bis Rechnung“**: Teilprozesse
+   hintereinander mit ihren Übergaben (Ergebnis des einen = Auslöser des
+   nächsten). Lücken fallen hier auf.
+5. **Listen** Probleme & Anforderungen / Offene Fragen / Systeme & Daten /
+   Dokumente – filterbar, exportierbar.
+6. **Beispielvorgänge**: ein Prozess kann mit einem echten Auftrag/Angebot
+   aus dem Tool verknüpft werden (Projektauftrag, Ersatzteilauftrag).
+7. **Druck-/Export**: Prozesshandbuch grob → fein; Excel-Export im
+   Vorlagenformat.
+
+Kein Kanban.
+
+---
+
+## 8. Datenmodell (Entwurf, additiv)
 
 ```
-Prozess
-  id, parent_id (→ Prozess, NULL = Ebene 0/1), kategorie (fuehrung|kern|unterstuetzung)
-  nummer (z.B. "K4.2"), bezeichnung, verantwortlich (→ User.name)
-  abteilungen (kommagetrennt), zweck, ausloeser, ergebnis, haeufigkeit
-  erpnext_modul, status, reihenfolge, created_at, updated_at
-
-ProzessSchritt
-  id, prozess_id (→ Prozess), reihenfolge, was, wer_abteilung
-  systeme_heute, input, output, uebergabe_an, dauer
-  probleme, verbesserung, erpnext_doctype, erpnext_abdeckung, ist_soll
-  created_at, updated_at
-
-ProzessKommentar          (offene Fragen / Diskussion, wie VerlaufEintrag)
-  id, prozess_id, schritt_id (optional), text, erstellt_von, verantwortlich,
-  faelligkeit, status, aufgabe_erstellt, msgraph_list_id, msgraph_task_id
-
-ProzessHistorie
-  id, prozess_id, schritt_id (optional), feld, alt, neu, geaendert_von, created_at
+Rolle            id, bezeichnung, quelle ('organigramm'|'ungeklaert')
+UserRolle        user_id, rolle_id
+Prozess          id, parent_id, nummer, bezeichnung, variante, verantwortlich,
+                 ausloeser, ergebnis, beteiligte, systeme, vorgaenge_monat,
+                 aufnahmestatus, geprueft_von, geprueft_am, beispiel_item_id,
+                 reihenfolge, created_at, updated_at
+ProzessSchritt   id, prozess_id, reihenfolge, taetigkeit,
+                 ausfuehrend_user, ausfuehrend_rolle_id, freigabe_rolle_id,
+                 eingaben, system, ergebnis, uebergabe, ausnahme,
+                 bearbeitungszeit, wartezeit, quelle, nachweis
+Problem          id, prozess_id, schritt_id, problem, beispiel, auswirkung,
+                 haeufigkeit, anforderung, prioritaet, zustaendig, status
+OffeneFrage      id, prozess_id, schritt_id, frage, klaerung_durch,
+                 naechster_schritt, faelligkeit, status, antwort, nachweis,
+                 aufgabe_erstellt, msgraph_list_id, msgraph_task_id
+SystemDaten      id, bezeichnung, inhalt, pflegeverantwortlich, fuehrend,
+                 speicherort, uebertragung, datenqualitaet, migrationsbedarf
+                 (+ n:m zu Prozess)
+Dokument         id, nummer, titel, revision, geaendert_am, ersteller, pruefer,
+                 ablageort, geltungsbereich, auswertungsstatus
+                 (+ n:m zu Prozess, + mitgeltend n:m zu Dokument)
+ProzessHistorie  id, objekt_typ, objekt_id, feld, alt, neu, geaendert_von, created_at
 ```
 
-Neue Tabellen werden per `db.create_all()` angelegt; `migrate.py` bleibt für
-Spaltenergänzungen zuständig. Keine Änderung an `Item`/`VerlaufEintrag`.
-
-**API (Skizze):** `GET/POST /api/prozesse`, `GET/PUT/DELETE /api/prozesse/<id>`,
-`POST /api/prozesse/<id>/schritte`, `PUT/DELETE /api/schritte/<id>`,
-`POST /api/schritte/<id>/verschieben`, `GET /api/prozesse/fitgap(.csv)`.
-
-**Später möglich:** Verknüpfung zu Aufträgen/Angeboten („dieser Auftrag hängt
-gerade in Schritt K4.2“) – bewusst *nicht* in Phase 1.
+Neue Tabellen via `db.create_all()`; bestehende Tabellen und Daten bleiben
+unberührt.
 
 ---
 
-## 8. Vorgehen in der Firma (organisatorisch)
+## 9. Startbestand (Seed) – aus dem bisherigen Stand
 
-| Woche | Schritt | Beteiligte |
-|---|---|---|
-| 1 | Kick-off-Workshop (90 min): Prozesslandkarte Ebene 0–1 festlegen, Verantwortliche benennen | GF, Abteilungsleitungen |
-| 1 | Ebene 2 (Teilprozesse) als leere Hüllen anlegen | Prozessverantwortliche |
-| 2–4 | Ist-Beschreibung der Schritte, je Abteilung ca. 1 h/Woche reservieren | alle |
-| wöchentlich | 10 min in der Projektbesprechung: Fortschritt der Landkarte, offene Fragen | alle |
-| 5 | Review & Freigabe „Ist“ | Prozessverantwortliche |
-| 6+ | Fit-Gap-Workshops mit ERPNext-Partner anhand der Fit-Gap-Übersicht | GF, Key-User |
+- **Rollen** und Personen-Zuordnung laut Organigramm 08/2026.
+- **Dokumente**: die im Screenshot sichtbaren Arbeitsanweisungen (Titel,
+  Status „nicht gesichtet“); AA Angebotserstellung vollständig (Rev. 1,
+  09.09.2025, Ersteller: Carina Linker, Prüfer: Heiko Hensel, Bereich
+  Vertrieb Werk 4) mit mitgeltenden Dokumenten AA F4.6_02, F4.6_01, K1_01,
+  U4_01.
+- **Prozess „Angebotserstellung“** mit den elf Schritten aus der
+  Arbeitsanweisung, Aufnahmestatus *Laut Arbeitsanweisung – Praxisabgleich
+  offen*, Quelle je Schritt „AA Erstellen von Angeboten, Rev. 1“.
+- **Offene Fragen** zum Angebotsprozess (Zuständigkeiten, Dashboard,
+  Kalkulation, Sanktions-/Bonitätsprüfung, Unterschriftenregelung, fehlende
+  Angaben, negative Prüfung, Angebotsrevisionen, Nachverfolgung, Übergang
+  zum Auftrag).
+- **Systeme & Daten**: Dashboard, Kalkulationsvorlage, Angebotsvorlagen
+  DE/EN, Projektordner, Hard-/Softcopy-Ablage.
+- Weitere Hauptprozesse als leere Hüllen mit Status *Vorgeschlagen*.
 
-Tipp: Mit **einem** durchgängigen Kernprozess starten (z.B. K1–K2 Anfrage →
-Auftragsbestätigung), daran das Format testen und nachschärfen, dann ausrollen.
-
----
-
-## 9. Umsetzung im Tool – Stufen
-
-1. **MVP:** Modelle + API, Reiter „Prozesse“ mit Baum, Detail, Schritt-Tabelle,
-   Status. Seed mit der Landkarte aus Abschnitt 2.
-2. Landkarten-Startansicht mit Fortschritt, offene Fragen/Kommentare,
-   Änderungshistorie.
-3. Swimlane-Ansicht, Fit-Gap-Tabelle mit CSV-Export, Druckansicht.
-4. (Später) Verknüpfung zu Aufträgen, Anhänge/Vorlagen, Login-gebundene Freigabe.
+Diese Einträge sind **Arbeitsvorschläge**, keine bestätigte Beschreibung.
 
 ---
 
-## 10. Offene Entscheidungen
+## 10. Umsetzungsstufen im Tool
 
-1. Passt die Prozesslandkarte aus Abschnitt 2 grob zu HETA? Was fehlt / ist zu fein?
-2. Darf jede:r direkt ändern (mit Historie), oder sollen Änderungen an
-   freigegebenen Prozessen erst als Vorschlag laufen?
-3. Reichen Tabelle + automatische Swimlane, oder wird ein echter
-   Diagramm-Editor (BPMN) gewünscht? (Empfehlung: nein – zu hohe Hürde.)
-4. Gibt es schon Prozessbeschreibungen (z.B. QM-Handbuch / ISO 9001), die als
-   Startbestand übernommen werden sollen?
-5. Welche ERPNext-Module sind geplant, und gibt es schon einen
-   Implementierungspartner, dessen Fit-Gap-Format wir übernehmen sollten?
-6. Wer sind die Prozessverantwortlichen für die Hauptprozesse?
+1. **MVP**: Modelle, API, Reiter mit Baum/Detail/Schritt-Tabelle,
+   Aufnahmestatus, Offene Fragen, Seed (Abschnitt 9).
+2. Probleme & Anforderungen, Systeme & Daten, Dokumente, Änderungshistorie,
+   Landkarte.
+3. Swimlane, durchgängiger Ablauf, Excel-Import/-Export im Vorlagenformat,
+   Druckansicht.
+4. Später: Verknüpfung zu echten Aufträgen/Angeboten, Login-gebundene Bestätigung.
+
+---
+
+## 11. Offene Entscheidungen
+
+1. Gibt es eine QM-Prozesslandkarte (F/K/U-Nummerierung), die wir übernehmen?
+2. Soll das Tool die Excel-Vorlage ablösen oder parallel laufen
+   (dann Import/Export in Stufe 1 vorziehen)?
+3. Dürfen Mitarbeitende selbst Schritte anlegen, oder erfasst zunächst nur
+   die aufnehmende Person (Philipp) und die Beteiligten bestätigen?
+4. Geltungsbereich „Werk4“ – gilt das für alle Bereiche/Standorte?
