@@ -1,6 +1,6 @@
 # Konzept: Reiter „Prozesse“ – Prozessaufnahme zur Vorbereitung einer möglichen ERP-Einführung
 
-**Status:** Entwurf v0.2 zur Abstimmung (noch nicht umgesetzt)
+**Status:** Entwurf v0.3 zur Abstimmung (noch nicht umgesetzt)
 **Änderung zu v0.1:** Stand der parallel laufenden Prozessaufnahme eingearbeitet
 (Organigramm 08/2026, Excel-Vorlage `HETA_Prozessaufnahme.xlsx`, vorhandene
 Arbeitsanweisungen, Angebotsprozess). Sprachregelung angepasst.
@@ -70,22 +70,50 @@ Tool noch nicht von allen genutzt wird.
 | **3** | Arbeitsschritt | „Kundenstatus prüfen (Neu-/Bestandskunde)“ |
 | (4) | Arbeitsanweisung | verknüpftes Dokument, z.B. AA K1_01 Werk4 |
 
-### Prozesslandkarte: vorhandene QM-Nummerierung übernehmen
+### Prozesslandkarte: aus der vorhandenen QM-Nummerierung abgeleitet
 
-Die Dokumentnummern der vorhandenen Arbeitsanweisungen (`AA K1_01`,
-`AA F4.6_02`, `AA U4_01`) deuten stark darauf hin, dass es im QM bereits eine
-Prozesslandkarte mit **F = Führungs-, K = Kern-, U = Unterstützungsprozessen**
-gibt. **Statt eine eigene Landkarte zu erfinden, übernehmen wir diese
-Nummerierung** (bei Frau Häfer als QMB bzw. Petra Hamp erfragen). Dann passen
-Tool, QM-Handbuch und Arbeitsanweisungen ohne Umschlüsselung zusammen.
+Die Dateinamen der Arbeitsanweisungen (vollständige Liste:
+`docs/arbeitsanweisungen.csv`) bestätigen eine bestehende Landkarte mit
+**F = Führungs-, K = Kern-, U = Unterstützungsprozessen**. Wir übernehmen
+diese Nummerierung. Die **Namen der Hauptprozesse sind aus den Titeln der
+Anweisungen erschlossen** und müssen mit dem QM-Handbuch (Frau Häfer)
+abgeglichen werden:
 
-Bis das geklärt ist, dient als Arbeitsvorschlag die Wertschöpfungskette
-entlang eines Auftrags:
+| Nr. | Vermuteter Prozess | Vorhandene AA |
+|---|---|---|
+| F1–F3 | ? (keine AA – vermutlich nur im QM-Handbuch) | – |
+| F4.2 | Prüfmittelüberwachung | Prüfmittelüberwachung, Kalibrierung Schweißgeräte |
+| F4.5 | Kennzeichnung & Rückverfolgbarkeit | Werkstoffprüfzeugnis, Kennzeichnungen in der Fertigung |
+| F4.6 | Dokumentenlenkung / Ablage | Projektordnerstruktur, Nummernschlüssel |
+| **K1** | **Vertrieb / Angebot** | Dashboard, Namenskürzel, E-Mail-Ablage, Projektdokumentation, **Erstellen von Angeboten** |
+| **K2** | **Konstruktion / Entwicklung** | Anweisung Konstruktion, Zeichnungsänderung, Prüfung Konstruktionsunterlagen, Zeichnungen als PDF, Konstruktionsrichtlinien |
+| **K3.1** | **Auftragsbearbeitung** | Auftragsbearbeitung |
+| **K3.2** | **Versand & Rechnung** | Versand, Rechnungserstellung (R0!) |
+| **K3.3** | **Fertigung** (K3.3.1–.10 ohne AA; .11 = Fertigungshilfsprozesse?) | Druckproben, Schweißzusätze, Rücktrocknung Elektroden, Umstempelung, Lagerwesen, Maschinenwartung |
+| K4 | Kundenzufriedenheit | Kundenzufriedenheit |
+| **U1** | **Beschaffung** | U1.1 Bestellung, U1.2 Lieferantenauswahl/-freigabe, U1.3 Lieferantenbewertung, U1.4 Wareneingang & Materialeingangsprüfung |
+| U2 | Arbeitssicherheit / Umwelt | Anschlagmittel, Erstunterweisung, Abfallentsorgung |
+| U3 | ? (keine AA) | – |
+| U4 | Verwaltung / Personal | Sanktionslistenprüfung, U4.3 Arbeitszeiterfassung/-nachweis |
 
-Anfrage → Angebot → Auftragsbearbeitung → Auslegung/Kalkulation →
-Konstruktion → Einkauf/Bestellung → Wareneingang/Lager → Fertigung/Schweißen
-→ Prüfung/Dokumentation → Versand → Rechnung (+ Standard-/Ersatzteilgeschäft
-als eigene, kürzere Variante)
+Fett = Kette „Anfrage bis Rechnung“, die für ein mögliches ERP-System
+zuerst relevant ist: **K1 → K3.1 → K2 → U1 → K3.3 → K3.2**.
+
+**Auffälligkeiten (als offene Fragen erfassen, keine Bewertung):**
+- Rechnungserstellung steht auf **Revision 0** – Entwurf, nie freigegeben?
+- Die K3.3.11-AA und AA U2_01 tragen **keinen Zusatz „Werk4“** – anderer
+  Geltungsbereich oder nur uneinheitliche Benennung?
+- **Lagerwesen** ist unter Fertigung (K3.3.11) einsortiert, Wareneingang unter
+  Beschaffung (U1.4) – wer ist tatsächlich für Lager zuständig?
+- Kein eigener Prozess für **Service / Ersatzteilgeschäft**, obwohl es laut
+  Organigramm eine Funktion „Standard- und Ersatzteile“ gibt – steckt das
+  in K1/K3.1?
+- Keine AA für **Auslegung/Kalkulation, Projektmanagement,
+  Fertigungsplanung, Inbetriebnahme** – Lücke oder anderswo geregelt?
+- Hohe Revisionsstände (Wareneingang R4, Namenskürzel R3,
+  Lieferantenauswahl R3) zeigen, wo sich Abläufe schon öfter geändert haben.
+- `AA_VORLAGE.docx` liefert das Gliederungsschema der Anweisungen – ideal,
+  um das Tool-Format für Arbeitsschritte daran anzulehnen.
 
 ---
 
@@ -250,8 +278,8 @@ unberührt.
 ## 9. Startbestand (Seed) – aus dem bisherigen Stand
 
 - **Rollen** und Personen-Zuordnung laut Organigramm 08/2026.
-- **Dokumente**: die im Screenshot sichtbaren Arbeitsanweisungen (Titel,
-  Status „nicht gesichtet“); AA Angebotserstellung vollständig (Rev. 1,
+- **Dokumente**: alle 38 Dateien aus `docs/arbeitsanweisungen.csv`
+  (Nummer, Revision, Titel, Status „nicht gesichtet“); AA K1_05 Angebotserstellung vollständig (Rev. 1,
   09.09.2025, Ersteller: Carina Linker, Prüfer: Heiko Hensel, Bereich
   Vertrieb Werk 4) mit mitgeltenden Dokumenten AA F4.6_02, F4.6_01, K1_01,
   U4_01.
@@ -284,7 +312,7 @@ Diese Einträge sind **Arbeitsvorschläge**, keine bestätigte Beschreibung.
 
 ## 11. Offene Entscheidungen
 
-1. Gibt es eine QM-Prozesslandkarte (F/K/U-Nummerierung), die wir übernehmen?
+1. Offizielle Namen der Hauptprozesse F1–F4, K1–K4, U1–U4 (QM-Handbuch) – stimmt die Tabelle in Abschnitt 3?
 2. Soll das Tool die Excel-Vorlage ablösen oder parallel laufen
    (dann Import/Export in Stufe 1 vorziehen)?
 3. Dürfen Mitarbeitende selbst Schritte anlegen, oder erfasst zunächst nur
