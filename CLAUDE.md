@@ -18,7 +18,7 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
   wird von Flask direkt ausgeliefert
 - **Deployment:** Gunicorn als systemd-Dienst (`projektbesprechung.service`),
   nginx als Reverse-Proxy davor
-- **Server:** Ubuntu-Testserver, erreichbar unter `192.168.80.69` (interner
+- **Server:** Ubuntu-Testserver, erreichbar unter `192.168.80.65` (bis 09/2026: .69 — Adresse hat sich geändert, SSH-Host-Key ebenfalls; interner
   Testserver, Nutzer `heta`, Projektpfad `/opt/projektbesprechung`)
 
 ## Dateien im Repo
