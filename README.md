@@ -72,6 +72,35 @@ Im Browser die Server-IP oder den internen Hostnamen öffnen (Port 80).
 sudo systemctl restart projektbesprechung
 ```
 
+## Reiter „Prozesse“ einrichten (einmalig)
+
+Neue Dateien: `prozesse_api.py`, `prozess_daten.py`, `seed_prozesse.py`
+(plus geänderte `app.py`, `models.py`, `seed.py`, `static/index.html`).
+Nach dem Kopieren auf den Server — **Befehle einzeln ausführen**:
+
+```bash
+sudo chown -R heta:heta /opt/projektbesprechung
+```
+
+```bash
+cd /opt/projektbesprechung
+```
+
+```bash
+./venv/bin/python seed_prozesse.py
+```
+
+```bash
+sudo systemctl restart projektbesprechung
+```
+
+`seed_prozesse.py` legt nur die neuen Tabellen (`prozesse`,
+`prozess_schritte`, `prozess_fragen`, `dokumente`) an und spielt den
+Startbestand (Prozesslandkarte, Arbeitsanweisungen, Angebots- und
+Auftragsprozess, offene Fragen) ein. Bestehende Aufträge/Angebote bleiben
+unberührt. Existieren schon Prozesse, passiert nichts — das Skript kann also
+gefahrlos erneut ausgeführt werden.
+
 ## Microsoft-To-Do-Anbindung aktivieren
 
 Sobald ihr von IT/Heiko die drei Werte (Tenant-ID, Client-ID, Client-Secret)

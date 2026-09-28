@@ -100,9 +100,16 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
    Liste (aktuell bewusst nicht umgesetzt, siehe `graph_client.py`
    Docstring).
 
-## Prozessaufnahme / Reiter „Prozesse“ (in Konzeption)
+## Prozessaufnahme / Reiter „Prozesse“ (Stufe 1 umgesetzt)
 
-Konzept: `docs/KONZEPT-PROZESSE.md`. **Sprachregelung:** intern und in der
+Konzept: `docs/KONZEPT-PROZESSE.md`. Umgesetzt: Landkarte, Baum, Steckbrief,
+Ablaufschritte (sortierbar per ↑/↓), offene Fragen, Arbeitsanweisungen mit
+Auswertungsstatus, CSV-Export im Excel-Vorlagenformat. Code: `prozesse_api.py`
+(Blueprint), Modelle `Prozess`/`ProzessSchritt`/`ProzessFrage`/`Dokument` in
+`models.py`, Startbestand in `prozess_daten.py` (auch Quelle für
+`docs/prozessaufnahme/_erzeuge_csv.py`), Einspielen per `seed_prozesse.py`
+(idempotent, legt nur fehlende Tabellen an). Noch offen: Änderungshistorie,
+Probleme/Anforderungen, Systeme & Daten, Swimlane, Excel-Import. **Sprachregelung:** intern und in der
 Oberfläche immer „mögliche Einführung eines ERP-Systems“ — keinen
 Produktnamen (ERPNext) verwenden, keine Entscheidung vorwegnehmen.
 Struktur spiegelt die Excel-Vorlage `HETA_Prozessaufnahme.xlsx`.

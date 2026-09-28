@@ -1,0 +1,33 @@
+﻿Frage-ID;Prozessbezug;Frage;Klärung durch;Nächster Schritt;Fälligkeit;Status;Antwort / Entscheidung;Nachweis
+Q01;F;Offizielle Namen der Hauptprozesse laut QM-Handbuch? Was verbirgt sich hinter F1–F3 und U3 (keine AA vorhanden)?;Häfer;;;offen;;
+Q02;F4.6;Geltungsbereich „Werk4“: Gilt er für alle Bereiche? Warum tragen die K3.3.11-AA und AA U2_01 keinen Zusatz „Werk4“?;Häfer;;;offen;;
+Q03;K;Service- und Ersatzteilgeschäft hat keinen eigenen Prozess, obwohl es laut Organigramm eine Funktion „Standard- und Ersatzteile“ gibt. Steckt es in K1/K3.1?;Brühl / Linker / Nitzsche;;;offen;;
+Q04;K;Für Auslegung/Kalkulation, Projektmanagement, Fertigungsplanung und Inbetriebnahme gibt es keine AA. Lücke oder anderswo geregelt?;Hensel / Häfer;;;offen;;
+Q05;K3.2;Rechnungserstellung steht auf Revision R0: Entwurf, nie freigegeben?;Häfer / Brühl;;;offen;;
+Q06;K3.3;Lagerwesen ist unter Fertigung (K3.3.11) einsortiert, Wareneingang unter Beschaffung (U1.4). Wer ist tatsächlich für Lager, Wareneingang und Versand zuständig?;Justus / Köhler;;;offen;;
+Q07;K1.05;Wer bearbeitet die einzelnen Schritte? Wann werden Technik, Einkauf oder Geschäftsleitung eingebunden?;Linker;;;offen;;
+Q08;K1.05;Dashboard: Welche Felder und Status werden genutzt? Wer pflegt die Daten?;Linker;;;offen;;
+Q09;K1.05;Kalkulation: Wie werden Stundensätze, Zuschläge, Marge und Verkaufspreis festgelegt und freigegeben?;Hensel / Mühlberger;;;offen;;
+Q10;K1.05;Sanktions- und Bonitätsprüfung: Wer prüft, wo wird das Ergebnis dokumentiert?;Linker;;;offen;;
+Q11;K1.05;Unterschriftenregelung: Wer darf welche Angebote unterschreiben? Gibt es Wertgrenzen?;Hensel;;;offen;;
+Q12;K1.05;Wie wird mit unvollständigen Kundendaten umgegangen?;Linker;;;offen;;
+Q13;K1.05;Negative Prüfung / fehlende Machbarkeit: Wer entscheidet über das weitere Vorgehen?;Hensel;;;offen;;
+Q14;K1.05;Angebotsrevisionen: Wie werden Änderungen und ältere Angebotsstände gekennzeichnet?;Linker;;;offen;;
+Q15;K1.05;Nachverfolgung: Wer setzt Wiedervorlagen? Wo werden Rückmeldungen, Absagen und Verlustgründe erfasst?;Linker;;;offen;;
+Q16;K1.05/K3.1;Übergang zum Auftrag: Welche Angebotsdaten werden übernommen, welche erneut eingegeben?;Linker;;;offen;;
+Q17;K3.1;AA-Wortlaut: „wurde der Kunde bereits als Debitor erfasst, muss ggf. eine Sanktionsprüfung erfolgen“ – gemeint ist vermutlich „noch nicht erfasst“? Wird bei Bestandskunden erneut geprüft?;Linker;;;offen;;
+Q18;K3.1;Wo wird der Debitorenstamm geführt (Buchhaltungssoftware? Dashboard?) und wer legt neue Debitoren an?;Brühl / Buchhaltung;;;offen;;
+Q19;K3.1;Bestellung auf abgelaufenes Angebot oder mit abweichendem Preis/Lieferzeit: Wer entscheidet, wie wird der Kunde informiert?;Linker / Hensel;;;offen;;
+Q20;K3.1;Wie und von wem wird die Kommissionsnummer vergeben? Automatisch durch das Dashboard?;Linker;;;offen;;
+Q21;K3.1;Liefertermin prüfen: Mit wem (Konstruktion, Einkauf, Fertigung)? Gibt es eine Kapazitätsübersicht?;Linker / Justus;;;offen;;
+Q22;K3.1;Wer benennt die PM-Verantwortliche Person und wann? Gibt es Kriterien (Auftragsart, Wert)?;Hensel / Brühl;;;offen;;
+Q23;K3.1;Die Info-Mail an alle ist die einzige beschriebene Übergabe: Woher wissen Konstruktion, Einkauf und Fertigung, dass sie konkret etwas tun müssen?;Linker, Scharmann, Köhler, Justus;;;beantwortet;Übergabe erfolgt per Rundmail an alle, der die Auftragsbestätigung beiliegt.;Aussage Philipp Schreiber, 28.09.2026
+Q24;K3.1;Rundmail mit AB: Wird sie erst nach Erstellung der AB verschickt (laut AA kommt die Info-Mail vor der AB)? Gibt es bei Verzögerung der AB vorab eine Info-Mail ohne AB?;Linker;;;offen;;
+Q25;K3.1;Nach der Rundmail: Leitet jeder Bereich seine Aufgaben selbst aus der AB ab, oder beauftragt jemand (z.B. PM) Konstruktion, Einkauf und Fertigung ausdrücklich? Wer merkt, wenn niemand reagiert?;Linker, Häfer, Hamp, Schreiber;;;offen;;
+Q26;K3.1;Welche Informationen fehlen den Bereichen in der AB (interne Hinweise, Ursprungsauftrag, PM-Verantwortliche:r) und werden anders nachgereicht?;Scharmann, Köhler, Justus;;;offen;;
+Q27;K3.1;Wer unterschreibt/gibt die AB frei? Gilt die Unterschriftenregelung des Angebots?;Hensel;;;offen;;
+Q28;K3.1;Wo wird die AB abgelegt und wo wird die AB-Nummer vergeben?;Linker;;;offen;;
+Q29;K3.1;Unterscheidet sich der Ablauf je Auftragsart (Behälterbau, Ersatzteil, Service)? Wer übernimmt Serviceaufträge?;Brühl / Linker / Nitzsche;;;offen;;
+Q30;K3.1;Wird die 3-Tage-Frist für die AB gemessen oder nachgehalten?;Linker;;;offen;;
+Q31;K3.1;Kundenseitige Auftragsänderungen nach AB: Wie laufen sie ab (keine AA vorhanden)?;Linker;;;offen;;
+Q32;K3.1;Mitgeltende Dokumente: Sanktionslistenprüfung (AA U4_01) und Projektordnerstruktur (AA F4.6_01) werden im Text genutzt, aber nicht als mitgeltend aufgeführt – ergänzen?;Häfer;;;offen;;

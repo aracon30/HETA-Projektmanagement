@@ -1,0 +1,9 @@
+﻿Daten-ID;System / Datei / Ablage;Inhalt;Prozessbezug;Pflegeverantwortlicher;Führende Datenquelle;Speicherort;Übertragungswege;Datenqualität;Migrationsbedarf
+S01;Dashboard (Excel-Makrodateien: MASTERDATEN AUFTRAG.xlsx, Auftragsübersicht.xlsm, Positionsansicht Auftrag.xlsm);Anfrage-, Angebots- und Auftragslisten, Ordneranlage, Verknüpfung Bestellung/Zeichnungen;K1.05, K3.1;offen;ja (vermutlich);K:\Datenstruktur\Systemdateien\DB_Statistik\ (Positionsansicht);manuelle Eingabe, Übernahme Angebot → Auftrag;offen;hoch – zentrale Datenquelle
+S02;Projekt-/Auftragsordner K-Laufwerk;Angebots- und Auftragsunterlagen, Kommission;K1.05, K3.1;Vertrieb/Administration;;K-Laufwerk (Struktur lt. AA F4.6_01);Anlage über Dashboard;offen;offen
+S03;Kalkulationsvorlage;Material, Stunden, Preis;K1.05;offen;;offen;;offen;offen
+S04;Angebotsvorlage DE/EN;Angebotsdokument;K1.05;offen;;offen;;;
+S05;AB-Vorlageformular;Auftragsbestätigung;K3.1;offen;;offen;;;
+S06;Debitorenstamm;Kundenstammdaten;K3.1, Buchhaltung;offen;offen;offen (System?);;offen;hoch
+S07;E-Mail / Verteiler „alle MA“;Auftragsinformation mit AB (Rundmail), Eingangsbestätigungen;K1.05, K3.1;;;Outlook (Ablage lt. AA K1_03);;;
+S08;Papierablage (Hardcopy);Angebote;K1.05;;;offen;;;

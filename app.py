@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request, send_from_directory
 from models import db, User, Item, VerlaufEintrag, Phase, LieferterminHistorie
 import graph_client
 from erp_import import parse_positionsansicht_auftrag, hat_offene_position
+from prozesse_api import bp as prozesse_bp
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -11,6 +12,7 @@ app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(BASE_DIR, "projektbesprechung.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
+app.register_blueprint(prozesse_bp)
 
 
 def parse_date(value):
