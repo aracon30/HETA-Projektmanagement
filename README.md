@@ -72,6 +72,29 @@ Im Browser die Server-IP oder den internen Hostnamen öffnen (Port 80).
 sudo systemctl restart projektbesprechung
 ```
 
+## Updates per Git (empfohlen)
+
+Ist `/opt/projektbesprechung` ein Git-Checkout (siehe unten), genügt für
+jedes Update:
+
+```bash
+bash /opt/projektbesprechung/deploy/update.sh
+```
+
+Das Skript sichert die Datenbank (die 10 neuesten Sicherungen bleiben),
+holt den neuesten Stand (`git pull`), führt `migrate.py` und
+`seed_prozesse.py` aus (beide ändern keine bestehenden Daten) und startet
+den Dienst neu.
+
+Einmalige Einrichtung: Deploy-Key (`ssh-keygen -t ed25519 -f
+~/.ssh/github_deploy`) als *Read-only Deploy key* im GitHub-Repo hinterlegen,
+dann in `/opt/projektbesprechung`: `git init`, Remote
+`git@github.com:aracon30/HETA-Projektmanagement.git` hinzufügen,
+`git config core.sshCommand "ssh -i ~/.ssh/github_deploy"`, Branch holen und
+mit `git checkout -f -t origin/<branch>` auschecken. Datenbank, `venv` und
+Sicherungen sind per `.gitignore` bzw. als nicht versionierte Dateien davon
+nicht betroffen.
+
 ## Reiter „Prozesse“ einrichten (einmalig)
 
 Neue Dateien: `prozesse_api.py`, `prozess_daten.py`, `seed_prozesse.py`
