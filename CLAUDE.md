@@ -117,6 +117,15 @@ Es heißt **Frau Häfer**.
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 
+- **Deployment per Git (seit 28.09.2026):** `/opt/projektbesprechung` ist ein
+  Git-Checkout (Deploy-Key `~/.ssh/github_deploy`, read-only). Update:
+  `bash /opt/projektbesprechung/deploy/update.sh` (sichert DB, `git pull`,
+  `migrate.py`, `seed_prozesse.py`, Neustart). Der Server folgt aktuell dem
+  Branch `claude/erpnext-prozess-dokumentation-ino6q8`; nach Merge auf `main`
+  umstellen (`git checkout main && bash deploy/update.sh`). Nur auf dem Server
+  vorhanden (nicht im Repo): `import_orders.py`.
+- **Nie `seed.py` auf dem Server ausführen** — setzt die Datenbank zurück.
+
 - **Nach jedem `sudo cp ... /opt/projektbesprechung/...` sofort**
   `sudo chown -R heta:heta /opt/projektbesprechung` **ausführen** — sonst
   crasht Gunicorn beim Neustart mit `PermissionError`, weil `sudo cp`
