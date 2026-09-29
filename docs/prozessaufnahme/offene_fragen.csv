@@ -43,3 +43,18 @@ Q41;K2;Welches CAD-System wird genutzt, wo werden Zeichnungen abgelegt, und wie 
 Q42;K2;HETA-Typennummer: Nach welcher Systematik wird sie vergeben und wo ist sie hinterlegt?;Scharmann;;;offen;;
 Q43;K2;Kundenspezifikationen (BASF-Werksnorm, Thyssen Krupp/UHDE u.a.): Wo liegen sie, und wer hält sie aktuell?;Scharmann / Häfer;;;offen;;
 Q44;K2;Werden Konstruktionsstunden auf die Kommission gebucht (für die Nachkalkulation)?;Scharmann / Brühl;;;offen;;
+Q45;U1.1;"Wird vor einer Bestellung auf Kommission geprüft, ob das Material am Lager ist? Die AA Bestellung sieht keinen solchen Schritt vor; die Lagerliste dient laut AA Lagerwesen nur dazu, Nachbestellbedarf zu erkennen.";Köhler / Justus;;;offen;;
+Q46;U1.1;MDL: Wer erstellt sie, wird die Stückliste von Hand übertragen, und wo liegt sie für alle Abteilungen?;Köhler / Hamp;;;offen;;
+Q47;U1.1;Bestellnummer, Bestelldaten, Lieferscheine und Rechnungswert werden in Dashboard UND MDL (und DATEV) geführt – welche Liste ist führend, und wo wird doppelt eingetragen?;Köhler / Brühl;;;offen;;
+Q48;U1.1;Unterschriftenregelung für Bestellungen: Wer darf bis zu welchem Wert unterschreiben?;Hensel / Köhler;;;offen;;
+Q49;U1.1;Auf welchem Weg geht die Bestellung an den Lieferanten, und wird dessen Auftragsbestätigung (Liefertermin) irgendwo erfasst und überwacht?;Köhler;;;offen;;
+Q50;U1.4;Woher weiß der Wareneingang, was bestellt wurde (Bestellpositionen für die Vollständigkeitsprüfung) – Ausdruck der Bestellung, Dashboard, MDL?;Justus / Köhler;;;offen;;
+Q51;U1.4;Wer ist „Fertigungsleiter Werk 4“ (verantwortlich laut AA) und wer nimmt die Ware in der Praxis an?;Justus / Scharmann;;;offen;;
+Q52;U1.4;Zeugnisse: Wie kommen die Werkstoffzeugnisse vom Lieferanten zu PM/Dokumentation und werden der Kommission zugeordnet?;Hamp / Häfer;;;offen;;
+Q53;U1.4;Wird die Frist „max. 1 Arbeitstag zwischen Annahme und Prüfung“ eingehalten bzw. nachgehalten?;Justus;;;offen;;
+Q54;Lager, Bestandsführung und Inventur;Lagerwesen nennt die Liste „Lagerbestand“, Wareneingang „Lagerbestandsführung“ (beide FB_K3.3.11-26) – ist das dieselbe Excel-Liste?;Häfer;;;offen;;
+Q55;Lager, Bestandsführung und Inventur;Nur Rohre, Flansche und Stangenmaterial werden geführt. Gibt es weitere Lagerartikel (Normteile, Dichtungen, Schweißzusatz, Standard-/Ersatzteile) ohne Bestandsführung?;Justus / Köhler;;;offen;;
+Q56;Lager, Bestandsführung und Inventur;Gibt es Mindestbestände, und wer schaut regelmäßig in die Liste, um nachzubestellen?;Köhler;;;offen;;
+Q57;Lager, Bestandsführung und Inventur;Wird Lagermaterial für eine Kommission reserviert, bevor es entnommen wird?;Justus;;;offen;;
+Q58;Lager, Bestandsführung und Inventur;Wie oft kommt die Entnahme per Zettel vor, und wie genau ist die Liste im Vergleich zum tatsächlichen Bestand (Inventur)?;Justus / Häfer;;;offen;;
+Q59;F;AA F4_01 „Steuerung von Nichtkonformitäten“ und AA U2.3_01 „Umgang Gefahrstoffe“ werden als mitgeltend genannt, fehlen aber in der Dateiliste der Arbeitsanweisungen – wo liegen sie?;Häfer;;;offen;;

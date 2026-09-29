@@ -69,6 +69,34 @@ zusammengefasst; für ein mögliches ERP-System sind sie vor allem als
 **Stammdaten/Merkmale** interessant (Typennummer, technische Daten,
 Stutzenliste).
 
+### U1.1 Bestellung · U1.4 Wareneingang · Lager
+
+| | U1.1 Bestellung | U1.4 Wareneingang | Lager, Bestandsführung |
+|---|---|---|---|
+| Quelle | AA U1.1_01, Rev. 2, 25.09.2025 (Häfer / Köhler) | AA U1.4_02, Rev. 4, 24.09.2026 (Häfer / Scharmann) | AA K3.3.11-05, Rev. 1, 23.06.2026 (Häfer / Justus) |
+| Verantwortlich | Einkauf Werk 4 | Fertigungsleiter Werk 4 | Justus, Köhler, Häfer |
+| Kernaussage | Bestellung erst mit AB + freigegebener Stückliste; MDL (Excel) aus Stückliste; ≥1 schriftliches Angebot; technische Prüfung durch Konstruktion; Unterschriftenregelung; Nr. aus Dashboard; nach Lieferung LS und Rechnungswert (aus DATEV) ins Dashboard | Annahme, Sichtkontrolle, LS stempeln/scannen (roter Kasten), Prüfung ≤ 1 Arbeitstag (Vollständigkeit, Maße, Schmelze, Zeugnis, ggf. PMI), sperren oder freigeben, Kommission zuordnen, Lagermaterial erfassen, LS in blauen Kasten | Excel-Liste nur für Rohre, Flansche, Stangenmaterial; Zugang beim WE, Entnahme mit Datum austragen; bei akutem Bedarf Zettel |
+| Schritte | 10 | 8 | 4 |
+
+## Wird geprüft, ob Material am Lager ist?
+
+**Nein – nicht als fester Schritt.** Die AA Bestellung beginnt mit Stückliste →
+MDL → Lieferantenangebot; ein Abgleich mit dem Lagerbestand ist nicht
+vorgesehen. Die Lagerliste dient laut AA Lagerwesen nur dazu, dass der Einkauf
+**Nachbestellbedarf** erkennt. Einziger Bezug im Konstruktionsprozess: das
+Abstimmen von „Alternativmaterial aus dem Lager“ (AA K2_01). Bestand wird
+zudem nur für Rohre, Flansche und Stangenmaterial geführt, Entnahmen bei
+akutem Bedarf per Zettel.
+
+Für ein mögliches ERP-System ist das eine zentrale Anforderung
+(Verfügbarkeitsprüfung, Reservierung je Kommission, Bestandsführung für alle
+Lagerartikel) – im Praxisabgleich mit Köhler und Justus klären, wie es heute
+tatsächlich läuft (Fragen im Tool bei U1.1 und Lager).
+
+**Mehrfacherfassung:** Bestelldaten stehen in Dashboard **und** MDL,
+Lieferscheine werden gestempelt, gescannt, kopiert und ins Dashboard
+übertragen, Rechnungswerte aus DATEV von Hand ins Dashboard.
+
 ## Übergabe Konstruktion → Einkauf (Nahtstelle K2 → U1.1)
 
 Laut AA stimmt die Konstruktion **Bestelltexte** und den Einsatz von

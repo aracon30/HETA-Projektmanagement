@@ -8,3 +8,13 @@ K3.1;K3.3;Auftragsbestätigung (Rundmail an alle);E-Mail;;Praxisangabe P. Schrei
 K2;U1.1;Bestelltexte / Materialauswahl, Info bei Zeichnungsänderungen;Noch unklar;ja;Laut AA K2_01. Ob eine Stückliste übergeben wird und in welcher Form, ist ungeklärt.;K2 Schritt 4
 K2;K3.3;Freigegebene Zeichnungsunterlagen;Noch unklar;;"Laut AA K2_01 Schritt 7; Weg der Verteilung offen";K2 Schritt 7
 K3.3;K2;Schweißtechnische Abstimmung (Schweißverfahren, Zusatz);Mündlich / Telefon;;"Laut AA K2_01 Schritt 2 (Schweißaufsicht); Weg angenommen";K2 Schritt 2
+K2;U1.1;Freigegebene Zeichnungen und Stücklisten (Voraussetzung jeder Bestellung);Noch unklar;;Laut AA U1.1_01;U1.1 Schritt 1
+U1.1;K2;Bestellung zur technischen Prüfung und Paraphe;Noch unklar;;Laut AA U1.1_01 Schritt 6;U1.1 Schritt 6
+U1.1;U1.4;Bestelldaten für die Prüfung auf Vollständigkeit;Noch unklar;ja;Wie der Wareneingang die Bestellpositionen kennt, ist offen;U1.4 Schritt 4
+U1.4;U1.1;Bearbeitete Original-Lieferscheine (blauer Ablagekasten);Papier;;Laut AA U1.4_02 / U1.1_01;U1.4 Schritt 8
+U1.4;U1.1;Meldung bei Schaden oder Fehlmenge (Reklamation beim Lieferanten);Noch unklar;;Laut AA U1.4_02;U1.4 Schritt 2
+K2;U1.4;Zeichnungen für die Maßkontrolle;Noch unklar;;Laut AA U1.4_02 Schritt 4;U1.4 Schritt 4
+U1.4;K3.3;Freigegebene Ware, der Kommission zugeordnet (A4-Blatt an Palette/Karton);Papier;;Laut AA U1.4_02;U1.4 Schritt 6
+U1.4;Lager, Bestandsführung und Inventur;Lagermaterial: Zugang in der Lagerbestandsliste;Ordner / K-Laufwerk;;Excel-Liste K:\02 Lager\Lagerbestand;U1.4 Schritt 7
+Lager, Bestandsführung und Inventur;U1.1;Lagerbestandsliste – Nachbestellbedarf;Ordner / K-Laufwerk;ja;"Einkauf erkennt Bedarf nur durch Blick in die Liste; keine Prüfung je Bestellung beschrieben";
+K3.3;Lager, Bestandsführung und Inventur;Entnahmezettel bei akutem Materialbedarf;Papier;ja;Laut AA K3.3.11-05: formloser Zettel;Lager, Bestandsführung und Inventur Schritt 4

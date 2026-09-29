@@ -253,6 +253,17 @@ SYSTEME = [
     ["S07", "E-Mail / Verteiler „alle MA“", "Auftragsinformation mit AB (Rundmail), Eingangsbestätigungen", "K1.05, K3.1",
      "", "", "Outlook (Ablage lt. AA K1_03)", "", "", ""],
     ["S08", "Papierablage (Hardcopy)", "Angebote", "K1.05", "", "", "offen", "", "", ""],
+    ["S09", "Material-Deadline-Liste (MDL, Excel)", "Zu bestellende Teile je Auftrag, Bestellstatus", "U1.1",
+     "Einkauf", "offen", "offen", "aus Stückliste (von Hand?)", "offen", "hoch"],
+    ["S10", "Dashboard – Bestellliste", "Bestellnummern, Bestelldaten, Lieferungen, Rechnungswerte", "U1.1",
+     "Einkauf", "offen", "Dashboard", "manuell aus Bestellung, Lieferschein, DATEV", "offen", "hoch"],
+    ["S11", "DATEV", "Eingangsrechnungen, Prüfung und Freigabe", "U1.1, Buchhaltung", "Buchhaltung/Einkauf",
+     "ja (Rechnungen)", "DATEV", "", "", "Schnittstelle prüfen"],
+    ["S12", "Lagerbestandsliste (Excel, FB_K3.3.11-26)", "Rohre, Flansche, Stangenmaterial: Zugänge/Entnahmen",
+     "Lager, U1.4, U1.1", "Justus, Köhler, Häfer", "ja (einzige Bestandsführung)", r"K:\02 Lager\Lagerbestand",
+     "Wareneingang, Entnahme, Zettel", "offen (Zettel-Entnahmen)", "hoch"],
+    ["S13", "Wareneingang: Stempel, Ordner WE, Ablagekästen rot/blau", "Lieferscheine unbearbeitet/bearbeitet",
+     "U1.4, U1.1", "Wareneingang", "", "Papier + Scan", "Papier", "", "mittel"],
 ]
 
 
@@ -382,6 +393,190 @@ ERGAENZUNGEN.append((3, dict(
     ],
 )))
 
+AA_BEST = "Laut AA U1.1_01 Rev. 2 – Praxisabgleich offen"
+AA_WE = "Laut AA U1.4_02 Rev. 4 – Praxisabgleich offen"
+AA_LAG = "Laut AA K3.3.11-05 Rev. 1 – Praxisabgleich offen"
+EK = "Einkauf Werk 4 (Köhler, Hamp)"
+WE = "Wareneingang: MA Fertigung Werk 4 (Person offen)"
+LAGER = "Lager, Bestandsführung und Inventur"
+
+ERGAENZUNGEN.append((4, dict(
+    titel="AA U1.1_01 Bestellung, U1.4_02 Wareneingang, K3.3.11-05 Lagerwesen ausgewertet (30.09.2026)",
+    # Lagerprozess unter U (wie in der Prozessliste vorgeschlagen); ist er schon von Hand angelegt,
+    # wird er über die Bezeichnung gefunden und nicht doppelt angelegt.
+    landkarte=[(None, LAGER, "U", "vorgeschlagen")],
+    details={
+        "U1.1": dict(
+            verantwortlich="Einkauf Werk 4",
+            beteiligte="Geschäftsleitung, PM, Konstruktion (technische Prüfung), Fertigungsleiter/Schweißaufsicht",
+            ausloeser="Kundenauftrag mit HETA-AB und freigegebene Zeichnungen/Stücklisten",
+            ergebnis="Unterschriebene Bestellung beim Lieferanten, erfasst in Dashboard und MDL; nach Lieferung "
+                     "Lieferschein und Rechnungswert in der Dashboard-Bestellliste",
+            systeme="Material-Deadline-Liste (MDL, Excel), Dashboard (Bestellliste, Bestellnummer), Bestellvorlage, "
+                    "DATEV (Rechnungsprüfung/-freigabe)",
+            variante="Teile für Druckbehälter · Schweißzusatz (Zeugnis 3.1) · Gefahrstoffe (Sicherheitsdatenblatt)",
+        ),
+        "U1.4": dict(
+            verantwortlich="Fertigungsleiter Werk 4",
+            beteiligte="MA Fertigung, Einkauf, PM/Dokumentation, Konstruktion",
+            ausloeser="Anlieferung (Spedition, Paketdienst) mit Lieferschein",
+            ergebnis="Ware geprüft und freigegeben (oder gesperrt), der Kommission zugeordnet bzw. eingelagert; "
+                     "bearbeiteter Lieferschein im blauen Ablagekasten für den Einkauf",
+            systeme="Wareneingangsstempel, Lieferschein (Scan + Kopie), Ordner WE, Ablagekästen rot/blau, "
+                    "Liste Lagerbestandsführung, Umstempelbescheinigung, Sperrzettel, Mängelbericht",
+        ),
+        LAGER: dict(
+            verantwortlich="Justus, Köhler, Häfer (verwalten die Lagerbestandsliste)",
+            beteiligte="Alle MA Fertigung Werk 4, Einkauf",
+            ausloeser="Zugang von Lagermaterial (Wareneingang) oder Entnahme für einen Auftrag",
+            ergebnis="Aktuelle Lagerbestandsliste; Einkauf erkennt Nachbestellbedarf",
+            systeme=r"Excel-Liste K:\02 Lager\Lagerbestand (FB_K3.3.11-26), Aufkleber/Kennzeichnung, formloser Zettel",
+            variante="Nur Rohre, Flansche, Stangenmaterial (Rund, Flach, Winkel)",
+        ),
+    },
+    status={"U1.1": "laut_aa", "U1.4": "laut_aa", LAGER: "laut_aa"},
+    dokumente=[
+        ("AA_F4_01", "", "Steuerung von Nichtkonformitäten", "Werk4", "F", "nicht_gesichtet"),
+        ("AA_U2.3_01", "", "Umgang Gefahrstoffe", "", "U2", "nicht_gesichtet"),
+    ],
+    dokument_prozess={"AA_K3.3.11-05": LAGER},
+    dokument_status={"AA_U1.1_01": "uebernommen", "AA_U1.4_02": "uebernommen", "AA_K3.3.11-05": "uebernommen"},
+    schritte=[
+        ["U1.1", 1, "Voraussetzungen prüfen: Kundenauftrag und HETA-AB liegen vor, Zeichnungen und Stücklisten sind "
+         "von der Konstruktion erstellt und freigegeben", EK, "AB, freigegebene Zeichnungen und Stücklisten", "",
+         "Bestellung kann vorbereitet werden", "", "", "", "", "", AA_BEST],
+        ["U1.1", 2, "Material-Deadline-Liste (MDL) aus den Stücklisten erzeugen: alle zu bestellenden Teile des "
+         "Druckbehälters mit Daten zur Nachverfolgung", EK + " (Person offen)", "Stücklisten", "Excel (MDL)",
+         "MDL – Bestellstatus für alle Abteilungen sichtbar", "alle Abteilungen (Ablage offen)", "",
+         "Übertrag Stückliste → MDL von Hand? (siehe Offene Fragen)", "", "", AA_BEST],
+        ["U1.1", 3, "Mindestens ein schriftliches Lieferantenangebot einholen (Ausnahme: langjährige Lieferanten/"
+         "Rahmenvertrag, z.B. TÜV Hessen, Ingenieurbüro Hardt)", EK, "MDL / Stückliste", "E-Mail?",
+         "Lieferantenangebot", "", "", "", "", "", AA_BEST],
+        ["U1.1", 4, "Angebot technisch und kommerziell prüfen", EK, "Lieferantenangebot, Zeichnung", "",
+         "Geprüftes Angebot", "", "", "", "", "", AA_BEST],
+        ["U1.1", 5, "Bestellung auf Vorlage erstellen; immer Art der Prüfbescheinigung nach DIN EN 10204 angeben "
+         "(Schweißzusatz: 3.1; Gefahrstoffe: Sicherheitsdatenblätter anfordern, AA U2.3_01)", EK,
+         "Geprüftes Angebot", "Bestellvorlage (PB U1.1)", "Bestellentwurf", "", "", "", "", "", AA_BEST],
+        ["U1.1", 6, "Bestellung technisch prüfen und parafieren", "Konstruktion oder dafür Verantwortliche:r",
+         "Bestellentwurf, Zeichnung", "", "Technisch freigegebene Bestellung", "", "Konstruktion",
+         "", "", "", AA_BEST],
+        ["U1.1", 7, "Bestellung nach Unterschriftenregelung unterschreiben (= Freigabe) und an Lieferanten senden",
+         "Unterschriftsberechtigte (lt. Regelung)", "Technisch geprüfte Bestellung", "E-Mail? (Versandweg offen)",
+         "Bestellung beim Lieferanten", "Lieferant", "Unterschriftenregelung", "", "", "", AA_BEST],
+        ["U1.1", 8, "Bestellnummer = nächste laufende Nummer im Dashboard (je Kommission); Bestelldaten im Dashboard "
+         "ergänzen; Bestell-Nr. mit Datum und Lieferant in der MDL eintragen", EK, "Bestellung",
+         "Dashboard (Bestellliste), MDL", "Bestellung in Dashboard und MDL erfasst", "", "",
+         "Gleiche Daten in Dashboard und MDL", "", "", AA_BEST],
+        ["U1.1", 9, "Nach dem Wareneingang: Original-Lieferscheine aus dem blauen Ablagekasten in der "
+         "Dashboard-Bestellliste erfassen (Lieferdatum, gelieferte Positionen, Wert bei Teillieferung, Freigabedatum)",
+         EK, "Bearbeitete Lieferscheine (blauer Kasten)", "Dashboard (Bestellliste)", "Lieferung erfasst", "", "",
+         "", "", "", AA_BEST],
+        ["U1.1", 10, "Rechnung über DATEV erhalten, dort prüfen und freigeben; Rechnungswert in die "
+         "Dashboard-Bestellliste eintragen", EK + ", Buchhaltung", "Lieferantenrechnung", "DATEV, Dashboard",
+         "Rechnung freigegeben, Wert im Dashboard", "Buchhaltung", "", "", "", "", AA_BEST],
+
+        ["U1.4", 1, "Ware annehmen (Tor Straßenseite); Lieferschein auf Bestell- und/oder Kommissionsnummer prüfen",
+         WE, "Lieferung mit Lieferschein", "", "Ware angenommen", "Einkauf, falls Nummern fehlen", "",
+         "Keine Bestell-/Kommissions-Nr.: Einkauf klärt mit dem Lieferanten", "", "", AA_WE],
+        ["U1.4", 2, "Sichtkontrolle von Verpackung und Ware", WE, "Lieferung", "", "Ware unbeschädigt/vollständig",
+         "Einkauf bei Schaden oder Fehlmenge", "", "Beschädigt/unvollständig: Einkauf informieren (Reklamation)",
+         "", "", AA_WE],
+        ["U1.4", 3, "Lieferschein stempeln (Datum + Wareneingangsstempel, Unterschrift Annehmer), scannen und "
+         "kopieren (1x an die Ware, 1x in Ordner WE), Original in roten Ablagekasten (= unbearbeitet)", WE,
+         "Lieferschein", "WE-Stempel, Scanner, Ordner WE, roter Kasten", "Lieferschein erfasst", "", "", "", "",
+         "", AA_WE],
+        ["U1.4", 4, "Ware prüfen (spätestens 1 Arbeitstag nach Annahme): alle Positionen vollständig, Maßkontrolle "
+         "nach Zeichnung, Schmelze Lieferschein = Material, Kennzeichnung = Zeugnis, ggf. Umstempeln mit "
+         "Umstempelbescheinigung, PMI bei Kundenforderung; Ergebnis im WE-Stempel eintragen",
+         WE, "Ware, Lieferschein, Zeichnung, Zeugnis, Bestellung", "WE-Stempel, FB_K3.3.11-04 Umstempelbescheinigung",
+         "Prüfergebnis", "PM bei fehlendem Zeugnis / fehlender Schmelze", "",
+         "Keine Schmelzangabe: Rücksprache PM", "", "max. 1 Arbeitstag", AA_WE],
+        ["U1.4", 5, "Bei negativer Prüfung: Ware sperren nach AA F4_01 Steuerung von Nichtkonformitäten "
+         "(Sperrzettel, Mängelbericht)", WE, "Negatives Prüfergebnis", "FB_U1.4.1_02 Sperrzettel, FB_U1.4.1_01 "
+         "Mängelbericht", "Ware gesperrt", "Einkauf / QM (offen)", "", "", "", "", AA_WE],
+        ["U1.4", 6, "Freigegebene Ware der Kommission zuordnen (A4-Blatt mit 4-stelliger Auftragsnummer an Palette/"
+         "Karton), bereitstellen für interne/externe Bearbeitung, bei Handelsware umpacken/etikettieren",
+         WE, "Freigegebene Ware", "A4-Blatt", "Ware der Kommission zugeordnet", "Fertigung / Versand", "", "",
+         "", "", AA_WE],
+        ["U1.4", 7, "Lagermaterial (Rohre, Standardflansche DIN, Stangenmaterial) in Liste Lagerbestandsführung "
+         "erfassen, mit Schmelze und Werkstoff kennzeichnen und einlagern", WE,
+         "Freigegebenes Lagermaterial", r"Excel-Liste Lagerbestand (K:\02 Lager), FB_K3.3.11-26",
+         "Lagerzugang erfasst", LAGER, "", "", "", "", AA_WE],
+        ["U1.4", 8, "Original-Lieferschein: Qualitätskontrolle im WE-Stempel ausfüllen (freigegeben, Datum, Kürzel, "
+         "Unterschrift), scannen, in blauen Ablagekasten (= bearbeitet)", WE, "Geprüfte Ware", "WE-Stempel, "
+         "Scanner, blauer Kasten", "Lieferschein bearbeitet", "Einkauf (blauer Kasten)", "", "", "", "", AA_WE],
+
+        [LAGER, 1, "Zugang: Material, das zusätzlich zur Kommission für Lager bestellt wurde (Rohre, Flansche, "
+         "Stangenmaterial), beim Wareneingang als Neuzugang in der Lagerbestandsliste erfassen",
+         "Justus, Köhler, Häfer (lt. AA), in der Praxis Wareneingang?", "Freigegebenes Lagermaterial",
+         r"Excel K:\02 Lager\Lagerbestand (FB_K3.3.11-26)", "Neuzugang in der Liste", "", "", "", "", "", AA_LAG],
+        [LAGER, 2, "Material mit Schmelze und Werkstoffnummer kennzeichnen (ggf. Aufkleber) und an den Lagerort "
+         "bringen", "MA Fertigung", "Lagermaterial", "Aufkleber", "Gekennzeichnetes Material am Lagerort", "", "",
+         "", "", "", AA_LAG],
+        [LAGER, 3, "Entnahme für einen Auftrag nur durch autorisierte MA; entnommene Menge/Länge mit Datum in der "
+         "Liste austragen – dadurch sieht der Einkauf, wann nachbestellt werden muss",
+         "Justus, Köhler, Häfer", "Materialbedarf eines Auftrags", r"Excel K:\02 Lager\Lagerbestand",
+         "Bestand aktualisiert", "Einkauf (Nachbestellbedarf über die Liste)", "", "", "", "", AA_LAG],
+        [LAGER, 4, "Ausnahme bei akutem Bedarf in der Fertigung: Fertigungs-MA entnimmt selbst, notiert Abmessung, "
+         "Schmelze, Werkstoff auf einem formlosen Zettel und gibt ihn einer zuständigen Person zum Austragen",
+         "MA Fertigung → Justus/Köhler/Häfer", "Akuter Materialbedarf", "Formloser Zettel, Excel-Liste",
+         "Bestand (verzögert) aktualisiert", "zuständige Person (Zettel)", "", "Zettel geht verloren → Bestand falsch?",
+         "", "bis Zettel übertragen ist", AA_LAG],
+    ],
+    fragen=[
+        ("U1.1", "Wird vor einer Bestellung auf Kommission geprüft, ob das Material am Lager ist? Die AA Bestellung "
+                 "sieht keinen solchen Schritt vor; die Lagerliste dient laut AA Lagerwesen nur dazu, Nachbestellbedarf "
+                 "zu erkennen.", "Köhler / Justus"),
+        ("U1.1", "MDL: Wer erstellt sie, wird die Stückliste von Hand übertragen, und wo liegt sie für alle "
+                 "Abteilungen?", "Köhler / Hamp"),
+        ("U1.1", "Bestellnummer, Bestelldaten, Lieferscheine und Rechnungswert werden in Dashboard UND MDL (und "
+                 "DATEV) geführt – welche Liste ist führend, und wo wird doppelt eingetragen?", "Köhler / Brühl"),
+        ("U1.1", "Unterschriftenregelung für Bestellungen: Wer darf bis zu welchem Wert unterschreiben?",
+                 "Hensel / Köhler"),
+        ("U1.1", "Auf welchem Weg geht die Bestellung an den Lieferanten, und wird dessen Auftragsbestätigung "
+                 "(Liefertermin) irgendwo erfasst und überwacht?", "Köhler"),
+        ("U1.4", "Woher weiß der Wareneingang, was bestellt wurde (Bestellpositionen für die Vollständigkeitsprüfung) – "
+                 "Ausdruck der Bestellung, Dashboard, MDL?", "Justus / Köhler"),
+        ("U1.4", "Wer ist „Fertigungsleiter Werk 4“ (verantwortlich laut AA) und wer nimmt die Ware in der Praxis an?",
+                 "Justus / Scharmann"),
+        ("U1.4", "Zeugnisse: Wie kommen die Werkstoffzeugnisse vom Lieferanten zu PM/Dokumentation und werden der "
+                 "Kommission zugeordnet?", "Hamp / Häfer"),
+        ("U1.4", "Wird die Frist „max. 1 Arbeitstag zwischen Annahme und Prüfung“ eingehalten bzw. nachgehalten?",
+                 "Justus"),
+        (LAGER, "Lagerwesen nennt die Liste „Lagerbestand“, Wareneingang „Lagerbestandsführung“ (beide "
+                "FB_K3.3.11-26) – ist das dieselbe Excel-Liste?", "Häfer"),
+        (LAGER, "Nur Rohre, Flansche und Stangenmaterial werden geführt. Gibt es weitere Lagerartikel (Normteile, "
+                "Dichtungen, Schweißzusatz, Standard-/Ersatzteile) ohne Bestandsführung?", "Justus / Köhler"),
+        (LAGER, "Gibt es Mindestbestände, und wer schaut regelmäßig in die Liste, um nachzubestellen?", "Köhler"),
+        (LAGER, "Wird Lagermaterial für eine Kommission reserviert, bevor es entnommen wird?", "Justus"),
+        (LAGER, "Wie oft kommt die Entnahme per Zettel vor, und wie genau ist die Liste im Vergleich zum tatsächlichen "
+                "Bestand (Inventur)?", "Justus / Häfer"),
+        ("F", "AA F4_01 „Steuerung von Nichtkonformitäten“ und AA U2.3_01 „Umgang Gefahrstoffe“ werden als "
+              "mitgeltend genannt, fehlen aber in der Dateiliste der Arbeitsanweisungen – wo liegen sie?", "Häfer"),
+    ],
+    verbindungen=[
+        ("K2", "U1.1", "Freigegebene Zeichnungen und Stücklisten (Voraussetzung jeder Bestellung)", "unklar", False,
+         "Laut AA U1.1_01", ("U1.1", 1)),
+        ("U1.1", "K2", "Bestellung zur technischen Prüfung und Paraphe", "unklar", False,
+         "Laut AA U1.1_01 Schritt 6", ("U1.1", 6)),
+        ("U1.1", "U1.4", "Bestelldaten für die Prüfung auf Vollständigkeit", "unklar", True,
+         "Wie der Wareneingang die Bestellpositionen kennt, ist offen", ("U1.4", 4)),
+        ("U1.4", "U1.1", "Bearbeitete Original-Lieferscheine (blauer Ablagekasten)", "papier", False,
+         "Laut AA U1.4_02 / U1.1_01", ("U1.4", 8)),
+        ("U1.4", "U1.1", "Meldung bei Schaden oder Fehlmenge (Reklamation beim Lieferanten)", "unklar", False,
+         "Laut AA U1.4_02", ("U1.4", 2)),
+        ("K2", "U1.4", "Zeichnungen für die Maßkontrolle", "unklar", False, "Laut AA U1.4_02 Schritt 4", ("U1.4", 4)),
+        ("U1.4", "K3.3", "Freigegebene Ware, der Kommission zugeordnet (A4-Blatt an Palette/Karton)", "papier", False,
+         "Laut AA U1.4_02", ("U1.4", 6)),
+        ("U1.4", LAGER, "Lagermaterial: Zugang in der Lagerbestandsliste", "ordner", False,
+         r"Excel-Liste K:\02 Lager\Lagerbestand", ("U1.4", 7)),
+        (LAGER, "U1.1", "Lagerbestandsliste – Nachbestellbedarf", "ordner", True,
+         "Einkauf erkennt Bedarf nur durch Blick in die Liste; keine Prüfung je Bestellung beschrieben", None),
+        ("K3.3", LAGER, "Entnahmezettel bei akutem Materialbedarf", "papier", True,
+         "Laut AA K3.3.11-05: formloser Zettel", (LAGER, 4)),
+    ],
+)))
+
 # Aktueller Stand = höchste Ergänzungsnummer (Startbestand oben = 1)
 STARTBESTAND_VERSION = max([1] + [v for v, _ in ERGAENZUNGEN])
 
@@ -397,7 +592,9 @@ def alle_fragen():
 
 def alle_dokumente():
     """Dokumentenliste mit dem Auswertungsstatus nach allen Ergänzungen."""
-    status = {}
+    status, prozess, liste = {}, {}, list(DOKUMENTE)
     for _, e in ERGAENZUNGEN:
+        liste += e.get("dokumente", [])
         status.update(e.get("dokument_status", {}))
-    return [(n, r, t, g, p, status.get(n, s)) for n, r, t, g, p, s in DOKUMENTE]
+        prozess.update(e.get("dokument_prozess", {}))
+    return [(n, r, t, g, prozess.get(n, p), status.get(n, s)) for n, r, t, g, p, s in liste]

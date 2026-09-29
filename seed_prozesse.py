@@ -27,6 +27,35 @@ def _finde_prozess(nach_nummer, nummer):
     return None
 
 
+class _ProzessSuche(dict):
+    """Nummer -> Prozess; findet Prozesse ohne Nummer (z.B. von Hand angelegte)
+    ersatzweise über die Bezeichnung (ohne Groß-/Kleinschreibung)."""
+
+    def _nach_name(self, key):
+        if not isinstance(key, str):
+            return None
+        name = key.strip().lower()
+        treffer = [p for p in Prozess.query.all() if p.bezeichnung.strip().lower() == name]
+        return treffer[0] if len(treffer) == 1 else None
+
+    def __contains__(self, key):
+        return dict.__contains__(self, key) or self._nach_name(key) is not None
+
+    def __getitem__(self, key):
+        if dict.__contains__(self, key):
+            return dict.__getitem__(self, key)
+        p = self._nach_name(key)
+        if p is None:
+            raise KeyError(key)
+        return p
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+
 def _neuer_schritt(prozess_id, reihenfolge, zeile):
     (_, _, taetigkeit, ausfuehrend, eingaben, system, ergebnis, uebergabe, freigabe,
      ausnahme, bearbeitungszeit, wartezeit, nachweis) = zeile
@@ -73,7 +102,7 @@ def _grundbestand_einspielen():
 
 def _ergaenzung_einspielen(version, e):
     """Spielt eine Ergänzung ein, ohne Änderungen aus dem Tool zu überschreiben."""
-    nach_nummer = {p.nummer: p for p in Prozess.query.all() if p.nummer}
+    nach_nummer = _ProzessSuche({p.nummer: p for p in Prozess.query.all() if p.nummer})
     reihenfolge = db.session.query(db.func.max(Prozess.reihenfolge)).scalar() or 0
 
     for nummer, bezeichnung, parent, status in e.get("landkarte", []):
@@ -104,6 +133,17 @@ def _ergaenzung_einspielen(version, e):
         p = nach_nummer.get(nummer)
         if p and p.aufnahmestatus == "vorgeschlagen":
             p.aufnahmestatus = status
+
+    for nummer, revision, titel, geltung, prozess_nr, status in e.get("dokumente", []):
+        if not Dokument.query.filter_by(nummer=nummer).first():
+            p = _finde_prozess(nach_nummer, prozess_nr)
+            db.session.add(Dokument(nummer=nummer, revision=revision or None, titel=titel, geltungsbereich=geltung,
+                                    prozess_id=p.id if p else None, auswertungsstatus=status))
+
+    for nummer, ziel in e.get("dokument_prozess", {}).items():
+        dok, p = Dokument.query.filter_by(nummer=nummer).first(), nach_nummer.get(ziel)
+        if dok and p:
+            dok.prozess_id = p.id
 
     for nummer, status in e.get("dokument_status", {}).items():
         dok = Dokument.query.filter_by(nummer=nummer).first()

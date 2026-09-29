@@ -7,3 +7,8 @@ S05;AB-Vorlageformular;Auftragsbestätigung;K3.1;offen;;offen;;;
 S06;Debitorenstamm;Kundenstammdaten;K3.1, Buchhaltung;offen;offen;offen (System?);;offen;hoch
 S07;E-Mail / Verteiler „alle MA“;Auftragsinformation mit AB (Rundmail), Eingangsbestätigungen;K1.05, K3.1;;;Outlook (Ablage lt. AA K1_03);;;
 S08;Papierablage (Hardcopy);Angebote;K1.05;;;offen;;;
+S09;Material-Deadline-Liste (MDL, Excel);Zu bestellende Teile je Auftrag, Bestellstatus;U1.1;Einkauf;offen;offen;aus Stückliste (von Hand?);offen;hoch
+S10;Dashboard – Bestellliste;Bestellnummern, Bestelldaten, Lieferungen, Rechnungswerte;U1.1;Einkauf;offen;Dashboard;manuell aus Bestellung, Lieferschein, DATEV;offen;hoch
+S11;DATEV;Eingangsrechnungen, Prüfung und Freigabe;U1.1, Buchhaltung;Buchhaltung/Einkauf;ja (Rechnungen);DATEV;;;Schnittstelle prüfen
+S12;Lagerbestandsliste (Excel, FB_K3.3.11-26);Rohre, Flansche, Stangenmaterial: Zugänge/Entnahmen;Lager, U1.4, U1.1;Justus, Köhler, Häfer;ja (einzige Bestandsführung);K:\02 Lager\Lagerbestand;Wareneingang, Entnahme, Zettel;offen (Zettel-Entnahmen);hoch
+S13;Wareneingang: Stempel, Ordner WE, Ablagekästen rot/blau;Lieferscheine unbearbeitet/bearbeitet;U1.4, U1.1;Wareneingang;;Papier + Scan;Papier;;mittel
