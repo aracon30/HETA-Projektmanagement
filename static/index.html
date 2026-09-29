@@ -2667,6 +2667,7 @@ let pzSearch = "";
 let verbindungen = [];          // Übergaben zwischen Prozessen (Schnittstellen)
 let pzKarteFokus = null;        // in der Schnittstellenkarte hervorgehobener Prozess
 let pzKarteNurProbleme = false;
+let pzKarteModus = (() => { try{ return localStorage.getItem("pzKarteModus") || "grob"; }catch(e){ return "grob"; } })();
 // Kette "Anfrage bis Rechnung" (Reihenfolge entlang eines Auftrags)
 const PZ_KETTE = ["K1", "K3.1", "K2", "U1", "K3.3", "K3.2"];
 const PZ_STATUS_KURZ = {
@@ -3116,7 +3117,7 @@ const PZ_WEG_FARBEN = {
 };
 // Reihenfolge der Kernprozesse in der Karte (entlang eines Auftrags); andere
 // Prozesse werden hinter dem nächsten übergeordneten Prozess aus dieser Liste einsortiert.
-const PZ_KARTE_KERN = ["K1", "K1.05", "K3.1", "K2", "K3", "K3.3", "K3.2", "K4"];
+const PZ_KARTE_KERN = ["K1", "K1.05", "K3.1", "K2", "K3.3", "K3", "K3.2", "K4"];
 
 function pzWegLabel(weg){
   const w = (prozessConfig?.wege || []).find(o => o.value === weg);
@@ -3130,18 +3131,22 @@ function pzWegHtml(weg){
   return `<span class="pz-weg"><span class="pz-weg-linie" style="${linie}"></span>${pzEsc(pzWegLabel(weg))}</span>`;
 }
 
-function renderPzVerbindungsListe(prozessId, schritte){
-  const ein = verbindungen.filter(v => v.nachId === prozessId);
-  const aus = verbindungen.filter(v => v.vonId === prozessId);
-  if(!ein.length && !aus.length){
+function renderPzVerbindungsListe(prozessIds, schritte){
+  const ids = new Set(Array.isArray(prozessIds) ? prozessIds : [prozessIds]);
+  const ein = verbindungen.filter(v => ids.has(v.nachId) && !ids.has(v.vonId));
+  const aus = verbindungen.filter(v => ids.has(v.vonId) && !ids.has(v.nachId));
+  const intern = ids.size > 1 ? verbindungen.filter(v => ids.has(v.vonId) && ids.has(v.nachId)) : [];
+  if(!ein.length && !aus.length && !intern.length){
     return `<div class="pz-empty">Noch keine Übergaben erfasst. Über „+ Übergabe“ festhalten, was dieser Prozess von wem bekommt und an wen er etwas weitergibt.</div>`;
   }
+  const link = (id) => { const a = pzById(id); return a ? `<button class="clickable-text" data-pz-open="${a.id}">${pzEsc(pzLabel(a))}</button>` : '—'; };
   const zeile = (v, andererId, pfeil) => {
-    const a = pzById(andererId);
     const schritt = (schritte || []).find(s => s.id === v.schrittId);
+    // bei mehreren Prozessen (Hauptprozess + Teilprozesse) auch den eigenen Teilprozess nennen
+    const eigener = ids.size > 1 ? (pfeil === "←" ? v.nachId : pfeil === "→" ? v.vonId : null) : null;
     return `<tr>
       <td class="nr">${pfeil}</td>
-      <td>${a ? `<button class="clickable-text" data-pz-open="${a.id}">${pzEsc(pzLabel(a))}</button>` : '—'}</td>
+      <td>${pfeil === "↔" ? `${link(v.vonId)} → ${link(v.nachId)}` : link(andererId)}${eigener ? `<div class="small">${pfeil === "←" ? "an" : "von"} ${pzEsc(pzLabel(pzById(eigener)))}</div>` : ''}</td>
       <td>${pzEsc(v.inhalt)}${v.notiz ? `<div class="small">${pzEsc(v.notiz)}</div>` : ''}</td>
       <td>${pzWegHtml(v.weg)}</td>
       <td class="nr">${schritt ? `Schritt ${schritt.reihenfolge}` : ''}</td>
@@ -3160,6 +3165,7 @@ function renderPzVerbindungsListe(prozessId, schritte){
     <tbody>
       ${gruppe("Erhält von", ein, "←", "vonId")}
       ${gruppe("Übergibt an", aus, "→", "nachId")}
+      ${gruppe("Innerhalb (zwischen Teilprozessen)", intern, "↔", "nachId")}
     </tbody></table></div>`;
 }
 
@@ -3268,6 +3274,9 @@ async function openPzVerbindungModal(kontextId, v){
 }
 
 /* ---------- Schnittstellenkarte ---------- */
+// Zwei Stufen, passend zu „von grob nach fein“:
+//  grob – nur Hauptprozesse (Ebene unter F/K/U), Übergaben zusammengefasst
+//  fein – alle beteiligten Prozesse, Teilprozesse in der Spalte ihres Hauptprozesses gestapelt
 function pzBahn(p){
   const root = [...pzAhnen(p), p][0];
   const kennung = (root.nummer || root.bezeichnung || "").toUpperCase();
@@ -3276,6 +3285,10 @@ function pzBahn(p){
   if(kennung.startsWith("U")) return 2;
   return 3;
 }
+function pzHauptprozess(p){
+  const kette = [...pzAhnen(p), p];
+  return kette[1] || kette[0];
+}
 function pzKernSchluessel(p){
   for(const x of [p, ...pzAhnen(p).reverse()]){
     const idx = PZ_KARTE_KERN.indexOf(x.nummer);
@@ -3283,36 +3296,94 @@ function pzKernSchluessel(p){
   }
   return 99 * 100000 + p.reihenfolge;
 }
+function pzSpalte(p, modus){
+  if(modus === "grob") return p;
+  if(pzBahn(p) === 1){
+    for(const x of [p, ...pzAhnen(p).reverse()]){
+      if(PZ_KARTE_KERN.includes(x.nummer)) return x;
+    }
+  }
+  return pzHauptprozess(p);
+}
 
-function pzKarteLayout(){
-  const KW = 176, KH = 54, GAP = 26, BAHN_H = 150, LINKS = 120, OBEN = 96;
+function pzKarteDaten(modus){
+  if(modus !== "grob"){
+    const ids = new Set();
+    verbindungen.forEach(v => { ids.add(v.vonId); ids.add(v.nachId); });
+    return {
+      knoten: [...ids].map(pzById).filter(Boolean),
+      kanten: verbindungen.map(v => ({ ...v, schluessel: `v${v.id}`, einzeln: [v] })),
+    };
+  }
+  const gruppen = {};
+  verbindungen.forEach(v => {
+    const a = pzById(v.vonId), b = pzById(v.nachId);
+    if(!a || !b) return;
+    const ha = pzHauptprozess(a), hb = pzHauptprozess(b);
+    if(ha.id === hb.id) return;  // Übergabe innerhalb desselben Hauptprozesses
+    const k = `${ha.id}-${hb.id}`;
+    (gruppen[k] = gruppen[k] || { vonId: ha.id, nachId: hb.id, einzeln: [] }).einzeln.push(v);
+  });
+  const kanten = Object.entries(gruppen).map(([k, g]) => {
+    const zaehler = {};
+    g.einzeln.forEach(v => { zaehler[v.weg] = (zaehler[v.weg] || 0) + 1; });
+    const weg = Object.entries(zaehler).sort((x, y) => y[1] - x[1])[0][0];
+    return {
+      ...g, schluessel: `g${k}`, weg,
+      problem: g.einzeln.some(v => v.problem),
+      inhalt: g.einzeln.length === 1 ? g.einzeln[0].inhalt : `${g.einzeln.length} Übergaben`,
+    };
+  });
   const ids = new Set();
-  verbindungen.forEach(v => { ids.add(v.vonId); ids.add(v.nachId); });
-  const knoten = [...ids].map(pzById).filter(Boolean);
-  const bahnen = [[], [], [], []];
-  knoten.forEach(p => bahnen[pzBahn(p)].push(p));
-  // nur belegte Bahnen anzeigen, in fester Reihenfolge Führung – Kern – Unterstützung – Sonstige
-  const genutzt = [0, 1, 2, 3].filter(b => bahnen[b].length);
-  const bahnY = (b) => OBEN + genutzt.indexOf(b) * BAHN_H;
+  kanten.forEach(k => { ids.add(k.vonId); ids.add(k.nachId); });
+  return { knoten: [...ids].map(pzById), kanten };
+}
+
+function pzKarteLayout(daten, modus){
+  const KW = 176, KH = 54, ZEILE = KH + 14, GAP = modus === "grob" ? 110 : 64, LINKS = 120, OBEN = 44, BAHN_ABSTAND = 96;
+  // Spalten bilden (Bahn -> Spalten -> Knoten)
+  const spalten = {};
+  daten.knoten.forEach(p => {
+    const kopf = pzSpalte(p, modus);
+    const k = `${pzBahn(p)}-${kopf.id}`;
+    (spalten[k] = spalten[k] || { bahn: pzBahn(p), kopf, knoten: [] }).knoten.push(p);
+  });
+  Object.values(spalten).forEach(s => s.knoten.sort((a, b) =>
+    (a.id === s.kopf.id ? -1 : b.id === s.kopf.id ? 1 : 0) || (pzAhnen(a).length - pzAhnen(b).length) || (a.reihenfolge - b.reihenfolge)));
+  const genutzt = [0, 1, 2, 3].filter(b => Object.values(spalten).some(s => s.bahn === b));
+  const bahnTop = {};
+  let y = OBEN;
+  genutzt.forEach(b => {
+    bahnTop[b] = y;
+    const hoechste = Math.max(...Object.values(spalten).filter(s => s.bahn === b).map(s => s.knoten.length));
+    y += hoechste * ZEILE - 14 + BAHN_ABSTAND;
+  });
   const pos = {};
-  bahnen[1].sort((a, b) => pzKernSchluessel(a) - pzKernSchluessel(b))
-    .forEach((p, i) => { pos[p.id] = { x: LINKS + i * (KW + GAP), y: bahnY(1) }; });
+  const setzeSpalte = (s, x) => s.knoten.forEach((p, i) => { pos[p.id] = { x, y: bahnTop[s.bahn] + i * ZEILE }; });
+  Object.values(spalten).filter(s => s.bahn === 1)
+    .sort((a, b) => pzKernSchluessel(a.kopf) - pzKernSchluessel(b.kopf))
+    .forEach((s, i) => setzeSpalte(s, LINKS + i * (KW + GAP)));
   [0, 2, 3].forEach(b => {
-    const wunsch = (p) => {
-      const nachbarn = verbindungen.filter(v => v.vonId === p.id || v.nachId === p.id)
-        .map(v => pos[v.vonId === p.id ? v.nachId : v.vonId]).filter(Boolean);
-      return nachbarn.length ? nachbarn.reduce((s, q) => s + q.x, 0) / nachbarn.length : 1e6 + p.reihenfolge;
+    const wunsch = (s) => {
+      const ids = new Set(s.knoten.map(p => p.id));
+      const xs = daten.kanten.filter(k => ids.has(k.vonId) || ids.has(k.nachId))
+        .map(k => pos[ids.has(k.vonId) ? k.nachId : k.vonId]).filter(Boolean).map(q => q.x);
+      return xs.length ? xs.reduce((a, c) => a + c, 0) / xs.length : 1e6 + s.kopf.reihenfolge;
     };
     let rechts = LINKS - GAP;
-    bahnen[b].map(p => ({ p, w: wunsch(p) })).sort((a, c) => a.w - c.w).forEach(({ p, w }) => {
-      const x = Math.max(w > 1e5 ? 0 : w, rechts + GAP, LINKS);
-      pos[p.id] = { x, y: bahnY(b) };
-      rechts = x + KW;
-    });
+    Object.values(spalten).filter(s => s.bahn === b).map(s => ({ s, w: wunsch(s) }))
+      .sort((a, c) => a.w - c.w).forEach(({ s, w }) => {
+        const x = Math.max(w > 1e5 ? 0 : w, rechts + GAP, LINKS);
+        setzeSpalte(s, x);
+        rechts = x + KW;
+      });
   });
-  const maxX = Math.max(LINKS + KW, ...Object.values(pos).map(q => q.x + KW));
-  return { knoten, pos, KW, KH, BAHN_H, OBEN, breite: maxX + 40,
-           hoehe: OBEN + genutzt.length * BAHN_H - (BAHN_H - KH) + 100, genutzt, bahnY };
+  const breite = Math.max(LINKS + KW, ...Object.values(pos).map(q => q.x + KW)) + 60;
+  const bahnen = genutzt.map(b => {
+    const unten = Math.max(...Object.values(spalten).filter(s => s.bahn === b).map(s => bahnTop[b] + s.knoten.length * ZEILE - 14));
+    return { bahn: b, oben: bahnTop[b], unten };
+  });
+  return { pos, KW, KH, breite, hoehe: y - BAHN_ABSTAND + 100, bahnen };
 }
 
 function pzBezier(p0, p1, p2, p3, t){
@@ -3330,86 +3401,97 @@ function renderPzKarte(){
   if(!verbindungen.length){
     return kopf + `<div class="no-selection">Noch keine Übergaben erfasst. Öffne einen Prozess und lege unter „Schnittstellen“ mit „+ Übergabe“ die erste an.</div>`;
   }
-  const L = pzKarteLayout();
+  const modus = pzKarteModus;
+  const daten = pzKarteDaten(modus);
+  const L = pzKarteLayout(daten, modus);
   const fokus = pzKarteFokus && L.pos[pzKarteFokus] ? pzKarteFokus : null;
   const nachbarn = new Set(fokus ? [fokus] : []);
-  if(fokus) verbindungen.forEach(v => {
-    if(v.vonId === fokus) nachbarn.add(v.nachId);
-    if(v.nachId === fokus) nachbarn.add(v.vonId);
+  if(fokus) daten.kanten.forEach(k => {
+    if(k.vonId === fokus) nachbarn.add(k.nachId);
+    if(k.nachId === fokus) nachbarn.add(k.vonId);
   });
 
   // Mehrfachkanten zwischen denselben Prozessen auffächern
   const paare = {};
-  verbindungen.forEach(v => { const k = [v.vonId, v.nachId].sort().join("-"); (paare[k] = paare[k] || []).push(v.id); });
+  daten.kanten.forEach(k => { const p = [k.vonId, k.nachId].sort().join("-"); (paare[p] = paare[p] || []).push(k.schluessel); });
 
   const marker = Object.entries(PZ_WEG_FARBEN).map(([weg, farbe]) =>
     `<marker id="pzPfeil-${weg}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${farbe}"/></marker>`).join("");
 
   const belegt = [];  // bereits gesetzte Kantenbeschriftungen
-  const kanten = verbindungen.map(v => {
-    const a = L.pos[v.vonId], b = L.pos[v.nachId];
+  const kanten = daten.kanten.map(k => {
+    const a = L.pos[k.vonId], b = L.pos[k.nachId];
     if(!a || !b) return "";
-    const k = [v.vonId, v.nachId].sort().join("-");
-    const off = (paare[k].indexOf(v.id) - (paare[k].length - 1) / 2) * 16;
+    const pk = [k.vonId, k.nachId].sort().join("-");
+    const off = (paare[pk].indexOf(k.schluessel) - (paare[pk].length - 1) / 2) * 12;
     let x0, y0, x1, y1, x2, y2, x3, y3;
-    if(a.y !== b.y){
+    if(a.x === b.x){
+      // gleiche Spalte: seitlicher Bogen rechts
+      x0 = a.x + L.KW; y0 = a.y + L.KH / 2 + off; x3 = b.x + L.KW; y3 = b.y + L.KH / 2 + off;
+      const bogen = 26 + Math.abs(b.y - a.y) * 0.15;
+      x1 = x0 + bogen; y1 = y0; x2 = x3 + bogen; y2 = y3;
+    } else if(pzBahnVon(a, L) === pzBahnVon(b, L)){
+      // gleiche Bahn, andere Spalte: von Seite zu Seite; rückwärts gerichtete Übergaben laufen unten herum
+      const rechts = b.x > a.x;
+      x0 = rechts ? a.x + L.KW : a.x; y0 = a.y + L.KH / 2 + off;
+      x3 = rechts ? b.x : b.x + L.KW; y3 = b.y + L.KH / 2 + off;
+      if(rechts){ const dx = (x3 - x0) * 0.5; x1 = x0 + dx; y1 = y0; x2 = x3 - dx; y2 = y3; }
+      else { x1 = x0 - 50; y1 = y0 + 46; x2 = x3 + 50; y2 = y3 + 46; }
+    } else {
       const runter = b.y > a.y;
       x0 = a.x + L.KW / 2 + off; y0 = runter ? a.y + L.KH : a.y;
       x3 = b.x + L.KW / 2 + off; y3 = runter ? b.y : b.y + L.KH;
       const dy = (y3 - y0) * 0.5;
       x1 = x0; y1 = y0 + dy; x2 = x3; y2 = y3 - dy;
-    } else {
-      const rechts = b.x > a.x;
-      const bogen = Math.min(80, 30 + Math.abs(b.x - a.x) * 0.12) + Math.abs(off);
-      x0 = a.x + L.KW / 2 + off; x3 = b.x + L.KW / 2 + off;
-      if(rechts){ y0 = a.y; y3 = b.y; y1 = y2 = a.y - bogen; }
-      else { y0 = a.y + L.KH; y3 = b.y + L.KH; y1 = y2 = a.y + L.KH + bogen; }
-      x1 = x0; x2 = x3;
     }
     const d = `M${x0},${y0} C${x1},${y1} ${x2},${y2} ${x3},${y3}`;
-    const farbe = PZ_WEG_FARBEN[v.weg] || PZ_WEG_FARBEN.sonstiges;
-    const aktiv = fokus ? (v.vonId === fokus || v.nachId === fokus) : !pzKarteNurProbleme || v.problem;
-    const titel = `${pzLabel(pzById(v.vonId))} → ${pzLabel(pzById(v.nachId))}: ${v.inhalt} (${pzWegLabel(v.weg)})${v.problem ? ' – hakt' : ''}`;
+    const farbe = PZ_WEG_FARBEN[k.weg] || PZ_WEG_FARBEN.sonstiges;
+    const aktiv = fokus ? (k.vonId === fokus || k.nachId === fokus) : !pzKarteNurProbleme || k.problem;
+    const titel = `${pzLabel(pzById(k.vonId))} → ${pzLabel(pzById(k.nachId))}\n` +
+      k.einzeln.map(v => `• ${v.inhalt} (${pzWegLabel(v.weg)})${v.problem ? ' – hakt' : ''}`).join("\n");
     let label = "";
     if(fokus && aktiv){
       const mx = pzBezier(x0, x1, x2, x3, 0.5);
       let my = pzBezier(y0, y1, y2, y3, 0.5) - 5;
-      const text = v.inhalt.length > 38 ? v.inhalt.slice(0, 36) + "…" : v.inhalt;
-      // Beschriftungen nicht übereinander legen: bei Überlappung nach unten ausweichen
+      const text = k.inhalt.length > 38 ? k.inhalt.slice(0, 36) + "…" : k.inhalt;
       const breite = text.length * 6;
       while(belegt.some(r => Math.abs(r.x - mx) < (r.b + breite) / 2 && Math.abs(r.y - my) < 14)) my += 14;
       belegt.push({ x: mx, y: my, b: breite });
       label = `<text x="${mx}" y="${my}" text-anchor="middle" class="pz-kanten-label">${pzEsc(text)}</text>`;
     }
-    return `<g class="pz-kante" data-verbindung="${v.id}" opacity="${aktiv ? 1 : 0.1}">
+    const staerke = Math.min(1.8 + (k.einzeln.length - 1) * 0.6, 4.5) + (fokus && aktiv ? 0.6 : 0);
+    return `<g class="pz-kante" data-kante="${k.schluessel}" opacity="${aktiv ? 1 : 0.1}">
       <title>${pzEsc(titel)}</title>
-      ${v.problem ? `<path d="${d}" fill="none" stroke="#B0432E" stroke-opacity="0.3" stroke-width="9" stroke-linecap="round"/>` : ''}
+      ${k.problem ? `<path d="${d}" fill="none" stroke="#B0432E" stroke-opacity="0.3" stroke-width="${staerke + 7}" stroke-linecap="round"/>` : ''}
       <path d="${d}" fill="none" stroke="transparent" stroke-width="12"/>
-      <path d="${d}" fill="none" stroke="${farbe}" stroke-width="${fokus && aktiv ? 2.4 : 1.8}" ${v.weg === 'unklar' ? 'stroke-dasharray="5 4"' : ''} marker-end="url(#pzPfeil-${v.weg in PZ_WEG_FARBEN ? v.weg : 'sonstiges'})"/>
+      <path d="${d}" fill="none" stroke="${farbe}" stroke-width="${staerke}" ${k.weg === 'unklar' ? 'stroke-dasharray="5 4"' : ''} marker-end="url(#pzPfeil-${k.weg in PZ_WEG_FARBEN ? k.weg : 'sonstiges'})"/>
       ${label}
     </g>`;
   }).join("");
 
-  const knoten = L.knoten.map(p => {
+  const knoten = daten.knoten.map(p => {
     const q = L.pos[p.id];
     const aktiv = !fokus || nachbarn.has(p.id);
     const name = p.bezeichnung.length > 24 ? p.bezeichnung.slice(0, 22) + "…" : p.bezeichnung;
-    const hakt = verbindungen.some(v => v.problem && (v.vonId === p.id || v.nachId === p.id));
+    const hakt = daten.kanten.some(k => k.problem && (k.vonId === p.id || k.nachId === p.id));
+    const unter = modus === "grob" ? pzNachkommen(p.id).length : 0;
+    const fragen = modus === "grob" ? pzSumme(p, "anzahlFragenOffen") : p.anzahlFragenOffen;
     return `<g class="pz-knoten" data-knoten="${p.id}" opacity="${aktiv ? 1 : 0.25}">
-      <title>${pzEsc(pzLabel(p))} – ${pzEsc(pzStatusLabel(p.aufnahmestatus))}${p.anzahlFragenOffen ? ` – ${p.anzahlFragenOffen} offene Fragen` : ''}</title>
+      <title>${pzEsc(pzLabel(p))} – ${pzEsc(pzStatusLabel(p.aufnahmestatus))}${fragen ? ` – ${fragen} offene Fragen` : ''}${unter ? ` – ${unter} Teilprozesse` : ''}</title>
       <rect x="${q.x}" y="${q.y}" width="${L.KW}" height="${L.KH}" rx="4" fill="#FFFFFF"
             stroke="${p.id === fokus ? '#2C4A63' : hakt ? '#B0432E' : '#DCDFDA'}" stroke-width="${p.id === fokus ? 2.5 : 1.2}"/>
+      ${unter ? `<rect x="${q.x + 3}" y="${q.y + L.KH}" width="${L.KW - 6}" height="3" rx="1" fill="#DCDFDA"/>` : ''}
       <circle cx="${q.x + 12}" cy="${q.y + 15}" r="4" class="pz-knoten-dot pz-${p.aufnahmestatus}"/>
-      <text x="${q.x + 22}" y="${q.y + 19}" class="pz-knoten-nr">${pzEsc(p.nummer || '')}</text>
-      ${p.anzahlFragenOffen ? `<text x="${q.x + L.KW - 8}" y="${q.y + 19}" text-anchor="end" class="pz-knoten-fragen">? ${p.anzahlFragenOffen}</text>` : ''}
+      <text x="${q.x + 22}" y="${q.y + 19}" class="pz-knoten-nr">${pzEsc(p.nummer || '')}${unter ? ` · ${unter} Teilpr.` : ''}</text>
+      ${fragen ? `<text x="${q.x + L.KW - 8}" y="${q.y + 19}" text-anchor="end" class="pz-knoten-fragen">? ${fragen}</text>` : ''}
       <text x="${q.x + 10}" y="${q.y + 40}" class="pz-knoten-name">${pzEsc(name)}</text>
     </g>`;
   }).join("");
 
   const bahnNamen = ["Führung", "Kern", "Unterstützung", "Sonstige"];
-  const bahnen = L.genutzt.map((b, i) => `
-    <rect x="0" y="${L.bahnY(b) - 18}" width="100%" height="${L.KH + 36}" fill="${i % 2 ? '#F4F5F2' : '#FAFAF8'}"/>
-    <text x="12" y="${L.bahnY(b) + L.KH / 2 + 4}" class="pz-bahn-name">${bahnNamen[b]}</text>`).join("");
+  const bahnen = L.bahnen.map((b, i) => `
+    <rect x="0" y="${b.oben - 18}" width="100%" height="${b.unten - b.oben + 36}" fill="${i % 2 ? '#F4F5F2' : '#FAFAF8'}"/>
+    <text x="12" y="${b.oben + L.KH / 2 + 4}" class="pz-bahn-name">${bahnNamen[b.bahn]}</text>`).join("");
 
   const legende = prozessConfig.wege.map(w => pzWegHtml(w.value)).join("") +
     `<span class="pz-weg"><span class="pz-weg-linie" style="background:#B0432E; opacity:0.45; height:7px;"></span>Hakt</span>`;
@@ -3417,47 +3499,57 @@ function renderPzKarte(){
   let info;
   if(fokus){
     const p = pzById(fokus);
+    const ids = modus === "grob" ? [p.id, ...pzNachkommen(p.id)] : [p.id];
     info = `<div class="timeline-head" style="margin-top:22px;">
-        <h3>${pzEsc(pzLabel(p))}</h3>
-        <div style="display:flex; gap:8px;">
+        <h3>${pzEsc(pzLabel(p))}${modus === "grob" && ids.length > 1 ? ` <span style="text-transform:none; letter-spacing:0; font-weight:400;">(mit ${ids.length - 1} Teilprozessen)</span>` : ''}</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn text" id="pzKarteFokusWeg">Auswahl aufheben</button>
           <button class="btn ghost small" data-pz-open="${p.id}">Prozess öffnen</button>
           <button class="btn ghost small" id="pzKarteNeu">+ Übergabe</button>
         </div>
       </div>
-      ${renderPzVerbindungsListe(p.id, null)}`;
+      ${renderPzVerbindungsListe(ids, null)}`;
   } else {
-    info = `<p class="pz-intro" style="margin-top:14px;">Klick auf einen Prozess zeigt nur seine Übergaben mit Beschriftung. Klick auf eine Linie öffnet die Übergabe zum Bearbeiten.
-      Rot unterlegte Linien markieren Übergaben, bei denen es hakt – dort liegen meist die wichtigsten Anforderungen an ein mögliches ERP-System.</p>`;
+    info = `<p class="pz-intro" style="margin-top:14px;">${modus === "grob"
+      ? "<b>Grob:</b> nur Hauptprozesse, Übergaben zwischen ihren Teilprozessen sind zusammengefasst (dickere Linie = mehr Übergaben). Übergaben innerhalb eines Hauptprozesses sieht man unter „Fein“."
+      : "<b>Fein:</b> alle Teilprozesse, gestapelt in der Spalte ihres Hauptprozesses."}
+      Klick auf einen Prozess hebt seine Übergaben mit Beschriftung hervor. Rot unterlegt = hier hakt es – dort liegen meist die wichtigsten Anforderungen an ein mögliches ERP-System.</p>`;
   }
 
   return kopf + `
     <div class="pz-toolbar">
-      <span class="label">Weg</span>${legende}
+      <span class="label">Ansicht</span>
+      <button class="chip ${modus === 'grob' ? 'active' : ''}" data-karte-modus="grob">Grob – Hauptprozesse</button>
+      <button class="chip ${modus === 'fein' ? 'active' : ''}" data-karte-modus="fein">Fein – alle Teilprozesse</button>
       <label class="pz-weg" style="margin-left:auto; cursor:pointer;"><input type="checkbox" id="pzNurProbleme" ${pzKarteNurProbleme ? 'checked' : ''}> nur wo es hakt</label>
     </div>
+    <div class="pz-toolbar"><span class="label">Weg</span>${legende}</div>
     <div class="pz-karte-wrap">
       <svg id="pzKarteSvg" width="${L.breite}" height="${L.hoehe}" style="min-width:100%;" role="img" aria-label="Schnittstellenkarte der Prozesse">
         <defs>${marker}</defs>
-        <rect id="pzKarteHintergrund" x="0" y="0" width="100%" height="100%" fill="transparent"/>
+        <rect x="0" y="0" width="100%" height="100%" fill="transparent"/>
         ${bahnen}${kanten}${knoten}
       </svg>
     </div>
     ${info}
-    ${renderPzMatrix(L)}`;
+    ${renderPzMatrix(daten, L)}`;
 }
 
-function renderPzMatrix(L){
-  const reihen = [...L.knoten].sort((a, b) => (L.pos[a.id].y - L.pos[b.id].y) || (L.pos[a.id].x - L.pos[b.id].x));
+function pzBahnVon(q, L){
+  return L.bahnen.find(b => q.y >= b.oben - 1 && q.y <= b.unten)?.bahn;
+}
+
+function renderPzMatrix(daten, L){
+  const reihen = [...daten.knoten].sort((a, b) => (pzBahn(a) - pzBahn(b)) || (L.pos[a.id].x - L.pos[b.id].x) || (L.pos[a.id].y - L.pos[b.id].y));
   const kurz = (p) => pzEsc(p.nummer || (p.bezeichnung.length > 18 ? p.bezeichnung.slice(0, 16) + "…" : p.bezeichnung));
   const kopf = reihen.map(p => `<th class="pz-matrix-spalte" title="${pzEsc(pzLabel(p))}"><span>${kurz(p)}</span></th>`).join("");
   const zeilen = reihen.map(von => `<tr><th title="${pzEsc(pzLabel(von))}">${pzEsc(pzLabel(von))}</th>${reihen.map(nach => {
     if(von.id === nach.id) return `<td class="pz-matrix-leer"></td>`;
-    const liste = verbindungen.filter(v => v.vonId === von.id && v.nachId === nach.id);
-    return `<td>${liste.map(v => `<span class="pz-matrix-punkt ${v.problem ? 'hakt' : ''}" style="background:${PZ_WEG_FARBEN[v.weg] || PZ_WEG_FARBEN.sonstiges};" title="${pzEsc(v.inhalt)} (${pzEsc(pzWegLabel(v.weg))})${v.problem ? ' – hakt' : ''}"></span>`).join("")}</td>`;
+    const k = daten.kanten.find(x => x.vonId === von.id && x.nachId === nach.id);
+    return `<td>${k ? k.einzeln.map(v => `<span class="pz-matrix-punkt ${v.problem ? 'hakt' : ''}" style="background:${PZ_WEG_FARBEN[v.weg] || PZ_WEG_FARBEN.sonstiges};" title="${pzEsc(v.inhalt)} (${pzEsc(pzWegLabel(v.weg))})${v.problem ? ' – hakt' : ''}"></span>`).join("") : ''}</td>`;
   }).join("")}</tr>`).join("");
   return `
-    <div class="timeline-head" style="margin-top:28px;"><h3>Schnittstellenmatrix</h3></div>
+    <div class="timeline-head" style="margin-top:28px;"><h3>Schnittstellenmatrix (${pzKarteModus === "grob" ? "grob" : "fein"})</h3></div>
     <p class="pz-intro" style="margin:4px 0 8px;">Zeile übergibt an Spalte. Ein Punkt je Übergabe, Farbe = Weg, roter Rand = hakt. Maus über einen Punkt zeigt den Inhalt.</p>
     <div class="pz-table-wrap"><table class="pz-matrix"><thead><tr><th>von \\ an</th>${kopf}</tr></thead><tbody>${zeilen}</tbody></table></div>`;
 }
@@ -3469,6 +3561,13 @@ function bindPzKarte(){
     pzKarteNurProbleme = ev.target.checked;
     renderPzMain();
   });
+  main.querySelectorAll("[data-karte-modus]").forEach(btn => btn.addEventListener("click", () => {
+    pzKarteModus = btn.dataset.karteModus;
+    // Fokus in der anderen Stufe auf den passenden Prozess umsetzen
+    if(pzKarteFokus && pzKarteModus === "grob") pzKarteFokus = pzHauptprozess(pzById(pzKarteFokus)).id;
+    try{ localStorage.setItem("pzKarteModus", pzKarteModus); }catch(e){}
+    renderPzMain();
+  }));
   if(svg){
     svg.addEventListener("click", (ev) => {
       const k = ev.target.closest("[data-knoten]");
@@ -3478,10 +3577,17 @@ function bindPzKarte(){
         renderPzMain();
         return;
       }
-      const kante = ev.target.closest("[data-verbindung]");
+      const kante = ev.target.closest("[data-kante]");
       if(kante){
-        const v = verbindungen.find(x => x.id === parseInt(kante.dataset.verbindung, 10));
-        openPzVerbindungModal(pzKarteFokus && (v.vonId === pzKarteFokus || v.nachId === pzKarteFokus) ? pzKarteFokus : v.vonId, v);
+        const schluessel = kante.dataset.kante;
+        if(schluessel.startsWith("v")){
+          const v = verbindungen.find(x => x.id === parseInt(schluessel.slice(1), 10));
+          openPzVerbindungModal(pzKarteFokus && (v.vonId === pzKarteFokus || v.nachId === pzKarteFokus) ? pzKarteFokus : v.vonId, v);
+        } else {
+          // zusammengefasste Übergabe: Fokus auf den abgebenden Hauptprozess
+          pzKarteFokus = parseInt(schluessel.slice(1).split("-")[0], 10);
+          renderPzMain();
+        }
         return;
       }
       if(pzKarteFokus !== null){
