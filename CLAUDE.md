@@ -108,7 +108,12 @@ Auswertungsstatus, CSV-Export im Excel-Vorlagenformat. Code: `prozesse_api.py`
 (Blueprint), Modelle `Prozess`/`ProzessSchritt`/`ProzessFrage`/`Dokument` in
 `models.py`, Startbestand in `prozess_daten.py` (auch Quelle für
 `docs/prozessaufnahme/_erzeuge_csv.py`), Einspielen per `seed_prozesse.py`
-(idempotent, legt nur fehlende Tabellen an). Noch offen: Änderungshistorie,
+(idempotent, legt nur fehlende Tabellen an). **Neue Auswertungen (weitere
+Arbeitsanweisungen) als neuen Eintrag in `ERGAENZUNGEN` (prozess_daten.py,
+Version hochzählen) anlegen** – nie den Grundbestand ändern: die Server-DB
+ist schon befüllt, Ergänzungen werden per `update.sh` genau einmal
+eingespielt (Stand in Tabelle `startbestand_stand`), ohne Nutzeränderungen zu
+überschreiben. Ausgewertet: K1_05, K3.1_01, K2_01. Noch offen: Änderungshistorie,
 Probleme/Anforderungen, Systeme & Daten, Swimlane, Excel-Import. **Sprachregelung:** intern und in der
 Oberfläche immer „mögliche Einführung eines ERP-Systems“ — keinen
 Produktnamen (ERPNext) verwenden, keine Entscheidung vorwegnehmen.

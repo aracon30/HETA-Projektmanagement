@@ -243,3 +243,124 @@ SYSTEME = [
      "", "", "Outlook (Ablage lt. AA K1_03)", "", "", ""],
     ["S08", "Papierablage (Hardcopy)", "Angebote", "K1.05", "", "", "offen", "", "", ""],
 ]
+
+
+# ---------------------------------------------------------------------------
+# Ergänzungen zum Startbestand
+# ---------------------------------------------------------------------------
+# Jede Ergänzung wird von seed_prozesse.py genau einmal eingespielt (Stand wird
+# in der Tabelle startbestand_stand gemerkt). Dabei werden Änderungen aus dem
+# Tool nicht überschrieben: fehlende Prozesse/Dokumente werden angelegt,
+# Steckbrief-Felder nur gefüllt, wenn sie leer sind, Status nur von
+# "vorgeschlagen" bzw. "nicht_gesichtet" aus hochgesetzt, Schritte nur ergänzt,
+# wenn der Prozess noch keine hat.
+
+AA_KON = "Laut AA K2_01 Rev. 2 – Praxisabgleich offen"
+KON = "Konstrukteur:in (Konstruktion Werk 4, Person offen)"
+
+ERGAENZUNGEN = [
+    (2, dict(
+        titel="AA K2_01 Anweisung Konstruktion ausgewertet (29.09.2026)",
+        landkarte=[],
+        details={
+            "K2": dict(
+                verantwortlich="Leiter Konstruktion, PM",
+                beteiligte="Konstruktion Werk 4 (Scharmann, Hennig, Abdani), Einkauf, Schweißaufsicht (Justus, Abdani)",
+                ausloeser="Neuer Auftrag (vermutlich Rundmail mit AB – Zuweisung an Konstrukteur:in offen)",
+                ergebnis="Vollständige, kundenspezifische Konstruktionsunterlagen an alle betroffenen Abteilungen "
+                         "verteilt, Werkstoffe und Bestelltexte mit Einkauf abgestimmt",
+                systeme="CAD (System offen), Zeichnungsvorlagen (Stutzentabelle, Technische Daten), "
+                        "Kundenspezifikationen (z.B. BASF-Werksnorm, Thyssen Krupp/UHDE)",
+                variante="Auslegung nach AD 2000/DGRL oder ASME · kundenspezifische Unterlagen (BASF, Thyssen Krupp/UHDE)",
+            ),
+        },
+        status={"K2": "laut_aa"},
+        dokument_status={"AA_K2_01": "uebernommen"},
+        schritte=[
+            ["K2", 1, "Aufgabe übernehmen und alle erforderlichen Unterlagen beschaffen: Projektspezifikation, "
+             "Kundennormen/-vorschriften (z.B. BASF-Werksnorm), Bestellung des Kunden", KON,
+             "AB/Kundenbestellung, Projektspezifikation, Kundennormen", "K-Laufwerk (Auftragsordner)?",
+             "Vollständige Auslegungsgrundlagen", "", "", "Fehlende Unterlagen: Konstrukteur:in muss sie beschaffen",
+             "", "", AA_KON],
+            ["K2", 2, "Fertigbarkeit mit der Schweißtechnik abstimmen: Schweißverfahren und Schweißzusatz "
+             "rechtzeitig planen", KON + ", Schweißaufsicht", "Konstruktionsentwurf, Werkstoffe", "",
+             "Schweißtechnisch abgestimmte Konstruktion", "Schweißaufsicht", "", "", "", "", AA_KON],
+            ["K2", 3, "Werkstoffe anhand der Vorgaben aus Prozess und Spezifikation festlegen", KON,
+             "Spezifikation, Prozessdaten", "", "Werkstoffauswahl", "", "", "", "", "", AA_KON],
+            ["K2", 4, "Bestelltexte für die Materialbestellung mit dem Einkauf absprechen, Einsatz von "
+             "Alternativmaterial aus dem Lager abstimmen, Auswahl in die Konstruktionsunterlagen einarbeiten",
+             KON + ", Einkauf", "Werkstoffauswahl, Lagerbestand", "offen (Mail? Liste? Zeichnung?)",
+             "Abgestimmte Bestelltexte / Materialauswahl", "Einkauf (Materialbestellung, U1.1)", "",
+             "Stückliste wird in der AA nicht erwähnt (siehe Offene Fragen)", "", "", AA_KON],
+            ["K2", 5, "Konstruktionsunterlagen nach allgemeinen Regeln erstellen: Benennung wie in der Kundenbestellung "
+             "(ggf. mit Pos./Item-Nr.), HETA-Typennummer im Schriftfeld, Stutzentabelle nach Vorlage, "
+             "Tabelle Technische Daten vollständig (DGRL/AD 2000 mit Kategorie/Modul oder ASME mit MAWP/MDMT)",
+             KON, "Auslegungsdaten, Kundenbestellung", "CAD, Zeichnungsvorlagen",
+             "Zeichnungen mit Stutzentabelle und Technischen Daten", "", "",
+             "Fehlende technische Daten müssen in Erfahrung gebracht werden (keine leeren Zeilen)",
+             "", "", AA_KON],
+            ["K2", 6, "Kundenspezifische Angaben ergänzen – z.B. BASF (WN): Benennung mit Größe/Druck/Temperatur/"
+             "Werkstoff, Bestellangaben, zugehörige Zeichnungen, äußere Lasten, Anzugsmomente, Schweißangaben, "
+             "Toleranzen, Kennzeichnung, Oberfläche; Thyssen Krupp (UHDE): TK-Schriftkopf auf jeder Unterlage, "
+             "Stutzenlasten, Anzugsmomente, Hinweise, Oberfläche", KON,
+             "Kundenspezifikation, Kundenbestellung", "CAD, Kundenvorlagen (z.B. TK-Logo/Schriftkopf)",
+             "Kundenkonforme Konstruktionsunterlagen", "", "", "", "", "", AA_KON],
+            ["K2", 7, "Alle zutreffenden Abteilungen frühzeitig und vollständig mit den Zeichnungsunterlagen "
+             "versorgen", KON, "Fertige Konstruktionsunterlagen", "offen (K-Laufwerk? Mail? Papier?)",
+             "Abteilungen haben aktuelle Unterlagen",
+             "Fertigung, Einkauf, PM, Dokumentation (Weg offen)", "Prüfung/Freigabe vorher? (AA K2_03)",
+             "", "", "", AA_KON],
+            ["K2", 8, "Änderungsdienst bei Kundenänderungen nach AA K2_02 Zeichnungsänderung: Unterlagen ändern und "
+             "intern alle informieren, damit Bestellungen bei Lieferanten angepasst werden können", KON,
+             "Änderungswunsch des Kunden", "CAD, AA K2_02", "Geänderte Unterlagen, alle informiert",
+             "Alle Betroffenen, insbesondere Einkauf", "", "", "", "", AA_KON],
+        ],
+        fragen=[
+            ("K2", "Wie erfährt die Konstruktion von einem neuen Auftrag (Rundmail mit AB?) und wer weist ihn einer "
+                   "Konstrukteurin/einem Konstrukteur zu – Leiter Konstruktion oder PM?", "Scharmann"),
+            ("K2", "Stückliste: Wird eine erstellt, in welchem System (CAD, Excel?) und wie gelangt sie zum Einkauf? "
+                   "Die AA nennt nur das Abstimmen der Bestelltexte.", "Scharmann / Köhler"),
+            ("K2", "Bestelltexte an den Einkauf: In welcher Form werden sie übergeben (Mail, Liste, Zeichnung) und "
+                   "wann – alles auf einmal oder Langläufer vorab?", "Scharmann / Köhler"),
+            ("K2", "Alternativmaterial aus dem Lager: Woher weiß die Konstruktion, was am Lager ist? Gibt es eine "
+                   "Bestandsliste?", "Köhler / Justus"),
+            ("K2", "Festigkeitsberechnung (AD 2000 / ASME): Wer rechnet, mit welchem Programm, und wo wird das "
+                   "Ergebnis abgelegt? Nicht Teil der AA.", "Scharmann"),
+            ("K2", "Prüfung und Freigabe der Zeichnungen vor der Verteilung: Läuft das nach AA K2_03? Die AA ist "
+                   "nicht als mitgeltend aufgeführt.", "Scharmann / Häfer"),
+            ("K2", "Verteilung der Zeichnungen: Auf welchem Weg erhalten Fertigung, Einkauf, PM und Dokumentation die "
+                   "Unterlagen, und wie wird sichergestellt, dass alle den aktuellen Änderungsstand haben?",
+                   "Scharmann, Justus"),
+            ("K2", "Kundenfreigabe von Zeichnungen (Zeichnungen zur Genehmigung): Wer schickt sie, wie wird die "
+                   "Freigabe nachgehalten?", "Scharmann / PM"),
+            ("K2", "Welches CAD-System wird genutzt, wo werden Zeichnungen abgelegt, und wie wird die "
+                   "Zeichnungsnummer vergeben (AA F4.6_02 Nummernschlüssel?)", "Scharmann"),
+            ("K2", "HETA-Typennummer: Nach welcher Systematik wird sie vergeben und wo ist sie hinterlegt?",
+                   "Scharmann"),
+            ("K2", "Kundenspezifikationen (BASF-Werksnorm, Thyssen Krupp/UHDE u.a.): Wo liegen sie, und wer hält sie "
+                   "aktuell?", "Scharmann / Häfer"),
+            ("K2", "Werden Konstruktionsstunden auf die Kommission gebucht (für die Nachkalkulation)?",
+                   "Scharmann / Brühl"),
+        ],
+    )),
+]
+
+# Aktueller Stand = höchste Ergänzungsnummer (Startbestand oben = 1)
+STARTBESTAND_VERSION = max([1] + [v for v, _ in ERGAENZUNGEN])
+
+
+def alle_schritte():
+    """Startbestand + alle Ergänzungen (für den CSV-Export)."""
+    return SCHRITTE + [s for _, e in ERGAENZUNGEN for s in e["schritte"]]
+
+
+def alle_fragen():
+    return FRAGEN + [f for _, e in ERGAENZUNGEN for f in e["fragen"]]
+
+
+def alle_dokumente():
+    """Dokumentenliste mit dem Auswertungsstatus nach allen Ergänzungen."""
+    status = {}
+    for _, e in ERGAENZUNGEN:
+        status.update(e["dokument_status"])
+    return [(n, r, t, g, p, status.get(n, s)) for n, r, t, g, p, s in DOKUMENTE]

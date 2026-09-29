@@ -49,6 +49,44 @@ Beschreibung der tatsächlichen Abläufe.**
 
 ---
 
+### K2 Konstruktion / Entwicklung
+
+| | |
+|---|---|
+| Quelle | AA K2_01 Werk4 „Anweisung Konstruktion“, Rev. 2, 04.08.2026 (Rev. 1: 13.08.2025), Ersteller: Gabriele Häfer, Freigabe: Erik Scharmann |
+| Verantwortlich / mitwirkend | Leiter Konstruktion, PM / Konstruktion Werk 4, Einkauf, Schweißaufsicht |
+| Ziel laut AA | Qualitätsaspekte (Sicherheit, Leistung, Zuverlässigkeit) schon in der Konstruktion festlegen – fehlerhaftes Design ist Hauptursache für Qualitätsprobleme |
+| Auslöser | Neuer Auftrag (wie die Konstruktion davon erfährt, steht nicht in der AA) |
+| Ergebnis | Vollständige, kundenspezifische Konstruktionsunterlagen, an alle Abteilungen verteilt; Werkstoffe und Bestelltexte mit Einkauf abgestimmt |
+| Varianten | AD 2000/DGRL (Kategorie/Modul) oder ASME (MAWP, MDMT, Einheiten nach ASME) · Kundenspezifikationen z.B. BASF-Werksnorm, Thyssen Krupp/UHDE |
+| Mitgeltend | AA K2_02 Zeichnungsänderung |
+| Schritte | 8 (siehe `ablaufschritte.csv`) |
+
+Ein großer Teil der AA (Abschnitte 4.1–4.4) sind **Gestaltungsregeln für
+Zeichnungen** (Schriftfeld, Stutzentabelle, Tabelle Technische Daten,
+kundenspezifische Angaben). Sie sind in den Schritten 5 und 6
+zusammengefasst; für ein mögliches ERP-System sind sie vor allem als
+**Stammdaten/Merkmale** interessant (Typennummer, technische Daten,
+Stutzenliste).
+
+## Übergabe Konstruktion → Einkauf (Nahtstelle K2 → U1.1)
+
+Laut AA stimmt die Konstruktion **Bestelltexte** und den Einsatz von
+**Alternativmaterial aus dem Lager** mit dem Einkauf ab und informiert bei
+Zeichnungsänderungen alle, „damit Bestellungen bei Lieferanten berücksichtigt
+werden können“. **Nicht beschrieben** ist:
+
+- ob und wie eine **Stückliste** entsteht und an den Einkauf geht
+  (Bestellanforderung),
+- in welcher Form und zu welchem Zeitpunkt die Bestelltexte übergeben werden
+  (z.B. Langläufer vorab),
+- woher die Konstruktion den **Lagerbestand** kennt,
+- wie bei Zeichnungsänderungen **bereits bestellte Teile** erkannt werden.
+
+Das ist die zentrale Nahtstelle für die Beschaffung und sollte im Gespräch mit
+Konstruktion **und** Einkauf gemeinsam aufgenommen werden (danach AA U1.1_01
+Bestellung auswerten).
+
 ## Übergabe Angebot → Auftrag (Nahtstelle K1.05 → K3.1)
 
 ```

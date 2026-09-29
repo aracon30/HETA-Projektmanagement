@@ -9,7 +9,7 @@ from pathlib import Path
 HIER = Path(__file__).parent
 sys.path.insert(0, str(HIER.parent.parent))
 
-from prozess_daten import DOKUMENTE, SCHRITTE, FRAGEN, SYSTEME, AUSWERTUNGSSTATUS  # noqa: E402
+from prozess_daten import SYSTEME, AUSWERTUNGSSTATUS, alle_dokumente, alle_fragen, alle_schritte  # noqa: E402
 
 SCHRITTE_KOPF = ["Prozess-ID", "Schritt-Nr.", "Tätigkeit", "Ausführende Person / Rolle", "Eingaben",
                  "System", "Ergebnis", "Übergabe", "Freigabe", "Ausnahme / nächster Schritt",
@@ -29,11 +29,11 @@ def schreibe(pfad, kopf, zeilen):
 
 
 if __name__ == "__main__":
-    schreibe(HIER / "ablaufschritte.csv", SCHRITTE_KOPF, SCHRITTE)
+    schreibe(HIER / "ablaufschritte.csv", SCHRITTE_KOPF, alle_schritte())
     schreibe(HIER / "offene_fragen.csv", FRAGEN_KOPF,
              [[f"Q{i:02d}", f[0], f[1], f[2], "", "", *(f[3:] if len(f) > 3 else ("offen", "", ""))]
-              for i, f in enumerate(FRAGEN, 1)])
+              for i, f in enumerate(alle_fragen(), 1)])
     schreibe(HIER / "systeme_daten.csv", SYSTEME_KOPF, SYSTEME)
     labels = dict(AUSWERTUNGSSTATUS)
     schreibe(HIER.parent / "arbeitsanweisungen.csv", DOKUMENTE_KOPF,
-             [[n, r, t, g, p, labels[s]] for n, r, t, g, p, s in DOKUMENTE])
+             [[n, r, t, g, p, labels[s]] for n, r, t, g, p, s in alle_dokumente()])

@@ -300,6 +300,14 @@ class ProzessFrage(db.Model):
         }
 
 
+class StartbestandStand(db.Model):
+    """Merkt sich, bis zu welcher Ergänzung (prozess_daten.ERGAENZUNGEN) der
+    Startbestand eingespielt ist, damit jede Ergänzung genau einmal läuft."""
+    __tablename__ = "startbestand_stand"
+    id = db.Column(db.Integer, primary_key=True)
+    version = db.Column(db.Integer, nullable=False)
+
+
 class Dokument(db.Model):
     """Vorhandene Arbeitsanweisung (QM-Dokument) mit Auswertungsstand."""
     __tablename__ = "dokumente"

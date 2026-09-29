@@ -1,14 +1,17 @@
 """Legt die Tabellen für den Reiter "Prozesse" an (falls noch nicht vorhanden)
-und befüllt sie mit dem Startbestand aus prozess_daten.py.
+und spielt den Startbestand aus prozess_daten.py ein.
 
-Aufruf: ./venv/bin/python seed_prozesse.py
+Aufruf: ./venv/bin/python seed_prozesse.py   (läuft auch in deploy/update.sh)
 
-Sicher auf dem Server mit echten Daten: bestehende Tabellen (Aufträge,
-Angebote, Verlauf …) werden nicht angefasst, und der Startbestand wird nur
-eingespielt, solange noch KEIN Prozess in der Datenbank existiert.
+Sicher auf dem Server mit echten Daten:
+- bestehende Tabellen (Aufträge, Angebote, Verlauf …) werden nicht angefasst
+- der Grundbestand wird nur in eine leere Prozess-Datenbank eingespielt
+- jede Ergänzung (prozess_daten.ERGAENZUNGEN) läuft genau einmal; der Stand
+  steht in der Tabelle startbestand_stand. Änderungen aus dem Tool werden dabei
+  nicht überschrieben (siehe _ergaenzung_einspielen).
 """
-from models import db, Prozess, ProzessSchritt, ProzessFrage, Dokument
-from prozess_daten import LANDKARTE, PROZESS_DETAILS, DOKUMENTE, SCHRITTE, FRAGEN
+from models import db, Prozess, ProzessSchritt, ProzessFrage, Dokument, StartbestandStand
+from prozess_daten import LANDKARTE, PROZESS_DETAILS, DOKUMENTE, SCHRITTE, FRAGEN, ERGAENZUNGEN
 
 
 def _finde_prozess(nach_nummer, nummer):
@@ -24,13 +27,27 @@ def _finde_prozess(nach_nummer, nummer):
     return None
 
 
-def seed():
-    """Erwartet einen aktiven App-Kontext."""
-    db.create_all()
-    if Prozess.query.first() is not None:
-        print("Es existieren bereits Prozesse – Startbestand wird nicht erneut eingespielt.")
-        return False
+def _neuer_schritt(prozess_id, reihenfolge, zeile):
+    (_, _, taetigkeit, ausfuehrend, eingaben, system, ergebnis, uebergabe, freigabe,
+     ausnahme, bearbeitungszeit, wartezeit, nachweis) = zeile
+    return ProzessSchritt(
+        prozess_id=prozess_id, reihenfolge=reihenfolge, taetigkeit=taetigkeit,
+        ausfuehrend=ausfuehrend or None, eingaben=eingaben or None, system=system or None,
+        ergebnis=ergebnis or None, uebergabe=uebergabe or None, freigabe=freigabe or None,
+        ausnahme=ausnahme or None, bearbeitungszeit=bearbeitungszeit or None,
+        wartezeit=wartezeit or None, nachweis=nachweis or None,
+    )
 
+
+def _neue_frage(nach_nummer, f):
+    prozess_nr, frage, klaerung = f[:3]
+    status, antwort, nachweis = f[3:] if len(f) > 3 else ("offen", None, None)
+    p = _finde_prozess(nach_nummer, prozess_nr.split("/")[0])
+    return ProzessFrage(prozess_id=p.id, frage=frage, klaerung_durch=klaerung, status=status,
+                        antwort=antwort, nachweis=nachweis, erstellt_von="Startbestand")
+
+
+def _grundbestand_einspielen():
     nach_nummer = {}
     for i, (nummer, bezeichnung, parent, status) in enumerate(LANDKARTE, 1):
         p = Prozess(nummer=nummer, bezeichnung=bezeichnung, aufnahmestatus=status, reihenfolge=i,
@@ -45,26 +62,88 @@ def seed():
         db.session.add(Dokument(nummer=nummer, revision=revision or None, titel=titel, geltungsbereich=geltung,
                                 prozess_id=p.id if p else None, auswertungsstatus=status))
 
-    for (prozess_nr, nr, taetigkeit, ausfuehrend, eingaben, system, ergebnis, uebergabe, freigabe,
-         ausnahme, bearbeitungszeit, wartezeit, nachweis) in SCHRITTE:
-        db.session.add(ProzessSchritt(
-            prozess_id=nach_nummer[prozess_nr].id, reihenfolge=nr, taetigkeit=taetigkeit,
-            ausfuehrend=ausfuehrend or None, eingaben=eingaben or None, system=system or None,
-            ergebnis=ergebnis or None, uebergabe=uebergabe or None, freigabe=freigabe or None,
-            ausnahme=ausnahme or None, bearbeitungszeit=bearbeitungszeit or None,
-            wartezeit=wartezeit or None, nachweis=nachweis or None,
-        ))
-
+    for zeile in SCHRITTE:
+        db.session.add(_neuer_schritt(nach_nummer[zeile[0]].id, zeile[1], zeile))
     for f in FRAGEN:
-        prozess_nr, frage, klaerung = f[:3]
-        status, antwort, nachweis = f[3:] if len(f) > 3 else ("offen", None, None)
-        p = _finde_prozess(nach_nummer, prozess_nr.split("/")[0])
-        db.session.add(ProzessFrage(prozess_id=p.id, frage=frage, klaerung_durch=klaerung, status=status,
-                                    antwort=antwort, nachweis=nachweis, erstellt_von="Startbestand"))
+        db.session.add(_neue_frage(nach_nummer, f))
+    db.session.flush()
+    print(f"Grundbestand eingespielt: {len(LANDKARTE)} Prozesse, {len(DOKUMENTE)} Arbeitsanweisungen, "
+          f"{len(SCHRITTE)} Schritte, {len(FRAGEN)} Fragen.")
+
+
+def _ergaenzung_einspielen(version, e):
+    """Spielt eine Ergänzung ein, ohne Änderungen aus dem Tool zu überschreiben."""
+    nach_nummer = {p.nummer: p for p in Prozess.query.all() if p.nummer}
+    reihenfolge = db.session.query(db.func.max(Prozess.reihenfolge)).scalar() or 0
+
+    for nummer, bezeichnung, parent, status in e["landkarte"]:
+        if nummer in nach_nummer:
+            continue
+        reihenfolge += 1
+        eltern = _finde_prozess(nach_nummer, parent) if parent else None
+        p = Prozess(nummer=nummer, bezeichnung=bezeichnung, aufnahmestatus=status, reihenfolge=reihenfolge,
+                    parent_id=eltern.id if eltern else None)
+        db.session.add(p)
+        db.session.flush()
+        nach_nummer[nummer] = p
+
+    for nummer, felder in e["details"].items():
+        p = nach_nummer.get(nummer)
+        if p:
+            for feld, wert in felder.items():
+                if not getattr(p, feld):
+                    setattr(p, feld, wert)
+
+    for nummer, status in e["status"].items():
+        p = nach_nummer.get(nummer)
+        if p and p.aufnahmestatus == "vorgeschlagen":
+            p.aufnahmestatus = status
+
+    for nummer, status in e["dokument_status"].items():
+        dok = Dokument.query.filter_by(nummer=nummer).first()
+        if dok and dok.auswertungsstatus == "nicht_gesichtet":
+            dok.auswertungsstatus = status
+
+    schritte_neu = 0
+    for nummer in dict.fromkeys(z[0] for z in e["schritte"]):
+        p = nach_nummer.get(nummer)
+        if not p:
+            continue
+        if p.schritte:
+            print(f"Hinweis: {nummer} hat bereits Schritte – die Schritte aus der Ergänzung werden nicht "
+                  f"eingespielt (siehe docs/prozessaufnahme/ablaufschritte.csv).")
+            continue
+        for zeile in (z for z in e["schritte"] if z[0] == nummer):
+            db.session.add(_neuer_schritt(p.id, zeile[1], zeile))
+            schritte_neu += 1
+
+    for f in e["fragen"]:
+        db.session.add(_neue_frage(nach_nummer, f))
+    db.session.flush()
+    print(f"Ergänzung {version} eingespielt ({e['titel']}): {schritte_neu} Schritte, {len(e['fragen'])} Fragen.")
+
+
+def seed():
+    """Erwartet einen aktiven App-Kontext."""
+    db.create_all()
+    stand = StartbestandStand.query.first()
+    if stand is None:
+        # Datenbanken aus der Zeit vor den Ergänzungen haben den Grundbestand (= 1) schon
+        version = 1 if Prozess.query.first() is not None else 0
+        stand = StartbestandStand(version=version)
+        db.session.add(stand)
+
+    if stand.version < 1:
+        _grundbestand_einspielen()
+        stand.version = 1
+
+    for version, e in sorted(ERGAENZUNGEN, key=lambda x: x[0]):
+        if version > stand.version:
+            _ergaenzung_einspielen(version, e)
+            stand.version = version
 
     db.session.commit()
-    print(f"Startbestand eingespielt: {len(LANDKARTE)} Prozesse, {len(DOKUMENTE)} Arbeitsanweisungen, "
-          f"{len(SCHRITTE)} Schritte, {len(FRAGEN)} Fragen.")
+    print(f"Startbestand der Prozessaufnahme ist auf Stand {stand.version}.")
     return True
 
 

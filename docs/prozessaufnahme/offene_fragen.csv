@@ -31,3 +31,15 @@ Q29;K3.1;Unterscheidet sich der Ablauf je Auftragsart (Behälterbau, Ersatzteil,
 Q30;K3.1;Wird die 3-Tage-Frist für die AB gemessen oder nachgehalten?;Linker;;;offen;;
 Q31;K3.1;Kundenseitige Auftragsänderungen nach AB: Wie laufen sie ab (keine AA vorhanden)?;Linker;;;offen;;
 Q32;K3.1;Mitgeltende Dokumente: Sanktionslistenprüfung (AA U4_01) und Projektordnerstruktur (AA F4.6_01) werden im Text genutzt, aber nicht als mitgeltend aufgeführt – ergänzen?;Häfer;;;offen;;
+Q33;K2;Wie erfährt die Konstruktion von einem neuen Auftrag (Rundmail mit AB?) und wer weist ihn einer Konstrukteurin/einem Konstrukteur zu – Leiter Konstruktion oder PM?;Scharmann;;;offen;;
+Q34;K2;Stückliste: Wird eine erstellt, in welchem System (CAD, Excel?) und wie gelangt sie zum Einkauf? Die AA nennt nur das Abstimmen der Bestelltexte.;Scharmann / Köhler;;;offen;;
+Q35;K2;Bestelltexte an den Einkauf: In welcher Form werden sie übergeben (Mail, Liste, Zeichnung) und wann – alles auf einmal oder Langläufer vorab?;Scharmann / Köhler;;;offen;;
+Q36;K2;Alternativmaterial aus dem Lager: Woher weiß die Konstruktion, was am Lager ist? Gibt es eine Bestandsliste?;Köhler / Justus;;;offen;;
+Q37;K2;Festigkeitsberechnung (AD 2000 / ASME): Wer rechnet, mit welchem Programm, und wo wird das Ergebnis abgelegt? Nicht Teil der AA.;Scharmann;;;offen;;
+Q38;K2;Prüfung und Freigabe der Zeichnungen vor der Verteilung: Läuft das nach AA K2_03? Die AA ist nicht als mitgeltend aufgeführt.;Scharmann / Häfer;;;offen;;
+Q39;K2;Verteilung der Zeichnungen: Auf welchem Weg erhalten Fertigung, Einkauf, PM und Dokumentation die Unterlagen, und wie wird sichergestellt, dass alle den aktuellen Änderungsstand haben?;Scharmann, Justus;;;offen;;
+Q40;K2;Kundenfreigabe von Zeichnungen (Zeichnungen zur Genehmigung): Wer schickt sie, wie wird die Freigabe nachgehalten?;Scharmann / PM;;;offen;;
+Q41;K2;Welches CAD-System wird genutzt, wo werden Zeichnungen abgelegt, und wie wird die Zeichnungsnummer vergeben (AA F4.6_02 Nummernschlüssel?);Scharmann;;;offen;;
+Q42;K2;HETA-Typennummer: Nach welcher Systematik wird sie vergeben und wo ist sie hinterlegt?;Scharmann;;;offen;;
+Q43;K2;Kundenspezifikationen (BASF-Werksnorm, Thyssen Krupp/UHDE u.a.): Wo liegen sie, und wer hält sie aktuell?;Scharmann / Häfer;;;offen;;
+Q44;K2;Werden Konstruktionsstunden auf die Kommission gebucht (für die Nachkalkulation)?;Scharmann / Brühl;;;offen;;
