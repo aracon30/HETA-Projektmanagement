@@ -737,6 +737,225 @@ ERGAENZUNGEN.append((5, dict(
     ],
 )))
 
+VOR = "Vorschlag: typischer Ablauf – im Gespräch prüfen"
+VOR_V = "Vorschlag – im Gespräch prüfen"
+KALK = "Auslegung und Kalkulation"
+ANFRAGE = "Anfrage erfassen und bewerten"
+LIEFANFRAGE = "Lieferantenanfrage (für Angebote)"
+PLANUNG = "Auftragsplanung / Projektstart"
+TERMIN = "Liefertermin-Überwachung und Terminänderung (Kunde)"
+BANF = "Bestellanforderung aus der Konstruktion"
+AV = "Arbeitsauftrag / Arbeitsvorbereitung"
+LOHN = "Fremdfertigung / Lohnarbeit"
+PRUEF = "Prüfung, Abnahme und Dokumentation"
+ABNAHME = "Druckprobe und Abnahme (Kunde, TÜV)"
+DOKU = "Herstellerdokumentation erstellen"
+SERVICE = "Service & Ersatzteile"
+REKLA = "Kundenreklamation"
+NACHKALK = "Nachkalkulation / Auftragscontrolling"
+STAMM = "Stammdaten pflegen (Kunden, Lieferanten, Artikel)"
+
+
+def _s(prozess, nr, taetigkeit, wer, eingaben="", system="", ergebnis="", uebergabe="", freigabe="", ausnahme=""):
+    return [prozess, nr, taetigkeit, wer, eingaben, system, ergebnis, uebergabe, freigabe, ausnahme, "", "", VOR]
+
+
+ERGAENZUNGEN.append((6, dict(
+    titel="Vorschläge für weiße Flecken: typische Abläufe und Zusammenhänge (30.09.2026)",
+    landkarte=[
+        (None, ANFRAGE, "K1", "vorgeschlagen"),
+        (None, KALK, "K1", "vorgeschlagen"),
+        (None, LIEFANFRAGE, "U1", "vorgeschlagen"),
+        (None, PLANUNG, "K3.1", "vorgeschlagen"),
+        (None, TERMIN, "K3.1", "vorgeschlagen"),
+        (None, BANF, "U1", "vorgeschlagen"),
+        (None, AV, "K3.3", "vorgeschlagen"),
+        (None, LOHN, "K3.3", "vorgeschlagen"),
+        (None, PRUEF, "K3", "vorgeschlagen"),
+        (None, ABNAHME, PRUEF, "vorgeschlagen"),
+        (None, DOKU, PRUEF, "vorgeschlagen"),
+        (None, SERVICE, "K", "vorgeschlagen"),
+        (None, REKLA, SERVICE, "vorgeschlagen"),
+        (None, NACHKALK, "U", "vorgeschlagen"),
+        (None, STAMM, "U", "vorgeschlagen"),
+    ],
+    details={
+        KALK: dict(ausloeser="Technische Kundenanfrage", ergebnis="Auslegung und freigegebener Preis",
+                   beteiligte="Hensel, Mühlberger (laut Organigramm)"),
+        PLANUNG: dict(ausloeser="Auftrag / Rundmail mit AB", ergebnis="PM benannt, Terminplan, Langläufer bestellt",
+                      beteiligte="Projektmanagement, Konstruktion, Einkauf, Fertigung"),
+        TERMIN: dict(ausloeser="Terminrisiko (Material, Kapazität, Kundenänderung)",
+                     ergebnis="Kunde informiert, Termin in allen Listen aktuell"),
+        BANF: dict(ausloeser="Freigegebene Stückliste", ergebnis="Bestellbedarf beim Einkauf, Lagermaterial reserviert",
+                   beteiligte="Konstruktion, Einkauf, Lager"),
+        AV: dict(ausloeser="Freigegebene Zeichnungen, Material verfügbar",
+                 ergebnis="Arbeitsauftrag / Werkstattmappe, Reihenfolge festgelegt",
+                 beteiligte="Justus, PM, Schweißaufsicht"),
+        LOHN: dict(ausloeser="Arbeitsgang wird extern ausgeführt (Beizen, Glühen, Zuschnitt, Bearbeitung, ZfP)",
+                   ergebnis="Geprüfte Rücklieferung", beteiligte="Einkauf, Fertigung, Wareneingang"),
+        ABNAHME: dict(ausloeser="Fertigung abgeschlossen", ergebnis="Abnahmeprotokoll, Typschild, Konformität",
+                      beteiligte="Fertigung, QM, Kunde, ZÜS (z.B. TÜV)"),
+        DOKU: dict(ausloeser="Abnahme erfolgt", ergebnis="Dokumentationspaket für den Kunden",
+                   beteiligte="Linker, Häfer, Hamp (laut Organigramm)"),
+        REKLA: dict(ausloeser="Reklamation des Kunden (oder Fehler eines Lieferanten)",
+                    ergebnis="Lösung, Korrekturmaßnahme, ggf. Garantiefall G-XX/JJ"),
+        NACHKALK: dict(ausloeser="Auftrag abgeschlossen und abgerechnet",
+                       ergebnis="Plan-/Ist-Vergleich, Erkenntnisse für die Kalkulation"),
+        STAMM: dict(ausloeser="Neuer Kunde, Lieferant oder Artikel", ergebnis="Stammdatensatz angelegt und geprüft"),
+    },
+    schritte=[
+        _s(KALK, 1, "Technische Daten aus der Anfrage übernehmen (Medium, Druck, Temperatur, Durchfluss, Filterfeinheit)",
+           "offen (Hensel/Mühlberger?)", "Kundenanfrage, Spezifikation"),
+        _s(KALK, 2, "Filter auslegen: Baugröße, Filterfläche, Werkstoff", "offen", "Anfragedaten", "", "Auslegung"),
+        _s(KALK, 3, "Grobe Festigkeitsberechnung / Wanddicken (AD 2000 oder ASME)", "offen", "Auslegung",
+           "Berechnungsprogramm?", "Wanddicken"),
+        _s(KALK, 4, "Mengengerüst: Material, Zukaufteile, Stunden für Konstruktion, Fertigung, Dokumentation",
+           "offen", "Auslegung, Lieferantenpreise", "Kalkulationsvorlage", "Kostenaufstellung"),
+        _s(KALK, 5, "Zuschläge und Marge, Preis freigeben", "offen", "Kostenaufstellung", "Kalkulationsvorlage",
+           "Freigegebener Preis", "Angebotserstellung (K1.05)", "offen (GL?)"),
+        _s(PLANUNG, 1, "PM-Verantwortliche:n benennen", "offen (GL/Vertrieb?)", "Auftrag / AB", "", "PM benannt"),
+        _s(PLANUNG, 2, "Interner Kick-off mit Konstruktion, Einkauf, Fertigung", "PM", "AB, Spezifikation", "",
+           "Alle kennen Umfang und Termine", "Konstruktion, Einkauf, Fertigung", "", "Findet ein Kick-off statt?"),
+        _s(PLANUNG, 3, "Terminplan mit Meilensteinen (Zeichnungsfreigabe, Materialeingang, Fertigung, Druckprobe, "
+           "Versand)", "PM", "Liefertermin", "Gantt/Phasen im Tool?", "Terminplan"),
+        _s(PLANUNG, 4, "Langläufer erkennen und vorab bestellen (z.B. Schmiedeteile, Sonderwerkstoffe)", "PM, Einkauf",
+           "Spezifikation", "", "Frühe Bestellungen", "Einkauf"),
+        _s(PLANUNG, 5, "Dokumentations- und Prüfanforderungen klären (Kundenspezifikation, Prüfplan)", "PM, QM",
+           "Kundenspezifikation", "", "Prüf-/Dokuplan", PRUEF),
+        _s(TERMIN, 1, "Terminrisiko erkennen (Material verspätet, Engpass Fertigung, Kundenänderung)", "offen",
+           "Bestellstatus, Fertigungsstand"),
+        _s(TERMIN, 2, "Neuen Termin intern abstimmen", "PM", "", "", "Neuer Termin"),
+        _s(TERMIN, 3, "Kunden informieren, ggf. revidierte AB", "Vertrieb/Administration", "Neuer Termin", "E-Mail",
+           "Kunde informiert", "Kunde"),
+        _s(TERMIN, 4, "Termin in allen Listen anpassen (Dashboard, MDL, Versandliste, Tool)", "offen", "", "mehrere Listen",
+           "Termin überall aktuell", "", "", "Wird überall nachgezogen?"),
+        _s(BANF, 1, "Stückliste erstellen", "Konstruktion", "Zeichnungen", "CAD / Excel?", "Stückliste"),
+        _s(BANF, 2, "Positionen kennzeichnen: Zukauf, Eigenfertigung oder aus Lager", "Konstruktion / Einkauf",
+           "Stückliste", "", "Gekennzeichnete Stückliste"),
+        _s(BANF, 3, "Lagerbestand prüfen und Material für die Kommission reservieren", "offen", "Stückliste",
+           "Lagerbestandsliste", "Reserviertes Lagermaterial", "", "", "Laut AA nicht vorgesehen"),
+        _s(BANF, 4, "Bestellanforderung für die Fehlmenge an den Einkauf", "Konstruktion", "Stückliste",
+           "offen", "Bestellbedarf", "Einkauf (U1.1)"),
+        _s(BANF, 5, "Liefertermine gegen den Terminplan prüfen", "Einkauf / PM", "Lieferantenangebote", "",
+           "Termin gesichert oder Eskalation"),
+        _s(AV, 1, "Freigegebene Zeichnungen an die Werkstatt geben", "Konstruktion / PM", "Freigegebene Zeichnungen",
+           "Papier? K-Laufwerk?", "Werkstatt hat Zeichnungen"),
+        _s(AV, 2, "Arbeitsgänge festlegen (Zuschnitt, Schweißen, Bearbeitung, Beizen, Prüfung)", "offen (Justus?)",
+           "Zeichnungen", "", "Arbeitsgangfolge"),
+        _s(AV, 3, "Schweißanweisung (WPS) und qualifizierte Schweißer zuordnen", "Schweißaufsicht",
+           "Zeichnungen, Werkstoffe", "", "WPS / Schweißerzuordnung"),
+        _s(AV, 4, "Werkstattmappe / Laufzettel je Kommission anlegen", "offen", "", "Papier?", "Arbeitsauftrag"),
+        _s(AV, 5, "Reihenfolge nach Liefertermin und Kapazität festlegen", "offen (Justus?)", "Liefertermine", "",
+           "Fertigungsreihenfolge", "", "", "Gibt es eine Kapazitätsplanung?"),
+        _s(LOHN, 1, "Lohnarbeit bestellen", "Einkauf", "Arbeitsgang", "", "Bestellung Lohnarbeit", "Dienstleister"),
+        _s(LOHN, 2, "Material beistellen und Transport zum Dienstleister organisieren", "offen", "", "",
+           "Material außer Haus", "", "", "Wie wird verfolgt, was außer Haus ist?"),
+        _s(LOHN, 3, "Rücklieferung im Wareneingang prüfen (inkl. Prüfbescheinigung)", "Wareneingang",
+           "Rücklieferung", "", "Freigegebene Teile", "Fertigung"),
+        _s(ABNAHME, 1, "Prüf- und Abnahmeplan mit Kunde bzw. ZÜS abstimmen", "PM / QM", "Kundenspezifikation", "",
+           "Prüfplan"),
+        _s(ABNAHME, 2, "Zerstörungsfreie Prüfung, Maßprüfung, ggf. PMI", "Fertigung / QM", "Gefertigtes Teil", "",
+           "Prüfprotokolle"),
+        _s(ABNAHME, 3, "Druckprobe durchführen und protokollieren (AA K3.3.11-01)", "Fertigung", "", "",
+           "Druckprobenprotokoll"),
+        _s(ABNAHME, 4, "Abnahme durch Kunde bzw. TÜV (ggf. Werksabnahme)", "PM / QM", "Protokolle", "",
+           "Abnahmeprotokoll", "", "Kunde / ZÜS"),
+        _s(ABNAHME, 5, "Typschild, CE-Kennzeichnung bzw. Konformitätserklärung nach DGRL", "QM", "Abnahme", "",
+           "Konformität bestätigt", DOKU),
+        _s(DOKU, 1, "Unterlagen sammeln: Zeichnungen, Werkstoffzeugnisse (per Schmelze), WPS/WPQR, Schweißerzertifikate, "
+           "Prüfprotokolle, Konformitätserklärung", "offen (Linker/Häfer/Hamp?)", "Zeugnisse, Protokolle",
+           "K-Laufwerk (Auftragsordner)", "Vollständige Unterlagen"),
+        _s(DOKU, 2, "Dokumentationspaket nach Kundenvorgabe zusammenstellen und prüfen", "offen", "Unterlagen", "",
+           "Doku-Paket"),
+        _s(DOKU, 3, "Doku an den Kunden übergeben (mit der Lieferung oder separat)", "offen", "Doku-Paket",
+           "E-Mail / Papier?", "Doku beim Kunden", "Kunde", "", "Hängt die Schlusszahlung an der Doku?"),
+        _s(REKLA, 1, "Reklamation aufnehmen und dem Auftrag zuordnen", "offen", "Kundenmeldung", "",
+           "Reklamation erfasst"),
+        _s(REKLA, 2, "Ursache analysieren (eigener Fehler / Lieferantenfehler)", "QM", "Reklamation", "", "Ursache"),
+        _s(REKLA, 3, "Sofortmaßnahme: Ersatz, Nacharbeit, Gutschrift", "offen", "", "", "Kunde versorgt", "",
+           "Kulanz: wer entscheidet?"),
+        _s(REKLA, 4, "Korrekturmaßnahme festlegen; Lieferantenfehler in die Lieferantenbewertung", "QM", "Ursache", "",
+           "Maßnahme", "Lieferantenbewertung (U1.3)"),
+        _s(NACHKALK, 1, "Ist-Werte sammeln: Stunden, Material, Fremdleistung je Kommission", "offen",
+           "Stunden, Eingangsrechnungen", "Zeiterfassung, DATEV, Dashboard?", "Ist-Kosten"),
+        _s(NACHKALK, 2, "Plan- und Ist-Werte vergleichen", "offen", "Kalkulation, Ist-Kosten", "", "Abweichungen"),
+        _s(NACHKALK, 3, "Erkenntnisse in die Kalkulation zurückgeben (Stundenansätze, Zuschläge)", "offen",
+           "Abweichungen", "", "Aktualisierte Kalkulationswerte", KALK),
+        _s(NACHKALK, 4, "Auftragsordner abschließen und archivieren", "offen", "", "K-Laufwerk", "Auftrag abgeschlossen"),
+        _s(STAMM, 1, "Neuen Kunden anlegen: Sanktions- und Bonitätsprüfung, Debitorennummer", "offen",
+           "Kundendaten", "Dashboard? DATEV?", "Kunde angelegt"),
+        _s(STAMM, 2, "Neuen Lieferanten anlegen nach Freigabe (AA U1.2_01)", "Einkauf", "Lieferantendaten", "",
+           "Lieferant angelegt"),
+        _s(STAMM, 3, "Neuen Artikel / HETA-Typennummer anlegen", "offen", "", "", "Artikel angelegt", "", "",
+           "Wo werden Artikel überhaupt geführt?"),
+    ],
+    fragen=[
+        (KALK, "Wer rechnet (Hensel, Mühlberger), mit welcher Vorlage, woher kommen die Stundensätze, und wer gibt "
+               "den Preis frei?", "Hensel / Mühlberger"),
+        (PLANUNG, "Gibt es einen internen Kick-off, oder nur die Rundmail? Wo steht der Terminplan (werden die Phasen "
+                  "im Gantt dieses Tools genutzt)?", "PM (Häfer, Hamp, Linker, Schreiber)"),
+        (PLANUNG, "Welche Rolle hat die wöchentliche Projektbesprechung (und dieses Tool) als Informationskanal für "
+                  "alle Beteiligten?", "Schreiber / Hensel"),
+        (TERMIN, "Wer merkt eine Terminverzögerung zuerst, wird der Kunde aktiv informiert, und gibt es "
+                 "Vertragsstrafen?", "PM / Linker"),
+        (BANF, "Wer entscheidet, was aus dem Lager kommt? Wird die Stückliste abgetippt oder übernommen?",
+               "Scharmann / Köhler"),
+        (AV, "Gibt es einen schriftlichen Arbeitsauftrag? Wer plant die Kapazität der Werkstatt, und woher weiß die "
+             "Werkstatt, welcher Auftrag Vorrang hat?", "Justus"),
+        (LOHN, "Welche Arbeitsgänge werden extern vergeben, und wie wird verfolgt, welches Material gerade außer Haus "
+               "ist?", "Köhler / Justus"),
+        (DOKU, "Wer stellt die Herstellerdokumentation zusammen, wie lange dauert das, und hängt die Schlusszahlung "
+               "an der Doku?", "Häfer / Hamp / Linker"),
+        ("Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen)",
+         "Anzahlung, Teil- und Schlussrechnung, Bürgschaften: Wer löst welche Rechnung aus, und woher erfährt die "
+         "Buchhaltung, dass ein Meilenstein erreicht ist?", "Brühl"),
+        (REKLA, "Wo wird eine Reklamation erfasst, und wer entscheidet über Kulanz?", "Häfer / Brühl"),
+        (NACHKALK, "Wird nachkalkuliert? Woher kommen die Ist-Stunden je Kommission?", "Brühl / Hensel"),
+        (STAMM, "Wer legt Kunden, Lieferanten und Artikel wo an? Gibt es Dubletten (dieselbe Adresse in mehreren "
+                "Listen)?", "Linker / Köhler / Brühl"),
+        ("K3.1", "Auf welcher Grundlage wird der Liefertermin in der AB zugesagt (Kapazität Fertigung, Lieferzeiten "
+                 "Material)?", "Linker / Justus / Köhler"),
+    ],
+    verbindungen=[
+        (ANFRAGE, KALK, "Technische Anfragedaten, Spezifikation", "unklar", False, VOR_V, None),
+        (LIEFANFRAGE, KALK, "Lieferantenpreise und Lieferzeiten", "unklar", False, VOR_V, None),
+        (KALK, "K1.05", "Auslegung und freigegebener Preis", "unklar", False, VOR_V, None),
+        (KALK, NACHKALK, "Plan-Kalkulation (Stunden, Material)", "unklar", False, VOR_V, None),
+        (NACHKALK, KALK, "Rückkopplung: Stundenansätze und Zuschläge aktualisieren", "unklar", False, VOR_V, None),
+        ("K3.1", PLANUNG, "Auftrag / AB, PM-Benennung", "unklar", False, VOR_V, None),
+        (PLANUNG, "K2", "Terminplan, Spezifikation, Prüfplan", "unklar", False, VOR_V, None),
+        ("K3.3", "K3.1", "Machbarkeit des Liefertermins (Kapazität Fertigung)", "unklar", True,
+         "Vorschlag: Grundlage der Terminzusage in der AB ist nicht beschrieben", None),
+        ("U1.1", "K3.1", "Lieferzeiten Material für die Terminzusage", "unklar", False, VOR_V, None),
+        ("K3.1", "Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen)", "Anzahlungsrechnung nach AB",
+         "unklar", False, VOR_V, None),
+        (TERMIN, "U1.1", "Kundenänderung: offene Bestellungen anpassen oder stornieren", "unklar", True,
+         "Vorschlag: nur für Zeichnungsänderungen beschrieben (AA K2_01)", None),
+        (TERMIN, "Versand vorbereiten / Verpackung", "Geänderter Liefertermin für die Versandliste", "unklar", False,
+         VOR_V, None),
+        ("K2", BANF, "Freigegebene Stückliste", "unklar", False, VOR_V, None),
+        (BANF, "U1.1", "Bestellbedarf (Fehlmenge nach Lagerprüfung)", "unklar", False, VOR_V, None),
+        ("K2", AV, "Freigegebene Zeichnungen für die Werkstatt", "unklar", False, VOR_V, None),
+        (AV, LOHN, "Teile für externe Bearbeitung", "unklar", False, VOR_V, None),
+        (LOHN, "U1.1", "Bestellung Lohnarbeit", "unklar", False, VOR_V, None),
+        ("U1.4", DOKU, "Werkstoffzeugnisse der Kommission", "unklar", True,
+         "Vorschlag: Zuordnung der Zeugnisse zur Kommission ist nicht beschrieben", None),
+        ("K3.3", ABNAHME, "Gefertigter Behälter / Filter zur Prüfung", "unklar", False, VOR_V, None),
+        (ABNAHME, DOKU, "Prüf- und Abnahmeprotokolle, Konformitätserklärung", "unklar", False, VOR_V, None),
+        (ABNAHME, "Versand vorbereiten / Verpackung", "Freigabe zum Versand", "unklar", False, VOR_V, None),
+        (DOKU, "Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen)", "Doku übergeben (ggf. Bedingung für "
+         "Schlusszahlung)", "unklar", False, VOR_V, None),
+        ("K3.3", NACHKALK, "Ist-Stunden je Kommission", "unklar", False, VOR_V, None),
+        ("U1.1", NACHKALK, "Ist-Materialkosten (Eingangsrechnungen)", "unklar", False, VOR_V, None),
+        ("K3.3", "K3.1", "Rückmeldung Fertigungsfortschritt (Material da, Druckprobe, versandbereit)", "unklar",
+         True, "Vorschlag: nicht beschrieben – wer weiß wann was?", None),
+        (REKLA, "U1.3", "Lieferantenfehler für die Lieferantenbewertung", "unklar", False, VOR_V, None),
+        ("K3.1", SERVICE, "Unterlagen des Ursprungsauftrags für Ersatzteile (Zeichnung, Stückliste)", "ordner",
+         False, "Vorschlag: laut AA K1_05/K3.1_01 wird auf den Ursprungsauftrag verwiesen", None),
+        (STAMM, "K3.1", "Kunden-/Debitorenstamm", "unklar", False, VOR_V, None),
+    ],
+)))
+
 # Aktueller Stand = höchste Ergänzungsnummer (Startbestand oben = 1)
 STARTBESTAND_VERSION = max([1] + [v for v, _ in ERGAENZUNGEN])
 

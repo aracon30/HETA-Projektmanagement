@@ -75,3 +75,16 @@ Q73;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Die AA Rechnungsers
 Q74;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Wie werden Anzahlungs-, Teil- und Schlussrechnungen ausgelöst (z.B. Anzahlung nach AB), und wer informiert die Buchhaltung?;Brühl;;;offen;;
 Q75;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Woher kennt die Buchhaltung Preise und Zahlungsbedingungen des Auftrags (Dashboard, AB)?;Brühl;;;offen;;
 Q76;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Wird die Rechnung direkt in DATEV geschrieben oder in einer Vorlage erstellt und dann gebucht? Wer überwacht Zahlungseingänge und mahnt?;Brühl / Necke;;;offen;;
+Q77;Auslegung und Kalkulation;Wer rechnet (Hensel, Mühlberger), mit welcher Vorlage, woher kommen die Stundensätze, und wer gibt den Preis frei?;Hensel / Mühlberger;;;offen;;
+Q78;Auftragsplanung / Projektstart;Gibt es einen internen Kick-off, oder nur die Rundmail? Wo steht der Terminplan (werden die Phasen im Gantt dieses Tools genutzt)?;PM (Häfer, Hamp, Linker, Schreiber);;;offen;;
+Q79;Auftragsplanung / Projektstart;Welche Rolle hat die wöchentliche Projektbesprechung (und dieses Tool) als Informationskanal für alle Beteiligten?;Schreiber / Hensel;;;offen;;
+Q80;Liefertermin-Überwachung und Terminänderung (Kunde);Wer merkt eine Terminverzögerung zuerst, wird der Kunde aktiv informiert, und gibt es Vertragsstrafen?;PM / Linker;;;offen;;
+Q81;Bestellanforderung aus der Konstruktion;Wer entscheidet, was aus dem Lager kommt? Wird die Stückliste abgetippt oder übernommen?;Scharmann / Köhler;;;offen;;
+Q82;Arbeitsauftrag / Arbeitsvorbereitung;Gibt es einen schriftlichen Arbeitsauftrag? Wer plant die Kapazität der Werkstatt, und woher weiß die Werkstatt, welcher Auftrag Vorrang hat?;Justus;;;offen;;
+Q83;Fremdfertigung / Lohnarbeit;Welche Arbeitsgänge werden extern vergeben, und wie wird verfolgt, welches Material gerade außer Haus ist?;Köhler / Justus;;;offen;;
+Q84;Herstellerdokumentation erstellen;Wer stellt die Herstellerdokumentation zusammen, wie lange dauert das, und hängt die Schlusszahlung an der Doku?;Häfer / Hamp / Linker;;;offen;;
+Q85;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Anzahlung, Teil- und Schlussrechnung, Bürgschaften: Wer löst welche Rechnung aus, und woher erfährt die Buchhaltung, dass ein Meilenstein erreicht ist?;Brühl;;;offen;;
+Q86;Kundenreklamation;Wo wird eine Reklamation erfasst, und wer entscheidet über Kulanz?;Häfer / Brühl;;;offen;;
+Q87;Nachkalkulation / Auftragscontrolling;Wird nachkalkuliert? Woher kommen die Ist-Stunden je Kommission?;Brühl / Hensel;;;offen;;
+Q88;Stammdaten pflegen (Kunden, Lieferanten, Artikel);Wer legt Kunden, Lieferanten und Artikel wo an? Gibt es Dubletten (dieselbe Adresse in mehreren Listen)?;Linker / Köhler / Brühl;;;offen;;
+Q89;K3.1;Auf welcher Grundlage wird der Liefertermin in der AB zugesagt (Kapazität Fertigung, Lieferzeiten Material)?;Linker / Justus / Köhler;;;offen;;

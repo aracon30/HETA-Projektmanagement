@@ -16,7 +16,9 @@ from prozess_daten import LANDKARTE, PROZESS_DETAILS, DOKUMENTE, SCHRITTE, FRAGE
 
 def _finde_prozess(nach_nummer, nummer):
     """Sucht den Prozess zur Nummer; fehlt er (z.B. U2.2), wird der nächsthöhere
-    vorhandene genommen (U2.2 -> U2)."""
+    vorhandene genommen (U2.2 -> U2). Bezeichnungen (mit Leerzeichen) nur exakt."""
+    if nummer and " " in nummer.strip():
+        return nach_nummer.get(nummer)
     while nummer:
         if nummer in nach_nummer:
             return nach_nummer[nummer]
@@ -113,6 +115,10 @@ def _ergaenzung_einspielen(version, e):
 
     for nummer, bezeichnung, parent, status in e.get("landkarte", []):
         eltern = _finde_prozess(nach_nummer, parent) if parent else None
+        if parent and eltern is None:
+            print(f"Hinweis: übergeordneter Prozess „{parent}“ nicht (eindeutig) gefunden – „{bezeichnung}“ "
+                  f"wird nicht angelegt.")
+            continue
         # Von Hand angelegte Prozesse nicht doppeln: gleiche Nummer oder gleiche
         # Bezeichnung unter demselben übergeordneten Prozess gilt als vorhanden.
         name = bezeichnung.strip().lower()
