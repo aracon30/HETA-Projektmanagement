@@ -540,6 +540,28 @@
   @media (max-width: 600px){ .pz-modal .form-grid{grid-template-columns:1fr;} }
   .pz-modal .hint{ font-size:0.72rem; color:var(--slate); margin-top:3px; }
   a.btn{ text-decoration:none; display:inline-block; }
+  .pz-weg{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap; font-size:0.76rem; color:var(--slate); }
+  .pz-weg-linie{ display:inline-block; width:18px; height:3px; border-radius:2px; }
+  .pz-table tr.pz-gruppe td{ background:#F7F8F6; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); font-weight:600; padding:6px 10px; }
+  .pz-karte-wrap{ overflow:auto; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel); max-height:72vh; }
+  .pz-karte-wrap svg{ display:block; font-family:'IBM Plex Sans', sans-serif; }
+  .pz-knoten, .pz-kante{ cursor:pointer; }
+  .pz-knoten:hover rect{ stroke:var(--steel); }
+  .pz-knoten-nr{ font-family:'IBM Plex Mono', monospace; font-size:11px; fill:var(--slate); }
+  .pz-knoten-name{ font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .pz-knoten-fragen{ font-size:10.5px; font-weight:600; fill:var(--copper); }
+  .pz-knoten-dot.pz-vorgeschlagen{fill:var(--slate-light);} .pz-knoten-dot.pz-laut_aa{fill:var(--amber);}
+  .pz-knoten-dot.pz-aufgenommen{fill:var(--steel);} .pz-knoten-dot.pz-bestaetigt{fill:var(--green);} .pz-knoten-dot.pz-anforderungen{fill:var(--copper);}
+  .pz-bahn-name{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; fill:var(--slate); }
+  .pz-kanten-label{ font-size:11px; fill:var(--ink); paint-order:stroke; stroke:#FFFFFF; stroke-width:4px; stroke-linejoin:round; pointer-events:none; }
+  .pz-matrix{ border-collapse:collapse; font-size:0.76rem; }
+  .pz-matrix th, .pz-matrix td{ border:1px solid #EDEEEA; padding:4px 6px; text-align:center; }
+  .pz-matrix tbody th{ text-align:left; font-weight:500; white-space:nowrap; max-width:240px; overflow:hidden; text-overflow:ellipsis; background:#F7F8F6; }
+  .pz-matrix-spalte{ vertical-align:bottom; background:#F7F8F6; font-weight:500; }
+  .pz-matrix-spalte span{ writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap; font-family:'IBM Plex Mono', monospace; }
+  .pz-matrix-leer{ background:#F2F3EF; }
+  .pz-matrix-punkt{ display:inline-block; width:10px; height:10px; border-radius:50%; margin:1px; }
+  .pz-matrix-punkt.hakt{ box-shadow:0 0 0 2px #B0432E; }
 </style>
 </head>
 <body>
@@ -2642,6 +2664,9 @@ let prozesse = [];              // Übersicht aller Prozesse (flach, mit parentI
 let prozessConfig = null;       // Statuswerte vom Server
 let selectedProzessId = null;   // null = Landkarte
 let pzSearch = "";
+let verbindungen = [];          // Übergaben zwischen Prozessen (Schnittstellen)
+let pzKarteFokus = null;        // in der Schnittstellenkarte hervorgehobener Prozess
+let pzKarteNurProbleme = false;
 // Kette "Anfrage bis Rechnung" (Reihenfolge entlang eines Auftrags)
 const PZ_KETTE = ["K1", "K3.1", "K2", "U1", "K3.3", "K3.2"];
 const PZ_STATUS_KURZ = {
@@ -2707,7 +2732,7 @@ function pzNutzerDatalist(){
 
 async function loadProzesse(){
   if(!prozessConfig) prozessConfig = await apiGet("/prozesse/config");
-  prozesse = await apiGet("/prozesse");
+  [prozesse, verbindungen] = await Promise.all([apiGet("/prozesse"), apiGet("/verbindungen")]);
 }
 
 async function openProzesseTab(){
@@ -2726,12 +2751,13 @@ async function openProzesseTab(){
       pzSearch = ev.target.value;
       renderPzTree();
     });
-    document.getElementById("pzNewBtn").addEventListener("click", () => openPzProzessModal(null, selectedProzessId));
+    document.getElementById("pzNewBtn").addEventListener("click", () => openPzProzessModal(null, typeof selectedProzessId === "number" ? selectedProzessId : null));
     // Alle Links auf Prozesse (Baum, Landkarte, Brotkrumen) laufen über data-pz-open
     board.addEventListener("click", (ev) => {
       const el = ev.target.closest("[data-pz-open]");
       if(!el) return;
-      pzSelect(el.dataset.pzOpen ? parseInt(el.dataset.pzOpen, 10) : null);
+      const v = el.dataset.pzOpen;
+      pzSelect(v === "" ? null : v === "karte" ? "karte" : parseInt(v, 10));
     });
   }
   try{
@@ -2765,7 +2791,7 @@ function updateStatsForProzesse(){
   const schritte = prozesse.reduce((s, p) => s + p.anzahlSchritte, 0);
   const fragen = prozesse.reduce((s, p) => s + p.anzahlFragenOffen, 0);
   document.getElementById("statBar").innerHTML =
-    `<span><b>${eigentliche.length}</b> Prozesse</span><span><b>${schritte}</b> Schritte</span><span><b>${fragen}</b> offene Fragen</span>`;
+    `<span><b>${eigentliche.length}</b> Prozesse</span><span><b>${schritte}</b> Schritte</span><span><b>${verbindungen.length}</b> Schnittstellen</span><span><b>${fragen}</b> offene Fragen</span>`;
 }
 
 function renderPzTree(){
@@ -2780,7 +2806,9 @@ function renderPzTree(){
       ${p.anzahlFragenOffen ? `<span class="cnt" title="${p.anzahlFragenOffen} offene Fragen">? ${p.anzahlFragenOffen}</span>` : ''}
     </button>`;
   const rows = [`<button class="pz-tree-item ${selectedProzessId === null ? 'selected' : ''}" data-pz-open="">
-      <span class="name">Landkarte (Übersicht)</span></button>`];
+      <span class="name">Landkarte (Übersicht)</span></button>`,
+    `<button class="pz-tree-item ${selectedProzessId === "karte" ? 'selected' : ''}" data-pz-open="karte">
+      <span class="name">Schnittstellenkarte</span><span class="cnt" style="color:var(--slate);">${verbindungen.length}</span></button>`];
   const term = pzSearch.trim().toLowerCase();
   if(term){
     const treffer = prozesse.filter(p => pzLabel(p).toLowerCase().includes(term));
@@ -2798,6 +2826,11 @@ function renderPzTree(){
 
 async function renderPzMain(){
   const main = document.getElementById("pzMain");
+  if(selectedProzessId === "karte"){
+    main.innerHTML = renderPzKarte();
+    bindPzKarte();
+    return;
+  }
   if(selectedProzessId === null || !pzById(selectedProzessId)){
     selectedProzessId = null;
     main.innerHTML = renderPzLandkarte();
@@ -2860,6 +2893,8 @@ function renderPzLandkarte(){
       ${exportLink("ablaufschritte", "Ablaufschritte")}
       ${exportLink("offene_fragen", "Offene Fragen")}
       ${exportLink("arbeitsanweisungen", "Arbeitsanweisungen")}
+      ${exportLink("schnittstellen", "Schnittstellen")}
+      <button class="btn small" data-pz-open="karte" style="margin-left:6px;">Schnittstellenkarte öffnen</button>
     </div>
     ${roots.length ? `<div class="pz-map">${roots.map(r => `
       <div class="pz-col">
@@ -2978,6 +3013,15 @@ function renderPzDetail(p){
       : `<div class="pz-empty">Noch keine Schritte erfasst. Tipp: an einem realen, abgeschlossenen Vorgang entlanggehen – „Was löst die Arbeit aus? Was machst du konkret? An wen gibst du es weiter?“</div>`}
 
     <div class="timeline-head">
+      <h3>Schnittstellen (${verbindungen.filter(v => v.vonId === p.id || v.nachId === p.id).length})</h3>
+      <div style="display:flex; gap:8px;">
+        <button class="btn text" id="pzZurKarteBtn">In Karte zeigen</button>
+        <button class="btn ghost small" id="pzAddVerbindungBtn">+ Übergabe</button>
+      </div>
+    </div>
+    ${renderPzVerbindungsListe(p.id, p.schritte)}
+
+    <div class="timeline-head">
       <h3>Offene Fragen (${p.fragen.filter(f => f.status === "offen").length} offen)</h3>
       <button class="btn ghost small" id="pzAddFrageBtn">+ Frage</button>
     </div>
@@ -3049,6 +3093,12 @@ function bindPzDetail(p){
       await pzReload("Frage gelöscht.");
     });
   }));
+  document.getElementById("pzAddVerbindungBtn").addEventListener("click", () => openPzVerbindungModal(p.id, null));
+  document.getElementById("pzZurKarteBtn").addEventListener("click", () => {
+    pzKarteFokus = p.id;
+    pzSelect("karte");
+  });
+  bindPzVerbindungsAktionen(main, p.id);
   main.querySelectorAll("[data-dok-status]").forEach(sel => sel.addEventListener("change", async () => {
     try{
       await apiPatch(`/dokumente/${sel.dataset.dokStatus}`, { auswertungsstatus: sel.value });
@@ -3057,6 +3107,392 @@ function bindPzDetail(p){
       showToast("Auswertungsstatus konnte nicht gespeichert werden.", true);
     }
   }));
+}
+
+/* ---------- Schnittstellen (Übergaben zwischen Prozessen) ---------- */
+const PZ_WEG_FARBEN = {
+  email: "#0077DB", dashboard: "#2E8B6F", ordner: "#9C5A34", papier: "#7E62A1",
+  muendlich: "#C4872A", sonstiges: "#1B2430", unklar: "#A9B2B9",
+};
+// Reihenfolge der Kernprozesse in der Karte (entlang eines Auftrags); andere
+// Prozesse werden hinter dem nächsten übergeordneten Prozess aus dieser Liste einsortiert.
+const PZ_KARTE_KERN = ["K1", "K1.05", "K3.1", "K2", "K3", "K3.3", "K3.2", "K4"];
+
+function pzWegLabel(weg){
+  const w = (prozessConfig?.wege || []).find(o => o.value === weg);
+  return w ? w.label : weg;
+}
+function pzWegHtml(weg){
+  const farbe = PZ_WEG_FARBEN[weg] || PZ_WEG_FARBEN.sonstiges;
+  const linie = weg === "unklar"
+    ? `background:repeating-linear-gradient(90deg, ${farbe} 0 4px, transparent 4px 7px);`
+    : `background:${farbe};`;
+  return `<span class="pz-weg"><span class="pz-weg-linie" style="${linie}"></span>${pzEsc(pzWegLabel(weg))}</span>`;
+}
+
+function renderPzVerbindungsListe(prozessId, schritte){
+  const ein = verbindungen.filter(v => v.nachId === prozessId);
+  const aus = verbindungen.filter(v => v.vonId === prozessId);
+  if(!ein.length && !aus.length){
+    return `<div class="pz-empty">Noch keine Übergaben erfasst. Über „+ Übergabe“ festhalten, was dieser Prozess von wem bekommt und an wen er etwas weitergibt.</div>`;
+  }
+  const zeile = (v, andererId, pfeil) => {
+    const a = pzById(andererId);
+    const schritt = (schritte || []).find(s => s.id === v.schrittId);
+    return `<tr>
+      <td class="nr">${pfeil}</td>
+      <td>${a ? `<button class="clickable-text" data-pz-open="${a.id}">${pzEsc(pzLabel(a))}</button>` : '—'}</td>
+      <td>${pzEsc(v.inhalt)}${v.notiz ? `<div class="small">${pzEsc(v.notiz)}</div>` : ''}</td>
+      <td>${pzWegHtml(v.weg)}</td>
+      <td class="nr">${schritt ? `Schritt ${schritt.reihenfolge}` : ''}</td>
+      <td>${v.problem ? '<span class="status-badge wartet_extern" title="Hier hakt es">Hakt</span>' : ''}</td>
+      <td class="actions">
+        <button class="pz-icon-btn" data-verb-edit="${v.id}" title="Bearbeiten" aria-label="Übergabe bearbeiten">✎</button>
+        <button class="pz-icon-btn" data-verb-del="${v.id}" title="Löschen" aria-label="Übergabe löschen">✕</button>
+      </td>
+    </tr>`;
+  };
+  const gruppe = (titel, liste, pfeil, feld) => liste.length ? `
+    <tr class="pz-gruppe"><td colspan="7">${titel} (${liste.length})</td></tr>
+    ${liste.map(v => zeile(v, v[feld], pfeil)).join("")}` : '';
+  return `<div class="pz-table-wrap"><table class="pz-table">
+    <thead><tr><th></th><th>Prozess</th><th>Was wird übergeben</th><th>Weg</th><th>Schritt</th><th></th><th></th></tr></thead>
+    <tbody>
+      ${gruppe("Erhält von", ein, "←", "vonId")}
+      ${gruppe("Übergibt an", aus, "→", "nachId")}
+    </tbody></table></div>`;
+}
+
+function bindPzVerbindungsAktionen(root, kontextId){
+  root.querySelectorAll("[data-verb-edit]").forEach(btn => btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    const v = verbindungen.find(x => x.id === parseInt(btn.dataset.verbEdit, 10));
+    openPzVerbindungModal(kontextId ?? v.vonId, v);
+  }));
+  root.querySelectorAll("[data-verb-del]").forEach(btn => btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    const v = verbindungen.find(x => x.id === parseInt(btn.dataset.verbDel, 10));
+    const von = pzById(v.vonId), nach = pzById(v.nachId);
+    openPzConfirm("Übergabe löschen?", `${pzLabel(von)} → ${pzLabel(nach)}: ${v.inhalt}`, async () => {
+      await apiDelete(`/verbindungen/${v.id}`);
+      await pzReload("Übergabe gelöscht.");
+    });
+  }));
+}
+
+async function openPzVerbindungModal(kontextId, v){
+  let ctx;
+  try{
+    ctx = await apiGet(`/prozesse/${kontextId}`);
+  }catch(err){
+    showToast("Prozess konnte nicht geladen werden.", true);
+    return;
+  }
+  const isNew = !v;
+  const richtung = isNew || v.vonId === ctx.id ? "aus" : "ein";
+  const andererId = isNew ? null : (richtung === "aus" ? v.nachId : v.vonId);
+  const andereOptionen = `<option value="">— bitte wählen —</option>` + prozesse
+    .filter(x => x.id !== ctx.id)
+    .map(x => `<option value="${x.id}" ${x.id === andererId ? 'selected' : ''}>${'   '.repeat(pzAhnen(x).length)}${pzEsc(pzLabel(x))}</option>`)
+    .join("");
+  const wegOptionen = prozessConfig.wege.map(w =>
+    `<option value="${w.value}" ${(v ? v.weg : "unklar") === w.value ? 'selected' : ''}>${pzEsc(w.label)}</option>`).join("");
+  let schrittOptionen = `<option value="">— kein bestimmter Schritt —</option>` + ctx.schritte.map(s =>
+    `<option value="${s.id}" ${v?.schrittId === s.id ? 'selected' : ''}>Schritt ${s.reihenfolge}: ${pzEsc(s.taetigkeit.slice(0, 70))}</option>`).join("");
+  if(v?.schrittId && !ctx.schritte.some(s => s.id === v.schrittId)){
+    schrittOptionen += `<option value="${v.schrittId}" selected>Schritt im anderen Prozess</option>`;
+  }
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide pz-modal" role="dialog" aria-modal="true" aria-labelledby="pzvTitle">
+        <h3 id="pzvTitle">${isNew ? 'Neue Übergabe' : 'Übergabe bearbeiten'}</h3>
+        <div class="sub">${pzEsc(pzLabel(ctx))} · Was wird zwischen zwei Prozessen weitergegeben, und auf welchem Weg?</div>
+        <div class="form-grid">
+          <div class="form-row"><label for="pzvRichtung">Richtung</label>
+            <select id="pzvRichtung">
+              <option value="aus" ${richtung === "aus" ? 'selected' : ''}>${pzEsc(ctx.nummer || ctx.bezeichnung)} übergibt an …</option>
+              <option value="ein" ${richtung === "ein" ? 'selected' : ''}>${pzEsc(ctx.nummer || ctx.bezeichnung)} erhält von …</option>
+            </select></div>
+          <div class="form-row"><label for="pzvAnderer">Anderer Prozess *</label><select id="pzvAnderer">${andereOptionen}</select></div>
+          <div class="form-row" style="grid-column:1 / -1;"><label for="pzvInhalt">Was wird übergeben? *</label>
+            <input id="pzvInhalt" value="${pzEsc(v?.inhalt || '')}" placeholder="z.B. Auftragsbestätigung, Stückliste, Zeichnungen, Lieferschein">
+          </div>
+          <div class="form-row"><label for="pzvWeg">Weg</label><select id="pzvWeg">${wegOptionen}</select></div>
+          <div class="form-row"><label for="pzvSchritt">Gehört zu Schritt</label><select id="pzvSchritt">${schrittOptionen}</select></div>
+        </div>
+        <div class="form-row"><label style="display:flex; align-items:center; gap:8px; text-transform:none; letter-spacing:0; font-size:0.85rem; color:var(--ink);">
+          <input type="checkbox" id="pzvProblem" style="width:auto;" ${v?.problem ? 'checked' : ''}>
+          Hier hakt es (Medienbruch, Rückfragen, doppelte Eingabe, Informationen fehlen …)</label></div>
+        <div class="form-row"><label for="pzvNotiz">Notiz</label><textarea id="pzvNotiz" rows="2">${pzEsc(v?.notiz || '')}</textarea></div>
+        <div class="modal-actions">
+          <button class="btn text" id="pzvCancel">Abbrechen</button>
+          <button class="btn" id="pzvSave">${isNew ? 'Hinzufügen' : 'Speichern'}</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("pzvCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById(isNew ? "pzvAnderer" : "pzvInhalt").focus();
+  document.getElementById("pzvSave").addEventListener("click", async () => {
+    const anderer = document.getElementById("pzvAnderer").value;
+    const inhalt = document.getElementById("pzvInhalt").value.trim();
+    if(!anderer || !inhalt){
+      showToast("Bitte den anderen Prozess und den Inhalt der Übergabe angeben.", true);
+      return;
+    }
+    const aus = document.getElementById("pzvRichtung").value === "aus";
+    const schritt = document.getElementById("pzvSchritt").value;
+    const body = {
+      vonId: aus ? ctx.id : parseInt(anderer, 10),
+      nachId: aus ? parseInt(anderer, 10) : ctx.id,
+      inhalt,
+      weg: document.getElementById("pzvWeg").value,
+      schrittId: schritt ? parseInt(schritt, 10) : null,
+      problem: document.getElementById("pzvProblem").checked,
+      notiz: document.getElementById("pzvNotiz").value.trim(),
+    };
+    const btn = document.getElementById("pzvSave");
+    btn.disabled = true;
+    try{
+      if(isNew) await apiPost("/verbindungen", body);
+      else await apiPatch(`/verbindungen/${v.id}`, body);
+      closeModal();
+      await pzReload(isNew ? "Übergabe hinzugefügt." : "Übergabe gespeichert.");
+    }catch(err){
+      showToast("Übergabe konnte nicht gespeichert werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+/* ---------- Schnittstellenkarte ---------- */
+function pzBahn(p){
+  const root = [...pzAhnen(p), p][0];
+  const kennung = (root.nummer || root.bezeichnung || "").toUpperCase();
+  if(kennung.startsWith("F")) return 0;
+  if(kennung.startsWith("K")) return 1;
+  if(kennung.startsWith("U")) return 2;
+  return 3;
+}
+function pzKernSchluessel(p){
+  for(const x of [p, ...pzAhnen(p).reverse()]){
+    const idx = PZ_KARTE_KERN.indexOf(x.nummer);
+    if(idx >= 0) return idx * 100000 + (x === p ? 0 : 1000) + p.reihenfolge;
+  }
+  return 99 * 100000 + p.reihenfolge;
+}
+
+function pzKarteLayout(){
+  const KW = 176, KH = 54, GAP = 26, BAHN_H = 150, LINKS = 120, OBEN = 96;
+  const ids = new Set();
+  verbindungen.forEach(v => { ids.add(v.vonId); ids.add(v.nachId); });
+  const knoten = [...ids].map(pzById).filter(Boolean);
+  const bahnen = [[], [], [], []];
+  knoten.forEach(p => bahnen[pzBahn(p)].push(p));
+  // nur belegte Bahnen anzeigen, in fester Reihenfolge Führung – Kern – Unterstützung – Sonstige
+  const genutzt = [0, 1, 2, 3].filter(b => bahnen[b].length);
+  const bahnY = (b) => OBEN + genutzt.indexOf(b) * BAHN_H;
+  const pos = {};
+  bahnen[1].sort((a, b) => pzKernSchluessel(a) - pzKernSchluessel(b))
+    .forEach((p, i) => { pos[p.id] = { x: LINKS + i * (KW + GAP), y: bahnY(1) }; });
+  [0, 2, 3].forEach(b => {
+    const wunsch = (p) => {
+      const nachbarn = verbindungen.filter(v => v.vonId === p.id || v.nachId === p.id)
+        .map(v => pos[v.vonId === p.id ? v.nachId : v.vonId]).filter(Boolean);
+      return nachbarn.length ? nachbarn.reduce((s, q) => s + q.x, 0) / nachbarn.length : 1e6 + p.reihenfolge;
+    };
+    let rechts = LINKS - GAP;
+    bahnen[b].map(p => ({ p, w: wunsch(p) })).sort((a, c) => a.w - c.w).forEach(({ p, w }) => {
+      const x = Math.max(w > 1e5 ? 0 : w, rechts + GAP, LINKS);
+      pos[p.id] = { x, y: bahnY(b) };
+      rechts = x + KW;
+    });
+  });
+  const maxX = Math.max(LINKS + KW, ...Object.values(pos).map(q => q.x + KW));
+  return { knoten, pos, KW, KH, BAHN_H, OBEN, breite: maxX + 40,
+           hoehe: OBEN + genutzt.length * BAHN_H - (BAHN_H - KH) + 100, genutzt, bahnY };
+}
+
+function pzBezier(p0, p1, p2, p3, t){
+  const u = 1 - t;
+  return u*u*u*p0 + 3*u*u*t*p1 + 3*u*t*t*p2 + t*t*t*p3;
+}
+
+function renderPzKarte(){
+  const kopf = `
+    <div class="pz-crumbs"><button class="clickable-text" data-pz-open="">Landkarte</button><span aria-hidden="true">›</span>Schnittstellenkarte</div>
+    <div class="order-head"><div>
+      <div class="komm">Wer übergibt was an wen – und auf welchem Weg?</div>
+      <h2 class="display">Schnittstellenkarte</h2>
+    </div></div>`;
+  if(!verbindungen.length){
+    return kopf + `<div class="no-selection">Noch keine Übergaben erfasst. Öffne einen Prozess und lege unter „Schnittstellen“ mit „+ Übergabe“ die erste an.</div>`;
+  }
+  const L = pzKarteLayout();
+  const fokus = pzKarteFokus && L.pos[pzKarteFokus] ? pzKarteFokus : null;
+  const nachbarn = new Set(fokus ? [fokus] : []);
+  if(fokus) verbindungen.forEach(v => {
+    if(v.vonId === fokus) nachbarn.add(v.nachId);
+    if(v.nachId === fokus) nachbarn.add(v.vonId);
+  });
+
+  // Mehrfachkanten zwischen denselben Prozessen auffächern
+  const paare = {};
+  verbindungen.forEach(v => { const k = [v.vonId, v.nachId].sort().join("-"); (paare[k] = paare[k] || []).push(v.id); });
+
+  const marker = Object.entries(PZ_WEG_FARBEN).map(([weg, farbe]) =>
+    `<marker id="pzPfeil-${weg}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${farbe}"/></marker>`).join("");
+
+  const belegt = [];  // bereits gesetzte Kantenbeschriftungen
+  const kanten = verbindungen.map(v => {
+    const a = L.pos[v.vonId], b = L.pos[v.nachId];
+    if(!a || !b) return "";
+    const k = [v.vonId, v.nachId].sort().join("-");
+    const off = (paare[k].indexOf(v.id) - (paare[k].length - 1) / 2) * 16;
+    let x0, y0, x1, y1, x2, y2, x3, y3;
+    if(a.y !== b.y){
+      const runter = b.y > a.y;
+      x0 = a.x + L.KW / 2 + off; y0 = runter ? a.y + L.KH : a.y;
+      x3 = b.x + L.KW / 2 + off; y3 = runter ? b.y : b.y + L.KH;
+      const dy = (y3 - y0) * 0.5;
+      x1 = x0; y1 = y0 + dy; x2 = x3; y2 = y3 - dy;
+    } else {
+      const rechts = b.x > a.x;
+      const bogen = Math.min(80, 30 + Math.abs(b.x - a.x) * 0.12) + Math.abs(off);
+      x0 = a.x + L.KW / 2 + off; x3 = b.x + L.KW / 2 + off;
+      if(rechts){ y0 = a.y; y3 = b.y; y1 = y2 = a.y - bogen; }
+      else { y0 = a.y + L.KH; y3 = b.y + L.KH; y1 = y2 = a.y + L.KH + bogen; }
+      x1 = x0; x2 = x3;
+    }
+    const d = `M${x0},${y0} C${x1},${y1} ${x2},${y2} ${x3},${y3}`;
+    const farbe = PZ_WEG_FARBEN[v.weg] || PZ_WEG_FARBEN.sonstiges;
+    const aktiv = fokus ? (v.vonId === fokus || v.nachId === fokus) : !pzKarteNurProbleme || v.problem;
+    const titel = `${pzLabel(pzById(v.vonId))} → ${pzLabel(pzById(v.nachId))}: ${v.inhalt} (${pzWegLabel(v.weg)})${v.problem ? ' – hakt' : ''}`;
+    let label = "";
+    if(fokus && aktiv){
+      const mx = pzBezier(x0, x1, x2, x3, 0.5);
+      let my = pzBezier(y0, y1, y2, y3, 0.5) - 5;
+      const text = v.inhalt.length > 38 ? v.inhalt.slice(0, 36) + "…" : v.inhalt;
+      // Beschriftungen nicht übereinander legen: bei Überlappung nach unten ausweichen
+      const breite = text.length * 6;
+      while(belegt.some(r => Math.abs(r.x - mx) < (r.b + breite) / 2 && Math.abs(r.y - my) < 14)) my += 14;
+      belegt.push({ x: mx, y: my, b: breite });
+      label = `<text x="${mx}" y="${my}" text-anchor="middle" class="pz-kanten-label">${pzEsc(text)}</text>`;
+    }
+    return `<g class="pz-kante" data-verbindung="${v.id}" opacity="${aktiv ? 1 : 0.1}">
+      <title>${pzEsc(titel)}</title>
+      ${v.problem ? `<path d="${d}" fill="none" stroke="#B0432E" stroke-opacity="0.3" stroke-width="9" stroke-linecap="round"/>` : ''}
+      <path d="${d}" fill="none" stroke="transparent" stroke-width="12"/>
+      <path d="${d}" fill="none" stroke="${farbe}" stroke-width="${fokus && aktiv ? 2.4 : 1.8}" ${v.weg === 'unklar' ? 'stroke-dasharray="5 4"' : ''} marker-end="url(#pzPfeil-${v.weg in PZ_WEG_FARBEN ? v.weg : 'sonstiges'})"/>
+      ${label}
+    </g>`;
+  }).join("");
+
+  const knoten = L.knoten.map(p => {
+    const q = L.pos[p.id];
+    const aktiv = !fokus || nachbarn.has(p.id);
+    const name = p.bezeichnung.length > 24 ? p.bezeichnung.slice(0, 22) + "…" : p.bezeichnung;
+    const hakt = verbindungen.some(v => v.problem && (v.vonId === p.id || v.nachId === p.id));
+    return `<g class="pz-knoten" data-knoten="${p.id}" opacity="${aktiv ? 1 : 0.25}">
+      <title>${pzEsc(pzLabel(p))} – ${pzEsc(pzStatusLabel(p.aufnahmestatus))}${p.anzahlFragenOffen ? ` – ${p.anzahlFragenOffen} offene Fragen` : ''}</title>
+      <rect x="${q.x}" y="${q.y}" width="${L.KW}" height="${L.KH}" rx="4" fill="#FFFFFF"
+            stroke="${p.id === fokus ? '#2C4A63' : hakt ? '#B0432E' : '#DCDFDA'}" stroke-width="${p.id === fokus ? 2.5 : 1.2}"/>
+      <circle cx="${q.x + 12}" cy="${q.y + 15}" r="4" class="pz-knoten-dot pz-${p.aufnahmestatus}"/>
+      <text x="${q.x + 22}" y="${q.y + 19}" class="pz-knoten-nr">${pzEsc(p.nummer || '')}</text>
+      ${p.anzahlFragenOffen ? `<text x="${q.x + L.KW - 8}" y="${q.y + 19}" text-anchor="end" class="pz-knoten-fragen">? ${p.anzahlFragenOffen}</text>` : ''}
+      <text x="${q.x + 10}" y="${q.y + 40}" class="pz-knoten-name">${pzEsc(name)}</text>
+    </g>`;
+  }).join("");
+
+  const bahnNamen = ["Führung", "Kern", "Unterstützung", "Sonstige"];
+  const bahnen = L.genutzt.map((b, i) => `
+    <rect x="0" y="${L.bahnY(b) - 18}" width="100%" height="${L.KH + 36}" fill="${i % 2 ? '#F4F5F2' : '#FAFAF8'}"/>
+    <text x="12" y="${L.bahnY(b) + L.KH / 2 + 4}" class="pz-bahn-name">${bahnNamen[b]}</text>`).join("");
+
+  const legende = prozessConfig.wege.map(w => pzWegHtml(w.value)).join("") +
+    `<span class="pz-weg"><span class="pz-weg-linie" style="background:#B0432E; opacity:0.45; height:7px;"></span>Hakt</span>`;
+
+  let info;
+  if(fokus){
+    const p = pzById(fokus);
+    info = `<div class="timeline-head" style="margin-top:22px;">
+        <h3>${pzEsc(pzLabel(p))}</h3>
+        <div style="display:flex; gap:8px;">
+          <button class="btn text" id="pzKarteFokusWeg">Auswahl aufheben</button>
+          <button class="btn ghost small" data-pz-open="${p.id}">Prozess öffnen</button>
+          <button class="btn ghost small" id="pzKarteNeu">+ Übergabe</button>
+        </div>
+      </div>
+      ${renderPzVerbindungsListe(p.id, null)}`;
+  } else {
+    info = `<p class="pz-intro" style="margin-top:14px;">Klick auf einen Prozess zeigt nur seine Übergaben mit Beschriftung. Klick auf eine Linie öffnet die Übergabe zum Bearbeiten.
+      Rot unterlegte Linien markieren Übergaben, bei denen es hakt – dort liegen meist die wichtigsten Anforderungen an ein mögliches ERP-System.</p>`;
+  }
+
+  return kopf + `
+    <div class="pz-toolbar">
+      <span class="label">Weg</span>${legende}
+      <label class="pz-weg" style="margin-left:auto; cursor:pointer;"><input type="checkbox" id="pzNurProbleme" ${pzKarteNurProbleme ? 'checked' : ''}> nur wo es hakt</label>
+    </div>
+    <div class="pz-karte-wrap">
+      <svg id="pzKarteSvg" width="${L.breite}" height="${L.hoehe}" style="min-width:100%;" role="img" aria-label="Schnittstellenkarte der Prozesse">
+        <defs>${marker}</defs>
+        <rect id="pzKarteHintergrund" x="0" y="0" width="100%" height="100%" fill="transparent"/>
+        ${bahnen}${kanten}${knoten}
+      </svg>
+    </div>
+    ${info}
+    ${renderPzMatrix(L)}`;
+}
+
+function renderPzMatrix(L){
+  const reihen = [...L.knoten].sort((a, b) => (L.pos[a.id].y - L.pos[b.id].y) || (L.pos[a.id].x - L.pos[b.id].x));
+  const kurz = (p) => pzEsc(p.nummer || (p.bezeichnung.length > 18 ? p.bezeichnung.slice(0, 16) + "…" : p.bezeichnung));
+  const kopf = reihen.map(p => `<th class="pz-matrix-spalte" title="${pzEsc(pzLabel(p))}"><span>${kurz(p)}</span></th>`).join("");
+  const zeilen = reihen.map(von => `<tr><th title="${pzEsc(pzLabel(von))}">${pzEsc(pzLabel(von))}</th>${reihen.map(nach => {
+    if(von.id === nach.id) return `<td class="pz-matrix-leer"></td>`;
+    const liste = verbindungen.filter(v => v.vonId === von.id && v.nachId === nach.id);
+    return `<td>${liste.map(v => `<span class="pz-matrix-punkt ${v.problem ? 'hakt' : ''}" style="background:${PZ_WEG_FARBEN[v.weg] || PZ_WEG_FARBEN.sonstiges};" title="${pzEsc(v.inhalt)} (${pzEsc(pzWegLabel(v.weg))})${v.problem ? ' – hakt' : ''}"></span>`).join("")}</td>`;
+  }).join("")}</tr>`).join("");
+  return `
+    <div class="timeline-head" style="margin-top:28px;"><h3>Schnittstellenmatrix</h3></div>
+    <p class="pz-intro" style="margin:4px 0 8px;">Zeile übergibt an Spalte. Ein Punkt je Übergabe, Farbe = Weg, roter Rand = hakt. Maus über einen Punkt zeigt den Inhalt.</p>
+    <div class="pz-table-wrap"><table class="pz-matrix"><thead><tr><th>von \\ an</th>${kopf}</tr></thead><tbody>${zeilen}</tbody></table></div>`;
+}
+
+function bindPzKarte(){
+  const main = document.getElementById("pzMain");
+  const svg = document.getElementById("pzKarteSvg");
+  document.getElementById("pzNurProbleme")?.addEventListener("change", (ev) => {
+    pzKarteNurProbleme = ev.target.checked;
+    renderPzMain();
+  });
+  if(svg){
+    svg.addEventListener("click", (ev) => {
+      const k = ev.target.closest("[data-knoten]");
+      if(k){
+        const id = parseInt(k.dataset.knoten, 10);
+        pzKarteFokus = pzKarteFokus === id ? null : id;
+        renderPzMain();
+        return;
+      }
+      const kante = ev.target.closest("[data-verbindung]");
+      if(kante){
+        const v = verbindungen.find(x => x.id === parseInt(kante.dataset.verbindung, 10));
+        openPzVerbindungModal(pzKarteFokus && (v.vonId === pzKarteFokus || v.nachId === pzKarteFokus) ? pzKarteFokus : v.vonId, v);
+        return;
+      }
+      if(pzKarteFokus !== null){
+        pzKarteFokus = null;
+        renderPzMain();
+      }
+    });
+  }
+  document.getElementById("pzKarteFokusWeg")?.addEventListener("click", () => { pzKarteFokus = null; renderPzMain(); });
+  document.getElementById("pzKarteNeu")?.addEventListener("click", () => openPzVerbindungModal(pzKarteFokus, null));
+  bindPzVerbindungsAktionen(main, pzKarteFokus);
 }
 
 function openPzConfirm(title, text, onConfirm){

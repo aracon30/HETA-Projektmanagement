@@ -113,7 +113,13 @@ Arbeitsanweisungen) als neuen Eintrag in `ERGAENZUNGEN` (prozess_daten.py,
 Version hochzählen) anlegen** – nie den Grundbestand ändern: die Server-DB
 ist schon befüllt, Ergänzungen werden per `update.sh` genau einmal
 eingespielt (Stand in Tabelle `startbestand_stand`), ohne Nutzeränderungen zu
-überschreiben. Ausgewertet: K1_05, K3.1_01, K2_01. Noch offen: Änderungshistorie,
+überschreiben. Ausgewertet: K1_05, K3.1_01, K2_01.
+**Schnittstellenkarte** (Eintrag im Prozess-Baum): Modell `ProzessVerbindung`
+(von → nach, Inhalt, Weg, optional Schritt, „hakt“), API `/api/verbindungen`,
+im Frontend eigenes SVG ohne Bibliothek (feste Bahnen Führung/Kern/
+Unterstützung, Kernprozesse in Auftragsreihenfolge `PZ_KARTE_KERN`,
+Klick = Fokus auf einen Prozess), dazu Schnittstellenmatrix und
+CSV-Export „schnittstellen“. Bewusst kein frei schwebendes Kraft-Layout. Noch offen: Änderungshistorie,
 Probleme/Anforderungen, Systeme & Daten, Swimlane, Excel-Import. **Sprachregelung:** intern und in der
 Oberfläche immer „mögliche Einführung eines ERP-Systems“ — keinen
 Produktnamen (ERPNext) verwenden, keine Entscheidung vorwegnehmen.

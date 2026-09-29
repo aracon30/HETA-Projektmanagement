@@ -18,6 +18,17 @@ AUFNAHMESTATUS = [
     ("anforderungen", "Anforderungen abgeleitet"),
 ]
 
+# Weg einer Übergabe zwischen zwei Prozessen (Farbe in der Schnittstellenkarte)
+UEBERGABE_WEGE = [
+    ("email", "E-Mail"),
+    ("dashboard", "Dashboard"),
+    ("ordner", "Ordner / K-Laufwerk"),
+    ("papier", "Papier"),
+    ("muendlich", "Mündlich / Telefon"),
+    ("sonstiges", "Sonstiges"),
+    ("unklar", "Noch unklar"),
+]
+
 AUSWERTUNGSSTATUS = [
     ("nicht_gesichtet", "Nicht gesichtet"),
     ("gesichtet", "Gesichtet"),
@@ -345,22 +356,48 @@ ERGAENZUNGEN = [
     )),
 ]
 
+ERGAENZUNGEN.append((3, dict(
+    titel="Schnittstellen aus den ausgewerteten Arbeitsanweisungen (29.09.2026)",
+    # (von, nach, was wird übergeben, weg, problem, notiz, (prozess, schritt-nr) oder None)
+    verbindungen=[
+        ("K1.05", "K3.1", "Angebot (Angebotsliste im Dashboard, Angebotsordner) als Basis der Auftragserfassung",
+         "dashboard", False, "Laut AA K3.1_01 Schritt 4/5", ("K3.1", 4)),
+        ("K1.05", "U4", "Sanktionslistenprüfung bei Neukunden", "unklar", False,
+         "Laut AA K1_05; wer prüft und wo dokumentiert wird, ist offen", ("K1.05", 1)),
+        ("K3.1", "U4", "Sanktionslistenprüfung bei neuem Debitor", "unklar", False,
+         "Laut AA K3.1_01", ("K3.1", 2)),
+        ("K3.1", "K2", "Auftragsbestätigung (Rundmail an alle)", "email", False,
+         "Praxisangabe P. Schreiber: Rundmail mit AB; ob Konstruktion ausdrücklich beauftragt wird, ist offen",
+         ("K3.1", 7)),
+        ("K3.1", "U1.1", "Auftragsbestätigung (Rundmail an alle)", "email", False,
+         "Praxisangabe P. Schreiber: Rundmail mit AB", ("K3.1", 7)),
+        ("K3.1", "K3.3", "Auftragsbestätigung (Rundmail an alle)", "email", False,
+         "Praxisangabe P. Schreiber: Rundmail mit AB", ("K3.1", 7)),
+        ("K2", "U1.1", "Bestelltexte / Materialauswahl, Info bei Zeichnungsänderungen", "unklar", True,
+         "Laut AA K2_01. Ob eine Stückliste übergeben wird und in welcher Form, ist ungeklärt.", ("K2", 4)),
+        ("K2", "K3.3", "Freigegebene Zeichnungsunterlagen", "unklar", False,
+         "Laut AA K2_01 Schritt 7; Weg der Verteilung offen", ("K2", 7)),
+        ("K3.3", "K2", "Schweißtechnische Abstimmung (Schweißverfahren, Zusatz)", "muendlich", False,
+         "Laut AA K2_01 Schritt 2 (Schweißaufsicht); Weg angenommen", ("K2", 2)),
+    ],
+)))
+
 # Aktueller Stand = höchste Ergänzungsnummer (Startbestand oben = 1)
 STARTBESTAND_VERSION = max([1] + [v for v, _ in ERGAENZUNGEN])
 
 
 def alle_schritte():
     """Startbestand + alle Ergänzungen (für den CSV-Export)."""
-    return SCHRITTE + [s for _, e in ERGAENZUNGEN for s in e["schritte"]]
+    return SCHRITTE + [s for _, e in ERGAENZUNGEN for s in e.get("schritte", [])]
 
 
 def alle_fragen():
-    return FRAGEN + [f for _, e in ERGAENZUNGEN for f in e["fragen"]]
+    return FRAGEN + [f for _, e in ERGAENZUNGEN for f in e.get("fragen", [])]
 
 
 def alle_dokumente():
     """Dokumentenliste mit dem Auswertungsstatus nach allen Ergänzungen."""
     status = {}
     for _, e in ERGAENZUNGEN:
-        status.update(e["dokument_status"])
+        status.update(e.get("dokument_status", {}))
     return [(n, r, t, g, p, status.get(n, s)) for n, r, t, g, p, s in DOKUMENTE]

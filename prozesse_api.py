@@ -6,13 +6,14 @@ from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, request
 
-from models import db, Prozess, ProzessSchritt, ProzessFrage, Dokument
-from prozess_daten import AUFNAHMESTATUS, AUSWERTUNGSSTATUS
+from models import db, Prozess, ProzessSchritt, ProzessFrage, Dokument, ProzessVerbindung
+from prozess_daten import AUFNAHMESTATUS, AUSWERTUNGSSTATUS, UEBERGABE_WEGE
 
 bp = Blueprint("prozesse", __name__, url_prefix="/api")
 
 AUFNAHMESTATUS_WERTE = {k for k, _ in AUFNAHMESTATUS}
 AUSWERTUNGSSTATUS_WERTE = {k for k, _ in AUSWERTUNGSSTATUS}
+WEG_WERTE = {k for k, _ in UEBERGABE_WEGE}
 
 PROZESS_FELDER = {
     "nummer": "nummer", "bezeichnung": "bezeichnung", "variante": "variante",
@@ -50,6 +51,7 @@ def prozess_config():
     return jsonify({
         "aufnahmestatus": [{"value": k, "label": v} for k, v in AUFNAHMESTATUS],
         "auswertungsstatus": [{"value": k, "label": v} for k, v in AUSWERTUNGSSTATUS],
+        "wege": [{"value": k, "label": v} for k, v in UEBERGABE_WEGE],
     })
 
 
@@ -183,6 +185,7 @@ def move_schritt(schritt_id):
 def delete_schritt(schritt_id):
     schritt = ProzessSchritt.query.get_or_404(schritt_id)
     prozess = schritt.prozess
+    ProzessVerbindung.query.filter_by(schritt_id=schritt.id).update({"schritt_id": None})
     prozess.schritte.remove(schritt)  # delete-orphan löscht den Schritt beim Commit
     _neu_nummerieren(prozess)
     db.session.commit()
@@ -256,6 +259,73 @@ def update_dokument(dokument_id):
     return jsonify(dok.to_dict())
 
 
+# ---------- Schnittstellen (Übergaben zwischen Prozessen) ----------
+def _verbindung_setzen(v, data):
+    if "vonId" in data:
+        v.von_id = Prozess.query.get_or_404(data["vonId"]).id
+    if "nachId" in data:
+        v.nach_id = Prozess.query.get_or_404(data["nachId"]).id
+    if "inhalt" in data:
+        v.inhalt = _text(data["inhalt"])
+    if "weg" in data:
+        if data["weg"] not in WEG_WERTE:
+            return "Unbekannter Übergabeweg."
+        v.weg = data["weg"]
+    if "schrittId" in data:
+        schritt_id = data["schrittId"]
+        if schritt_id is not None:
+            schritt = ProzessSchritt.query.get_or_404(schritt_id)
+            if schritt.prozess_id not in (v.von_id, v.nach_id):
+                return "Der Schritt gehört zu keinem der beiden Prozesse."
+        v.schritt_id = schritt_id
+    if "problem" in data:
+        v.problem = bool(data["problem"])
+    if "notiz" in data:
+        v.notiz = _text(data["notiz"])
+    if not v.inhalt:
+        return "Bitte angeben, was übergeben wird."
+    if v.von_id == v.nach_id:
+        return "Ein Prozess kann nicht an sich selbst übergeben."
+    return None
+
+
+@bp.route("/verbindungen")
+def list_verbindungen():
+    return jsonify([v.to_dict() for v in ProzessVerbindung.query.order_by(ProzessVerbindung.id).all()])
+
+
+@bp.route("/verbindungen", methods=["POST"])
+def create_verbindung():
+    data = request.get_json(force=True)
+    if "vonId" not in data or "nachId" not in data:
+        return _fehler("Von- und Nach-Prozess sind Pflichtfelder.")
+    v = ProzessVerbindung(weg="unklar", problem=False)
+    fehler = _verbindung_setzen(v, data)
+    if fehler:
+        return _fehler(fehler)
+    db.session.add(v)
+    db.session.commit()
+    return jsonify(v.to_dict()), 201
+
+
+@bp.route("/verbindungen/<int:verbindung_id>", methods=["PATCH"])
+def update_verbindung(verbindung_id):
+    v = ProzessVerbindung.query.get_or_404(verbindung_id)
+    fehler = _verbindung_setzen(v, request.get_json(force=True))
+    if fehler:
+        db.session.rollback()
+        return _fehler(fehler)
+    db.session.commit()
+    return jsonify(v.to_dict())
+
+
+@bp.route("/verbindungen/<int:verbindung_id>", methods=["DELETE"])
+def delete_verbindung(verbindung_id):
+    db.session.delete(ProzessVerbindung.query.get_or_404(verbindung_id))
+    db.session.commit()
+    return "", 204
+
+
 # ---------- CSV-Export im Format der Excel-Vorlage ----------
 def _csv_antwort(dateiname, kopf, zeilen):
     buf = io.StringIO()
@@ -312,4 +382,17 @@ def export_csv(blatt):
                             [[d.nummer, d.revision or "", d.titel, d.geltungsbereich or "",
                               _prozess_label(d.prozess), labels.get(d.auswertungsstatus, d.auswertungsstatus)]
                              for d in doks])
+    if blatt == "schnittstellen":
+        wege = dict(UEBERGABE_WEGE)
+        verbindungen = ProzessVerbindung.query.order_by(ProzessVerbindung.id).all()
+        schritte = {s.id: s for s in ProzessSchritt.query.filter(
+            ProzessSchritt.id.in_([v.schritt_id for v in verbindungen if v.schritt_id])).all()}
+        return _csv_antwort("schnittstellen.csv", [
+            "Von Prozess", "Von", "Nach Prozess", "Nach", "Was wird übergeben", "Weg", "Zu Schritt",
+            "Problem", "Notiz",
+        ], [[v.von.nummer or "", v.von.bezeichnung, v.nach.nummer or "", v.nach.bezeichnung, v.inhalt,
+             wege.get(v.weg, v.weg),
+             f"{schritte[v.schritt_id].prozess.nummer or ''} Schritt {schritte[v.schritt_id].reihenfolge}"
+             if v.schritt_id in schritte else "",
+             "ja" if v.problem else "", v.notiz or ""] for v in verbindungen])
     return _fehler("Unbekanntes Arbeitsblatt.", 404)

@@ -205,6 +205,14 @@ class Prozess(db.Model):
         order_by="ProzessFrage.created_at"
     )
     dokumente = db.relationship("Dokument", backref="prozess", order_by="Dokument.nummer")
+    verbindungen_aus = db.relationship(
+        "ProzessVerbindung", foreign_keys="ProzessVerbindung.von_id", backref="von",
+        cascade="all, delete-orphan"
+    )
+    verbindungen_ein = db.relationship(
+        "ProzessVerbindung", foreign_keys="ProzessVerbindung.nach_id", backref="nach",
+        cascade="all, delete-orphan"
+    )
 
     def to_summary(self):
         return {
@@ -297,6 +305,34 @@ class ProzessFrage(db.Model):
             "nachweis": self.nachweis,
             "erstelltVon": self.erstellt_von,
             "erstelltAm": self.created_at.isoformat() + "Z" if self.created_at else None,
+        }
+
+
+class ProzessVerbindung(db.Model):
+    """Übergabe von einem Prozess an einen anderen (Schnittstelle), z.B.
+    K3.1 -> K2 "AB per Rundmail". Grundlage der Schnittstellenkarte."""
+    __tablename__ = "prozess_verbindungen"
+    id = db.Column(db.Integer, primary_key=True)
+    von_id = db.Column(db.Integer, db.ForeignKey("prozesse.id"), nullable=False)
+    nach_id = db.Column(db.Integer, db.ForeignKey("prozesse.id"), nullable=False)
+    inhalt = db.Column(db.String(300), nullable=False)
+    # email | dashboard | ordner | papier | muendlich | sonstiges | unklar
+    weg = db.Column(db.String(20), default="unklar")
+    schritt_id = db.Column(db.Integer, db.ForeignKey("prozess_schritte.id"), nullable=True)
+    problem = db.Column(db.Boolean, default=False)
+    notiz = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "vonId": self.von_id,
+            "nachId": self.nach_id,
+            "inhalt": self.inhalt,
+            "weg": self.weg,
+            "schrittId": self.schritt_id,
+            "problem": bool(self.problem),
+            "notiz": self.notiz,
         }
 
 

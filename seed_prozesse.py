@@ -10,7 +10,7 @@ Sicher auf dem Server mit echten Daten:
   steht in der Tabelle startbestand_stand. Änderungen aus dem Tool werden dabei
   nicht überschrieben (siehe _ergaenzung_einspielen).
 """
-from models import db, Prozess, ProzessSchritt, ProzessFrage, Dokument, StartbestandStand
+from models import db, Prozess, ProzessSchritt, ProzessFrage, Dokument, ProzessVerbindung, StartbestandStand
 from prozess_daten import LANDKARTE, PROZESS_DETAILS, DOKUMENTE, SCHRITTE, FRAGEN, ERGAENZUNGEN
 
 
@@ -76,7 +76,7 @@ def _ergaenzung_einspielen(version, e):
     nach_nummer = {p.nummer: p for p in Prozess.query.all() if p.nummer}
     reihenfolge = db.session.query(db.func.max(Prozess.reihenfolge)).scalar() or 0
 
-    for nummer, bezeichnung, parent, status in e["landkarte"]:
+    for nummer, bezeichnung, parent, status in e.get("landkarte", []):
         eltern = _finde_prozess(nach_nummer, parent) if parent else None
         # Von Hand angelegte Prozesse nicht doppeln: gleiche Nummer oder gleiche
         # Bezeichnung unter demselben übergeordneten Prozess gilt als vorhanden.
@@ -93,25 +93,25 @@ def _ergaenzung_einspielen(version, e):
         if nummer:
             nach_nummer[nummer] = p
 
-    for nummer, felder in e["details"].items():
+    for nummer, felder in e.get("details", {}).items():
         p = nach_nummer.get(nummer)
         if p:
             for feld, wert in felder.items():
                 if not getattr(p, feld):
                     setattr(p, feld, wert)
 
-    for nummer, status in e["status"].items():
+    for nummer, status in e.get("status", {}).items():
         p = nach_nummer.get(nummer)
         if p and p.aufnahmestatus == "vorgeschlagen":
             p.aufnahmestatus = status
 
-    for nummer, status in e["dokument_status"].items():
+    for nummer, status in e.get("dokument_status", {}).items():
         dok = Dokument.query.filter_by(nummer=nummer).first()
         if dok and dok.auswertungsstatus == "nicht_gesichtet":
             dok.auswertungsstatus = status
 
     schritte_neu = 0
-    for nummer in dict.fromkeys(z[0] for z in e["schritte"]):
+    for nummer in dict.fromkeys(z[0] for z in e.get("schritte", [])):
         p = nach_nummer.get(nummer)
         if not p:
             continue
@@ -119,14 +119,30 @@ def _ergaenzung_einspielen(version, e):
             print(f"Hinweis: {nummer} hat bereits Schritte – die Schritte aus der Ergänzung werden nicht "
                   f"eingespielt (siehe docs/prozessaufnahme/ablaufschritte.csv).")
             continue
-        for zeile in (z for z in e["schritte"] if z[0] == nummer):
+        for zeile in (z for z in e.get("schritte", []) if z[0] == nummer):
             db.session.add(_neuer_schritt(p.id, zeile[1], zeile))
             schritte_neu += 1
 
-    for f in e["fragen"]:
+    for f in e.get("fragen", []):
         db.session.add(_neue_frage(nach_nummer, f))
     db.session.flush()
-    print(f"Ergänzung {version} eingespielt ({e['titel']}): {schritte_neu} Schritte, {len(e['fragen'])} Fragen.")
+
+    verbindungen_neu = 0
+    for von_nr, nach_nr, inhalt, weg, problem, notiz, schritt_ref in e.get("verbindungen", []):
+        von, nach = nach_nummer.get(von_nr), nach_nummer.get(nach_nr)
+        if not von or not nach or ProzessVerbindung.query.filter_by(
+                von_id=von.id, nach_id=nach.id, inhalt=inhalt).first():
+            continue
+        schritt = None
+        if schritt_ref and schritt_ref[0] in nach_nummer:
+            schritt = ProzessSchritt.query.filter_by(
+                prozess_id=nach_nummer[schritt_ref[0]].id, reihenfolge=schritt_ref[1]).first()
+        db.session.add(ProzessVerbindung(von_id=von.id, nach_id=nach.id, inhalt=inhalt, weg=weg, problem=problem,
+                                         notiz=notiz, schritt_id=schritt.id if schritt else None))
+        verbindungen_neu += 1
+    db.session.flush()
+    print(f"Ergänzung {version} eingespielt ({e['titel']}): {schritte_neu} Schritte, "
+          f"{len(e.get('fragen', []))} Fragen, {verbindungen_neu} Schnittstellen.")
 
 
 def seed():

@@ -1,0 +1,10 @@
+﻿Von Prozess;Nach Prozess;Was wird übergeben;Weg;Problem;Notiz;Zu Schritt
+K1.05;K3.1;Angebot (Angebotsliste im Dashboard, Angebotsordner) als Basis der Auftragserfassung;Dashboard;;Laut AA K3.1_01 Schritt 4/5;K3.1 Schritt 4
+K1.05;U4;Sanktionslistenprüfung bei Neukunden;Noch unklar;;"Laut AA K1_05; wer prüft und wo dokumentiert wird, ist offen";K1.05 Schritt 1
+K3.1;U4;Sanktionslistenprüfung bei neuem Debitor;Noch unklar;;Laut AA K3.1_01;K3.1 Schritt 2
+K3.1;K2;Auftragsbestätigung (Rundmail an alle);E-Mail;;"Praxisangabe P. Schreiber: Rundmail mit AB; ob Konstruktion ausdrücklich beauftragt wird, ist offen";K3.1 Schritt 7
+K3.1;U1.1;Auftragsbestätigung (Rundmail an alle);E-Mail;;Praxisangabe P. Schreiber: Rundmail mit AB;K3.1 Schritt 7
+K3.1;K3.3;Auftragsbestätigung (Rundmail an alle);E-Mail;;Praxisangabe P. Schreiber: Rundmail mit AB;K3.1 Schritt 7
+K2;U1.1;Bestelltexte / Materialauswahl, Info bei Zeichnungsänderungen;Noch unklar;ja;Laut AA K2_01. Ob eine Stückliste übergeben wird und in welcher Form, ist ungeklärt.;K2 Schritt 4
+K2;K3.3;Freigegebene Zeichnungsunterlagen;Noch unklar;;"Laut AA K2_01 Schritt 7; Weg der Verteilung offen";K2 Schritt 7
+K3.3;K2;Schweißtechnische Abstimmung (Schweißverfahren, Zusatz);Mündlich / Telefon;;"Laut AA K2_01 Schritt 2 (Schweißaufsicht); Weg angenommen";K2 Schritt 2

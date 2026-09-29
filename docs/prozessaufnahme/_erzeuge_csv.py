@@ -9,7 +9,8 @@ from pathlib import Path
 HIER = Path(__file__).parent
 sys.path.insert(0, str(HIER.parent.parent))
 
-from prozess_daten import SYSTEME, AUSWERTUNGSSTATUS, alle_dokumente, alle_fragen, alle_schritte  # noqa: E402
+from prozess_daten import (SYSTEME, AUSWERTUNGSSTATUS, UEBERGABE_WEGE, ERGAENZUNGEN,  # noqa: E402
+                           alle_dokumente, alle_fragen, alle_schritte)
 
 SCHRITTE_KOPF = ["Prozess-ID", "Schritt-Nr.", "Tätigkeit", "Ausführende Person / Rolle", "Eingaben",
                  "System", "Ergebnis", "Übergabe", "Freigabe", "Ausnahme / nächster Schritt",
@@ -37,3 +38,9 @@ if __name__ == "__main__":
     labels = dict(AUSWERTUNGSSTATUS)
     schreibe(HIER.parent / "arbeitsanweisungen.csv", DOKUMENTE_KOPF,
              [[n, r, t, g, p, labels[s]] for n, r, t, g, p, s in alle_dokumente()])
+    wege = dict(UEBERGABE_WEGE)
+    schreibe(HIER / "schnittstellen.csv",
+             ["Von Prozess", "Nach Prozess", "Was wird übergeben", "Weg", "Problem", "Notiz", "Zu Schritt"],
+             [[von, nach, inhalt, wege[weg], "ja" if problem else "", notiz or "",
+               f"{ref[0]} Schritt {ref[1]}" if ref else ""]
+              for _, e in ERGAENZUNGEN for von, nach, inhalt, weg, problem, notiz, ref in e.get("verbindungen", [])])
