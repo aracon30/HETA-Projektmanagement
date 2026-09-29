@@ -3,9 +3,9 @@ AA_F4.2_01;R2;Prüfmittelüberwachung;Werk4;F4.2;Nicht gesichtet
 AA_F4.2_02;R1;Kalibrierung Schweißgeräte;Werk4;F4.2;Nicht gesichtet
 AA_F4.5_01;R1;Umgang Werkstoffprüfzeugnis;Werk4;F4.5;Nicht gesichtet
 AA_F4.5_02;R1;Kennzeichnungen in der Fertigung;Werk4;F4.5;Nicht gesichtet
-AA_F4.6_01;R1;Projektordnerstruktur;Werk4;F4.6;Nicht gesichtet
-AA_F4.6_02;R1;Nummernschlüssel;Werk4;F4.6;Nicht gesichtet
-AA_K1_01;R1;Anwendung DASHBOARD;Werk4;K1;Nicht gesichtet
+AA_F4.6_01;R1;Projektordnerstruktur;Werk4;F4.6;Gesichtet
+AA_F4.6_02;R1;Nummernschlüssel;Werk4;F4.6;Gesichtet
+AA_K1_01;R1;Anwendung DASHBOARD;Werk4;K1;Gesichtet
 AA_K1_02;R3;Verwendung Namenskürzel;Werk4;K1;Nicht gesichtet
 AA_K1_03;R1;Ablagesystem E-Mails;Werk4;K1;Nicht gesichtet
 AA_K1_04;R1;Dokumentation von projektbezogenen Informationen;Werk4;K1;Nicht gesichtet
@@ -16,8 +16,8 @@ AA_K2_03;R2;Prüfung Konstruktionsunterlagen;Werk4;K2;Nicht gesichtet
 AA_K2_04;R2;Zeichnungen als PDF-Format;Werk4;K2;Nicht gesichtet
 AA_K2_05;R1;Interne Konstruktionsrichtlinien;Werk4;K2;Nicht gesichtet
 AA_K3.1_01;R1;Auftragsbearbeitung;Werk4;K3.1;In Schritte übernommen
-AA_K3.2_01;R1;Versand;Werk4;K3.2;Nicht gesichtet
-AA_K3.2_02;R0;Rechnungserstellung;Werk4;K3.2;Nicht gesichtet
+AA_K3.2_01;R1;Versand;Werk4;Versand vorbereiten / Verpackung;In Schritte übernommen
+AA_K3.2_02;R0;Rechnungserstellung;Werk4;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);In Schritte übernommen
 AA_K3.3.11-01;R1;Vorbereitung von Druckproben;ohne Angabe;K3.3;Nicht gesichtet
 AA_K3.3.11-02;R1;Schweisszusatzwerkstoffe;ohne Angabe;K3.3;Nicht gesichtet
 AA_K3.3.11-03;R1;Rücktrocknung von Elektroden;ohne Angabe;K3.3;Nicht gesichtet

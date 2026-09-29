@@ -240,7 +240,9 @@ FRAGEN = [
 
 # Spalten wie Excel-Arbeitsblatt "Systeme und Daten"
 SYSTEME = [
-    ["S01", "Dashboard (Excel-Makrodateien: MASTERDATEN AUFTRAG.xlsx, Auftragsübersicht.xlsm, Positionsansicht Auftrag.xlsm)",
+    ["S01", "Dashboard – zentrale Oberfläche über die HETA-Excel-Listen, statt PPS-System der PACO Gruppe "
+     "(Excel-Makrodateien: MASTERDATEN AUFTRAG.xlsx, Auftragsübersicht.xlsm, Positionsansicht Auftrag.xlsm; "
+     "Passwörter/Berechtigungen je Bereich; Anleitung Stand 12.04.2022)",
      "Anfrage-, Angebots- und Auftragslisten, Ordneranlage, Verknüpfung Bestellung/Zeichnungen", "K1.05, K3.1",
      "offen", "ja (vermutlich)", r"K:\Datenstruktur\Systemdateien\DB_Statistik\ (Positionsansicht)",
      "manuelle Eingabe, Übernahme Angebot → Auftrag", "offen", "hoch – zentrale Datenquelle"],
@@ -262,6 +264,16 @@ SYSTEME = [
     ["S12", "Lagerbestandsliste (Excel, FB_K3.3.11-26)", "Rohre, Flansche, Stangenmaterial: Zugänge/Entnahmen",
      "Lager, U1.4, U1.1", "Justus, Köhler, Häfer", "ja (einzige Bestandsführung)", r"K:\02 Lager\Lagerbestand",
      "Wareneingang, Entnahme, Zettel", "offen (Zettel-Entnahmen)", "hoch"],
+    ["S14", "Nummernkreise (AA F4.6_02)", "Angebot L-XXXXX/JJ-Kunde, Kommission K-XXXXX/JJ-Kunde, AB-XXXX/JJ, Bestellung "
+     "V-XXXXX/Komm/JJ, Rechnung und Lieferschein JJ/XXXX, Revisionen -R1…", "alle", "Häfer", "", "Dashboard (Vergabe)",
+     "", "Doppelbelegungen (V-…, JJ/XXXX)", "hoch – Nummernkreise im ERP-System abbilden"],
+    ["S15", "Projektordner (Musterordner) auf dem K-Laufwerk", "Alle Unterlagen von Anfrage bis Versand, inkl. Fotos",
+     "F4.6, K1.05, K3.1, Versand", "alle", "ja (Dokumente)", r"K:\01 HETA\01 ANGEBOTE bzw. 02 AUFTRÄGE",
+     "Anlage/Umwandlung über Dashboard", "", "hoch (Dokumentenablage)"],
+    ["S16", "Packliste (FB K3.2_01), Versandliste", "Packstücke, Maße, Gewichte; Versandplan 2 Wochen", "Versand",
+     "Warenausgang / Vertriebsadministration", "", "offen", "Papier?", "", "mittel"],
+    ["S17", "PPS-System der PACO Gruppe", "wird bei HETA nicht genutzt (laut AA K1_01)", "alle", "PACO Gruppe", "", "",
+     "", "", "klären: Option für die mögliche Einführung?"],
     ["S13", "Wareneingang: Stempel, Ordner WE, Ablagekästen rot/blau", "Lieferscheine unbearbeitet/bearbeitet",
      "U1.4, U1.1", "Wareneingang", "", "Papier + Scan", "Papier", "", "mittel"],
 ]
@@ -574,6 +586,154 @@ ERGAENZUNGEN.append((4, dict(
          "Einkauf erkennt Bedarf nur durch Blick in die Liste; keine Prüfung je Bestellung beschrieben", None),
         ("K3.3", LAGER, "Entnahmezettel bei akutem Materialbedarf", "papier", True,
          "Laut AA K3.3.11-05: formloser Zettel", (LAGER, 4)),
+    ],
+)))
+
+AA_VER = "Laut AA K3.2_01 Rev. 1 – Praxisabgleich offen"
+AA_RE = "Laut AA K3.2_02 Rev. 0 (unvollständiger Entwurf) – im Gespräch aufnehmen"
+VERSAND = "Versand vorbereiten / Verpackung"
+RECHNUNG = "Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen)"
+SPEDITION = "Auslieferung / Spedition beauftragen"
+WA = "Warenausgang (MA Werkstatt, Person offen)"
+BH = "Buchhaltung (Brühl, Necke, Panchuck)"
+RE_LEER = "Ablauf in der AA (R0) nicht beschrieben – mit der Buchhaltung aufnehmen"
+
+ERGAENZUNGEN.append((5, dict(
+    titel="AA K1_01 Dashboard, K3.2_01 Versand, K3.2_02 Rechnung, F4.6_01 Projektordner, F4.6_02 "
+          "Nummernschlüssel ausgewertet (30.09.2026)",
+    landkarte=[(None, VERSAND, "K3.2", "vorgeschlagen"), (None, SPEDITION, "K3.2", "vorgeschlagen"),
+               (None, RECHNUNG, "K3.2", "vorgeschlagen")],
+    details={
+        "K1": dict(systeme="Dashboard: zentrale Oberfläche über die HETA-Excel-Listen (statt PPS-System der PACO "
+                           "Gruppe), Passwörter/Berechtigungen je Bereich; Anleitung „Arbeit mit den neuen "
+                           "Excellisten HETA“ Stand 12.04.2022"),
+        "F4.6": dict(
+            verantwortlich="Alle Bereiche Werk 4 (Dokumente: Frau Häfer)",
+            ausloeser="Eingang einer Anfrage (erste Ablage)",
+            ergebnis="Einheitliche Nummern und Ablage aller Unterlagen von der Anfrage bis zum Versand",
+            systeme=r"Nummernschlüssel (AA F4.6_02), Musterordner K:\01 HETA\01 ANGEBOTE\01 ab 2022\01_MUSTERORDNER, "
+                    r"Auftragsordner K:\01 HETA\02 AUFTRÄGE, Anlage über das Dashboard",
+        ),
+        "K3.2": dict(verantwortlich="Vertrieb (Versand), Buchhaltung (Rechnung)",
+                     beteiligte="MA Werkstatt, Einkauf, Administration"),
+        VERSAND: dict(
+            verantwortlich="Vertrieb", beteiligte="MA Werkstatt, Einkauf, Administration",
+            ausloeser="Wöchentliche Versandliste der Vertriebsadministration; freigegebene Handelsware",
+            ergebnis="Sicher verpackte, markierte und fotografierte Packstücke mit Packliste und Lieferschein",
+            systeme="Versandliste, Packliste (FB K3.2_01), Tablet (Fotos), Auftragsordner, Aufkleber/Metallschilder",
+            variante="Handelsware · Filterelemente (Kerzen, Beutel, Siebkörbe) · Filter/Baugruppen · Luft-/Seefracht",
+        ),
+        RECHNUNG: dict(
+            verantwortlich="Buchhaltung", beteiligte="Vertrieb, Einkauf, Administration",
+            ausloeser="Packzettel mit Versandbelegen nach Abholung/Lieferung",
+            ergebnis="Rechnung an den Kunden (Deutschland, EU, Drittland)",
+            systeme="DATEV (?), Packliste, Lieferschein, Auftrag",
+        ),
+    },
+    status={VERSAND: "laut_aa", RECHNUNG: "laut_aa"},
+    dokument_prozess={"AA_K3.2_01": VERSAND, "AA_K3.2_02": RECHNUNG},
+    dokument_status={"AA_K3.2_01": "uebernommen", "AA_K3.2_02": "uebernommen", "AA_K1_01": "gesichtet",
+                     "AA_F4.6_01": "gesichtet", "AA_F4.6_02": "gesichtet"},
+    schritte=[
+        [VERSAND, 1, "Zum Wochenanfang Versandliste von der Vertriebsadministration erhalten: Aufträge, die in den "
+         "nächsten zwei Wochen versendet werden", WA, "Versandliste", "offen (Excel? Dashboard?)",
+         "Versandplanung für 2 Wochen", "", "", "", "", "", AA_VER],
+        [VERSAND, 2, "Ware vor dem Verpacken prüfen und reinigen: saubere Oberflächen, Schweißrückstände an "
+         "Filterelementen entfernen, Stellen nach dem Beizen nacharbeiten; saubere Umgebung", WA, "Ware", "",
+         "Saubere Ware", "", "", "", "", "", AA_VER],
+        [VERSAND, 3, "Handelsware nach Freigabe im Wareneingang verpacken – Verpackung nach Kundenbestellung/AB bzw. "
+         "Verpackungsvorgaben, Positionsaufkleber außen auf die Verpackung", WA,
+         "Freigegebene Handelsware, Kundenbestellung/AB", "Aufkleber", "Verpackte Handelsware", "", "", "", "", "",
+         AA_VER],
+        [VERSAND, 4, "Filterelemente: Filterkerzen in neutralen Kartons mit HETA-Aufkleber; Filterbeutel mit "
+         "Metallschildern (Lieferantenetiketten entfernen) in Losgrößen; Siebkörbe mit Filterfeinheit und "
+         "Kommissionsnummer markieren und gegen Verrutschen sichern", WA, "Filterelemente",
+         "HETA-Aufkleber, Metallschilder", "Verpackte, markierte Filterelemente", "", "", "", "", "", AA_VER],
+        [VERSAND, 5, "Filter/Baugruppen: in Folie einschlagen, stoßsicher auf Palette/in Kiste, Stutzen mit "
+         "Schutzkappen, liegend oder stehend klären, Keile/Sättel gegen Verrutschen; Zubehör und Ersatzteile dem "
+         "Filter zuordenbar kennzeichnen, auf Kundenwunsch Positionsmarkierung", WA, "Fertige Baugruppe", "",
+         "Versandsicheres Packstück", "", "", "", "", "", AA_VER],
+        [VERSAND, 6, "Verpackungsvorschriften des Kunden je nach Lieferart (Luft-/Seefracht) berücksichtigen; ggf. "
+         "Verpackungsfirma beauftragen und/oder Freigabe durch den Kunden einholen", "Vertrieb (Person offen)",
+         "Kundenvorgaben", "", "Vorschriftsgemäße Verpackung", "Verpackungsfirma / Kunde", "Kunde (falls gefordert)",
+         "", "", "", AA_VER],
+        [VERSAND, 7, "Alle verpackten Einzelteile und das komplette Packstück fotografieren und die Fotos im "
+         "Auftragsordner ablegen (…\\02 Dokumentation\\<Item>\\10 Bilder)", WA, "Packstücke", "Tablet, K-Laufwerk",
+         "Fotodokumentation", "", "", "", "", "", AA_VER],
+        [VERSAND, 8, "Packliste (FB K3.2_01) ausfüllen: Abmessungen, Art des Packstücks, Gewicht ohne und mit "
+         "Verpackung – Grundlage für die Beauftragung der Spedition", WA, "Packstücke", "FB K3.2_01 Packliste",
+         "Packliste", SPEDITION, "", "", "", "", AA_VER],
+        [VERSAND, 9, "Falls vom Kunden gefordert: Versandbereitschaftsmeldung mit Gewicht, Größe der Packstücke, "
+         "Abholdatum und -adresse", "offen (Vertrieb/Administration?)", "Packliste", "E-Mail?",
+         "Versandbereitschaft gemeldet", "Kunde", "", "", "", "", AA_VER],
+        [VERSAND, 10, "Versandmarkierung außen an mehreren Stellen anbringen; HETA-Lieferschein in roter Versandtasche "
+         "außen am Packstück befestigen", WA, "Lieferschein", "Versandtasche", "Versandfertiges Packstück",
+         "Spedition / Kunde", "", "Wer den Lieferschein erstellt, steht nicht in der AA", "", "", AA_VER],
+        [VERSAND, 11, "Nach Abholung bzw. Lieferung: Rechnung an den Kunden auslösen (Packzettel mit Versandbelegen "
+         "an die Buchhaltung)", "offen", "Packliste, Versandbelege", "Papier?", "Rechnung angestoßen", RECHNUNG, "",
+         "", "", "", AA_VER],
+
+        [RECHNUNG, 1, "Packzettel mit den zugehörigen Versandbelegen an die Buchhaltung geben", "offen (Versand/"
+         "Administration?)", "Packliste, Versandbelege", "Papier?", "Unterlagen bei der Buchhaltung", BH, "", "", "",
+         "", AA_RE],
+        [RECHNUNG, 2, "Angaben aus Packzettel, Lieferschein und zugehörigem Auftrag auf Richtigkeit prüfen", BH,
+         "Packzettel, Lieferschein, Auftrag/AB", "offen (Dashboard? AB-PDF?)", "Geprüfte Rechnungsgrundlage", "",
+         "", "", "", "", AA_RE],
+        [RECHNUNG, 3, "Rechnung für Deutschland erstellen", BH, "Geprüfte Rechnungsgrundlage", "DATEV (?)",
+         "Rechnung", "Kunde", "", RE_LEER, "", "", AA_RE],
+        [RECHNUNG, 4, "Rechnung für Export in die EU erstellen", BH, "Geprüfte Rechnungsgrundlage", "DATEV (?)",
+         "Rechnung", "Kunde", "", RE_LEER, "", "", AA_RE],
+        [RECHNUNG, 5, "Rechnung für Export in Nicht-EU-Staaten (Drittländer) erstellen", BH,
+         "Geprüfte Rechnungsgrundlage", "DATEV (?)", "Rechnung", "Kunde", "", RE_LEER, "", "", AA_RE],
+    ],
+    fragen=[
+        ("K1", "Laut AA K1_01 arbeitet HETA „abweichend vom PPS-System der PACO Gruppe“ mit Excel-Listen. Welches "
+               "System nutzt die PACO Gruppe, warum setzt HETA es nicht ein, und ist es eine Option für die mögliche "
+               "Einführung eines ERP-Systems?", "Hensel"),
+        ("K1", "Die eigentliche Beschreibung des Dashboards steht in der Anleitung „Arbeit mit den neuen Excellisten "
+               "HETA“ (Stand 12.04.2022, K:\\Qualitätsmanagement\\02 AA-Arbeitsanweisungen) – bitte bereitstellen.",
+               "Häfer"),
+        ("K1", "Julia Greb ist als verantwortlich für das Dashboard genannt, steht aber nicht im Organigramm 08/2026. "
+               "Wer betreut das Dashboard heute (Pflege, Makros, Berechtigungen, Schulung neuer MA)?", "Hensel / Brühl"),
+        ("K1", "Welche Listen gehören zum Dashboard, wer hat auf welche Bereiche Zugriff, und ist die Anleitung von "
+               "2022 noch aktuell?", "Linker / Häfer"),
+        ("F4.6", "Nummernschlüssel: Versuchsauftrag (V-XX/JJ) und Bestellnummer (V-XXXXX/…) beginnen beide mit „V“; "
+                 "Rechnungs- und Lieferscheinnummer haben dasselbe Format JJ/XXXX. Wie werden sie unterschieden, und "
+                 "wer vergibt Rechnungs- und Lieferscheinnummern?", "Häfer / Brühl"),
+        ("F4.6", "AA F4.6_02 nennt als mitgeltend „AA_F4.6_01 Erstellen und Ändern von gelenkten Dokumenten“, die "
+                 "Datei AA F4.6_01 heißt aber „Projektordnerstruktur“ – ist die Nummer doppelt vergeben?", "Häfer"),
+        ("F4.6", "Der Nummernschlüssel nennt Prozesssteckbriefe (PB), z.B. „PB U1.1 Bestellung“. Gibt es für alle "
+                 "Prozesse Steckbriefe, und wo liegen sie? Sie wären eine wichtige Quelle für die Prozessaufnahme.",
+                 "Häfer"),
+        ("F4.6", "Projektordnerstruktur: Die Übersicht der Ordnerstruktur (Grafik in der AA) bitte bereitstellen. "
+                 "Pfade nennen „01 ab 2022“ und „01 ab 2025“ – wann wird ein neuer Jahresordner angelegt?", "Häfer"),
+        (VERSAND, "Wer ist der Warenausgang? Laut AA ist der Vertrieb verantwortlich, die Werkstatt wirkt mit – wer "
+                  "packt, und wer koordiniert?", "Brühl / Justus"),
+        (VERSAND, "Versandliste: Woraus erstellt die Vertriebsadministration sie (Dashboard, Liefertermine?), und auf "
+                  "welchem Weg erhält sie der Warenausgang?", "Linker / Weiz"),
+        (VERSAND, "Wer erstellt den Lieferschein (Nummer JJ/XXXX), und in welchem System?", "Linker / Weiz"),
+        (VERSAND, "Wer beauftragt die Spedition, wer schreibt die Versandbereitschaftsmeldung, und wie laufen "
+                  "Exportpapiere (Zoll, Ursprungszeugnis) ab?", "Linker / Brühl"),
+        (VERSAND, "Die AA Versand hat im Revisionsstand kein Datum – ist sie aktuell?", "Häfer"),
+        (RECHNUNG, "Die AA Rechnungserstellung ist ein unvollständiger Entwurf (R0): Der Ablauf für Deutschland, EU "
+                   "und Drittländer fehlt. Bitte im Gespräch mit der Buchhaltung aufnehmen.", "Brühl / Necke / Panchuck"),
+        (RECHNUNG, "Wie werden Anzahlungs-, Teil- und Schlussrechnungen ausgelöst (z.B. Anzahlung nach AB), und wer "
+                   "informiert die Buchhaltung?", "Brühl"),
+        (RECHNUNG, "Woher kennt die Buchhaltung Preise und Zahlungsbedingungen des Auftrags (Dashboard, AB)?", "Brühl"),
+        (RECHNUNG, "Wird die Rechnung direkt in DATEV geschrieben oder in einer Vorlage erstellt und dann gebucht? "
+                   "Wer überwacht Zahlungseingänge und mahnt?", "Brühl / Necke"),
+    ],
+    verbindungen=[
+        ("K3.1", VERSAND, "Versandliste (wöchentlich, Aufträge der nächsten 2 Wochen)", "unklar", False,
+         "Laut AA K3.2_01; erstellt von der Vertriebsadministration", (VERSAND, 1)),
+        ("U1.4", VERSAND, "Freigegebene Handelsware zum Verpacken", "unklar", False, "Laut AA K3.2_01 / U1.4_02",
+         (VERSAND, 3)),
+        (VERSAND, SPEDITION, "Packliste (Maße, Gewichte) als Grundlage für die Spedition", "papier", False,
+         "Laut AA K3.2_01, FB K3.2_01", (VERSAND, 8)),
+        (VERSAND, RECHNUNG, "Packzettel mit Versandbelegen", "papier", False, "Laut AA K3.2_01 / K3.2_02",
+         (RECHNUNG, 1)),
+        ("K3.1", RECHNUNG, "Auftragsdaten (Preise, Zahlungsbedingungen) zur Rechnungsprüfung", "unklar", True,
+         "Laut AA K3.2_02 wird gegen den Auftrag geprüft; woher die Buchhaltung ihn kennt, ist offen", (RECHNUNG, 2)),
     ],
 )))
 

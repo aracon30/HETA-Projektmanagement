@@ -71,7 +71,11 @@ def _neuer_schritt(prozess_id, reihenfolge, zeile):
 def _neue_frage(nach_nummer, f):
     prozess_nr, frage, klaerung = f[:3]
     status, antwort, nachweis = f[3:] if len(f) > 3 else ("offen", None, None)
-    p = _finde_prozess(nach_nummer, prozess_nr.split("/")[0])
+    # "K1.05/K3.1" = Frage zu zwei Prozessen -> beim ersten ablegen; Bezeichnungen mit "/" bleiben ganz
+    p = nach_nummer.get(prozess_nr) or _finde_prozess(nach_nummer, prozess_nr.split("/")[0].strip())
+    if p is None:
+        print(f"Hinweis: Prozess „{prozess_nr}“ nicht gefunden – Frage übersprungen: {frage[:60]}…")
+        return None
     return ProzessFrage(prozess_id=p.id, frage=frage, klaerung_durch=klaerung, status=status,
                         antwort=antwort, nachweis=nachweis, erstellt_von="Startbestand")
 
@@ -94,7 +98,9 @@ def _grundbestand_einspielen():
     for zeile in SCHRITTE:
         db.session.add(_neuer_schritt(nach_nummer[zeile[0]].id, zeile[1], zeile))
     for f in FRAGEN:
-        db.session.add(_neue_frage(nach_nummer, f))
+        frage = _neue_frage(nach_nummer, f)
+        if frage:
+            db.session.add(frage)
     db.session.flush()
     print(f"Grundbestand eingespielt: {len(LANDKARTE)} Prozesse, {len(DOKUMENTE)} Arbeitsanweisungen, "
           f"{len(SCHRITTE)} Schritte, {len(FRAGEN)} Fragen.")
@@ -164,7 +170,9 @@ def _ergaenzung_einspielen(version, e):
             schritte_neu += 1
 
     for f in e.get("fragen", []):
-        db.session.add(_neue_frage(nach_nummer, f))
+        frage = _neue_frage(nach_nummer, f)
+        if frage:
+            db.session.add(frage)
     db.session.flush()
 
     verbindungen_neu = 0

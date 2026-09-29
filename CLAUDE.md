@@ -113,7 +113,7 @@ Arbeitsanweisungen) als neuen Eintrag in `ERGAENZUNGEN` (prozess_daten.py,
 Version hochzählen) anlegen** – nie den Grundbestand ändern: die Server-DB
 ist schon befüllt, Ergänzungen werden per `update.sh` genau einmal
 eingespielt (Stand in Tabelle `startbestand_stand`), ohne Nutzeränderungen zu
-überschreiben. Ergänzungen finden Prozesse per Nummer oder (bei von Hand angelegten) per Bezeichnung. Ausgewertet: K1_05, K3.1_01, K2_01, U1.1_01, U1.4_02, K3.3.11-05.
+überschreiben. Ergänzungen finden Prozesse per Nummer oder (bei von Hand angelegten) per Bezeichnung. Ausgewertet: K1_05, K3.1_01, K2_01, U1.1_01, U1.4_02, K3.3.11-05, K1_01, K3.2_01, K3.2_02, F4.6_01, F4.6_02 (Ergänzungen 2–5). Wichtig: HETA nutzt laut AA K1_01 bewusst nicht das PPS-System der PACO Gruppe (Frage an GL offen).
 **Schnittstellenkarte** (Eintrag im Prozess-Baum): Modell `ProzessVerbindung`
 (von → nach, Inhalt, Weg, optional Schritt, „hakt“), API `/api/verbindungen`,
 im Frontend eigenes SVG ohne Bibliothek (feste Bahnen Führung/Kern/

@@ -78,6 +78,22 @@ Stutzenliste).
 | Kernaussage | Bestellung erst mit AB + freigegebener Stückliste; MDL (Excel) aus Stückliste; ≥1 schriftliches Angebot; technische Prüfung durch Konstruktion; Unterschriftenregelung; Nr. aus Dashboard; nach Lieferung LS und Rechnungswert (aus DATEV) ins Dashboard | Annahme, Sichtkontrolle, LS stempeln/scannen (roter Kasten), Prüfung ≤ 1 Arbeitstag (Vollständigkeit, Maße, Schmelze, Zeugnis, ggf. PMI), sperren oder freigeben, Kommission zuordnen, Lagermaterial erfassen, LS in blauen Kasten | Excel-Liste nur für Rohre, Flansche, Stangenmaterial; Zugang beim WE, Entnahme mit Datum austragen; bei akutem Bedarf Zettel |
 | Schritte | 10 | 8 | 4 |
 
+### Dashboard, Nummernschlüssel, Projektordner, Versand, Rechnung
+
+| AA | Kernaussage |
+|---|---|
+| K1_01 Dashboard (Rev. 1, 31.10.2023) | HETA arbeitet **abweichend vom PPS-System der PACO Gruppe** mit Excel-Listen; das Dashboard ist die zentrale Oberfläche darüber (Passwörter/Berechtigungen je Bereich). Die eigentliche Beschreibung steht in der Anleitung „Arbeit mit den neuen Excellisten HETA“ (Stand 12.04.2022). Verantwortlich: Julia Greb (nicht im Organigramm). |
+| F4.6_02 Nummernschlüssel (Rev. 1, 29.04.2022) | „da hier kein PPS-System zum Einsatz kommt“: Angebot `L-XXXXX/JJ-Kunde` (Länderkürzel), Kommission `K-XXXXX/JJ-Kunde`, AB `AB-XXXX/JJ`, Bestellung `V-XXXXX/Komm/JJ`, Rechnung und Lieferschein `JJ/XXXX`, Revisionen `-R1…`. QM-Dokumente: AA, FB, PA und **PB = Prozesssteckbrief**. |
+| F4.6_01 Projektordnerstruktur (Rev. 1, 20.10.2022) | Anfrage → Angebotsnummer → Dashboard legt Musterordner auf K: an → bei Bestellung Umwandlung in Auftragsordner. |
+| K3.2_01 Versand (Rev. 1, ohne Datum) | Wöchentliche Versandliste der Vertriebsadministration, Reinigen, Verpacken je Warenart, Fotos in den Auftragsordner, Packliste (Grundlage Spedition), ggf. Versandbereitschaftsmeldung, Lieferschein in roter Tasche, danach Rechnung. → 11 Schritte |
+| K3.2_02 Rechnungserstellung (**R0**) | Nur Vorbereitung (Packzettel + Versandbelege an Buchhaltung) und Prüfung gegen Lieferschein und Auftrag; die Abläufe für Deutschland, EU und Drittländer sind **leere Platzhalter** („? DATEV“). → 5 Schritte, Rest im Gespräch |
+
+**Wichtigste Erkenntnisse:**
+1. Es gibt ein **PPS-System der PACO Gruppe**, das HETA bewusst nicht nutzt. Warum und ob es eine Option ist, muss vor jeder weiteren Systemüberlegung mit der Geschäftsleitung geklärt werden.
+2. Es gibt **Prozesssteckbriefe (PB)** im QM – vermutlich die offizielle Prozessbeschreibung zur Landkarte. Unbedingt anfordern.
+3. Die **Rechnungsstellung** ist nicht dokumentiert – Gespräch mit der Buchhaltung nötig.
+4. Nummernkreise haben Doppelbelegungen (`V-` für Versuchsauftrag und Bestellung, `JJ/XXXX` für Rechnung und Lieferschein).
+
 ## Wird geprüft, ob Material am Lager ist?
 
 **Nein – nicht als fester Schritt.** Die AA Bestellung beginnt mit Stückliste →

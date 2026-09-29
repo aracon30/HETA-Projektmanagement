@@ -18,3 +18,8 @@ U1.4;K3.3;Freigegebene Ware, der Kommission zugeordnet (A4-Blatt an Palette/Kart
 U1.4;Lager, Bestandsführung und Inventur;Lagermaterial: Zugang in der Lagerbestandsliste;Ordner / K-Laufwerk;;Excel-Liste K:\02 Lager\Lagerbestand;U1.4 Schritt 7
 Lager, Bestandsführung und Inventur;U1.1;Lagerbestandsliste – Nachbestellbedarf;Ordner / K-Laufwerk;ja;"Einkauf erkennt Bedarf nur durch Blick in die Liste; keine Prüfung je Bestellung beschrieben";
 K3.3;Lager, Bestandsführung und Inventur;Entnahmezettel bei akutem Materialbedarf;Papier;ja;Laut AA K3.3.11-05: formloser Zettel;Lager, Bestandsführung und Inventur Schritt 4
+K3.1;Versand vorbereiten / Verpackung;Versandliste (wöchentlich, Aufträge der nächsten 2 Wochen);Noch unklar;;"Laut AA K3.2_01; erstellt von der Vertriebsadministration";Versand vorbereiten / Verpackung Schritt 1
+U1.4;Versand vorbereiten / Verpackung;Freigegebene Handelsware zum Verpacken;Noch unklar;;Laut AA K3.2_01 / U1.4_02;Versand vorbereiten / Verpackung Schritt 3
+Versand vorbereiten / Verpackung;Auslieferung / Spedition beauftragen;Packliste (Maße, Gewichte) als Grundlage für die Spedition;Papier;;Laut AA K3.2_01, FB K3.2_01;Versand vorbereiten / Verpackung Schritt 8
+Versand vorbereiten / Verpackung;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Packzettel mit Versandbelegen;Papier;;Laut AA K3.2_01 / K3.2_02;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen) Schritt 1
+K3.1;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Auftragsdaten (Preise, Zahlungsbedingungen) zur Rechnungsprüfung;Noch unklar;ja;"Laut AA K3.2_02 wird gegen den Auftrag geprüft; woher die Buchhaltung ihn kennt, ist offen";Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen) Schritt 2
