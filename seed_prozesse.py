@@ -77,15 +77,21 @@ def _ergaenzung_einspielen(version, e):
     reihenfolge = db.session.query(db.func.max(Prozess.reihenfolge)).scalar() or 0
 
     for nummer, bezeichnung, parent, status in e["landkarte"]:
-        if nummer in nach_nummer:
+        eltern = _finde_prozess(nach_nummer, parent) if parent else None
+        # Von Hand angelegte Prozesse nicht doppeln: gleiche Nummer oder gleiche
+        # Bezeichnung unter demselben übergeordneten Prozess gilt als vorhanden.
+        name = bezeichnung.strip().lower()
+        if (nummer and nummer in nach_nummer) or any(
+                p.bezeichnung.strip().lower() == name and p.parent_id == (eltern.id if eltern else None)
+                for p in Prozess.query.all()):
             continue
         reihenfolge += 1
-        eltern = _finde_prozess(nach_nummer, parent) if parent else None
         p = Prozess(nummer=nummer, bezeichnung=bezeichnung, aufnahmestatus=status, reihenfolge=reihenfolge,
                     parent_id=eltern.id if eltern else None)
         db.session.add(p)
         db.session.flush()
-        nach_nummer[nummer] = p
+        if nummer:
+            nach_nummer[nummer] = p
 
     for nummer, felder in e["details"].items():
         p = nach_nummer.get(nummer)
