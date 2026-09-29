@@ -2727,6 +2727,22 @@ function pzAhnen(p){
   }
   return out;
 }
+// Alle Prozesse in Baum-Reihenfolge (wie links im Baum): jeder Prozess direkt unter seinem übergeordneten.
+// Prozesse mit fehlendem übergeordnetem Prozess kommen ans Ende, damit keiner verloren geht.
+function pzBaumReihenfolge(){
+  const liste = [];
+  const gesehen = new Set();
+  const walk = (parentId) => pzKinder(parentId).forEach(p => {
+    if(gesehen.has(p.id)) return;
+    gesehen.add(p.id);
+    liste.push(p);
+    walk(p.id);
+  });
+  walk(null);
+  prozesse.filter(p => !gesehen.has(p.id)).forEach(p => liste.push(p));
+  return liste;
+}
+
 function pzNutzerDatalist(){
   return `<datalist id="pzNutzerList">${nutzer.map(n => `<option value="${pzEsc(n.name)}">`).join("")}</datalist>`;
 }
@@ -3197,7 +3213,7 @@ async function openPzVerbindungModal(kontextId, v){
   const isNew = !v;
   const richtung = isNew || v.vonId === ctx.id ? "aus" : "ein";
   const andererId = isNew ? null : (richtung === "aus" ? v.nachId : v.vonId);
-  const andereOptionen = `<option value="">— bitte wählen —</option>` + prozesse
+  const andereOptionen = `<option value="">— bitte wählen —</option>` + pzBaumReihenfolge()
     .filter(x => x.id !== ctx.id)
     .map(x => `<option value="${x.id}" ${x.id === andererId ? 'selected' : ''}>${'   '.repeat(pzAhnen(x).length)}${pzEsc(pzLabel(x))}</option>`)
     .join("");
@@ -3634,7 +3650,7 @@ function openPzProzessModal(p, parentIdDefault){
   const isNew = !p;
   const ausgeschlossen = isNew ? [] : [p.id, ...pzNachkommen(p.id)];
   const parentAktuell = isNew ? (parentIdDefault ?? null) : p.parentId;
-  const parentOptions = `<option value="">— keiner (oberste Ebene) —</option>` + prozesse
+  const parentOptions = `<option value="">— keiner (oberste Ebene) —</option>` + pzBaumReihenfolge()
     .filter(x => !ausgeschlossen.includes(x.id))
     .map(x => `<option value="${x.id}" ${x.id === parentAktuell ? 'selected' : ''}>${'   '.repeat(pzAhnen(x).length)}${pzEsc(pzLabel(x))}</option>`)
     .join("");

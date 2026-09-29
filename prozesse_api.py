@@ -339,6 +339,24 @@ def _csv_antwort(dateiname, kopf, zeilen):
     )
 
 
+def _baum_reihenfolge():
+    """Alle Prozesse wie im Baum: jeder direkt unter seinem übergeordneten Prozess."""
+    alle = Prozess.query.order_by(Prozess.reihenfolge, Prozess.id).all()
+    kinder = {}
+    for p in alle:
+        kinder.setdefault(p.parent_id, []).append(p)
+    liste, gesehen = [], set()
+
+    def walk(parent_id):
+        for p in kinder.get(parent_id, []):
+            if p.id not in gesehen:
+                gesehen.add(p.id)
+                liste.append(p)
+                walk(p.id)
+    walk(None)
+    return liste + [p for p in alle if p.id not in gesehen]
+
+
 def _prozess_label(p):
     return p.nummer or p.bezeichnung if p else ""
 
@@ -364,7 +382,7 @@ def export_csv(blatt):
              f.status, f.antwort or "", f.nachweis or ""] for f in fragen])
     if blatt == "prozessuebersicht":
         labels = dict(AUFNAHMESTATUS)
-        prozesse = Prozess.query.order_by(Prozess.reihenfolge, Prozess.id).all()
+        prozesse = _baum_reihenfolge()
         return _csv_antwort("prozessuebersicht.csv", [
             "Prozess-ID", "Prozessname", "Übergeordnet", "Bereich / Variante", "Verantwortlicher", "Auslöser",
             "Ergebnis", "Beteiligte", "Systeme", "Aufnahmestatus", "Prüfung", "Vorgänge pro Monat",
