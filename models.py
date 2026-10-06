@@ -61,6 +61,10 @@ class Item(db.Model):
         "LieferterminHistorie", backref="item", cascade="all, delete-orphan",
         order_by="LieferterminHistorie.created_at"
     )
+    positionen = db.relationship(
+        "AuftragPosition", backref="item", cascade="all, delete-orphan",
+        order_by="AuftragPosition.reihenfolge"
+    )
 
     def to_dict(self):
         base = {
@@ -79,13 +83,14 @@ class Item(db.Model):
                 "prio": self.prio,
                 "liefertermin": self.liefertermin.isoformat() if self.liefertermin else None,
                 "status": self.auftrag_status,
-                "lieferterminHistorie": [h.to_dict() for h in self.liefertermin_historie],
+                "lieferterminHistorie": [h.to_dict() for h in self.liefertermin_historie if h.position_id is None],
                 "lieferbedingungen": self.lieferbedingungen,
                 "ursprungsauftrag": self.ursprungsauftrag,
                 "zulGeliefert": self.zul_geliefert,
                 "bu": self.bu,
                 "t": self.t,
                 "projektleiter": self.projektleiter,
+                "positionen": [p.to_dict() for p in self.positionen],
             })
         elif self.type == "angebot":
             base.update({
@@ -123,11 +128,14 @@ class Phase(db.Model):
 
 
 class LieferterminHistorie(db.Model):
-    """Protokolliert jede Änderung des Liefertermins eines Auftrags, damit der
-    ursprüngliche (und jeder zwischenzeitliche) Termin nachvollziehbar bleibt."""
+    """Protokolliert jede Änderung eines Liefertermins, damit der ursprüngliche
+    (und jeder zwischenzeitliche) Termin nachvollziehbar bleibt. Gehört entweder
+    zum Auftrag selbst (position_id leer) oder zu einer seiner Positionen, da ein
+    Auftrag mehrere Positionen mit je eigenem Liefertermin haben kann."""
     __tablename__ = "liefertermin_historie"
     id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False)
+    position_id = db.Column(db.Integer, db.ForeignKey("auftrag_positionen.id"), nullable=True)
     alter_termin = db.Column(db.Date, nullable=True)
     neuer_termin = db.Column(db.Date, nullable=True)
     kommentar = db.Column(db.Text, nullable=True)
@@ -136,10 +144,39 @@ class LieferterminHistorie(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
+            "positionId": self.position_id,
             "alterTermin": self.alter_termin.isoformat() if self.alter_termin else None,
             "neuerTermin": self.neuer_termin.isoformat() if self.neuer_termin else None,
             "kommentar": self.kommentar,
             "erstelltAm": self.created_at.isoformat() + "Z" if self.created_at else None,
+        }
+
+
+class AuftragPosition(db.Model):
+    """Eine Position im Lieferumfang eines Auftrags mit eigenem Liefertermin —
+    ein Auftrag kann mehrere Positionen mit unterschiedlichen Lieferterminen
+    haben (z.B. Teillieferungen)."""
+    __tablename__ = "auftrag_positionen"
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False)
+    position = db.Column(db.String(40), nullable=True)  # z.B. "R0-001"
+    beschreibung = db.Column(db.Text, nullable=False)
+    liefertermin = db.Column(db.Date, nullable=True)
+    reihenfolge = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    historie = db.relationship(
+        "LieferterminHistorie", backref="position", cascade="all, delete-orphan",
+        order_by="LieferterminHistorie.created_at"
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "position": self.position,
+            "beschreibung": self.beschreibung,
+            "liefertermin": self.liefertermin.isoformat() if self.liefertermin else None,
+            "historie": [h.to_dict() for h in self.historie],
         }
 
 

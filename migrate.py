@@ -165,6 +165,28 @@ def main():
     else:
         print("Tabelle liefertermin_historie existiert bereits.")
 
+    if not table_exists(cur, "auftrag_positionen"):
+        cur.execute("""
+            CREATE TABLE auftrag_positionen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL REFERENCES items(id),
+                position VARCHAR(40),
+                beschreibung TEXT NOT NULL,
+                liefertermin DATE,
+                reihenfolge INTEGER DEFAULT 0,
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle auftrag_positionen angelegt (mehrere Liefertermine je Position).")
+    else:
+        print("Tabelle auftrag_positionen existiert bereits.")
+
+    if not column_exists(cur, "liefertermin_historie", "position_id"):
+        cur.execute("ALTER TABLE liefertermin_historie ADD COLUMN position_id INTEGER REFERENCES auftrag_positionen(id)")
+        print("Spalte liefertermin_historie.position_id ergänzt (Historie je Position statt nur je Auftrag).")
+    else:
+        print("Spalte liefertermin_historie.position_id existiert bereits.")
+
     # Nutzer ergänzen, falls auf dem Server noch nicht angelegt
     cur.execute("SELECT id FROM users WHERE name = ?", ("Gabriele Häfer",))
     if cur.fetchone() is None:

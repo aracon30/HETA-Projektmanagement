@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, date
 from flask import Flask, jsonify, request, send_from_directory
-from models import db, User, Item, VerlaufEintrag, Phase, LieferterminHistorie
+from models import db, User, Item, VerlaufEintrag, Phase, LieferterminHistorie, AuftragPosition
 import graph_client
 from erp_import import parse_positionsansicht_auftrag, hat_offene_position
 from prozesse_api import bp as prozesse_bp
@@ -208,6 +208,15 @@ def import_auftraege_confirm():
             t=k.get("t"),
         )
         db.session.add(item)
+        db.session.flush()  # item.id wird für die Positionen benötigt
+        for i, pos in enumerate(k.get("positionen", [])):
+            db.session.add(AuftragPosition(
+                item_id=item.id,
+                position=pos.get("position"),
+                beschreibung=pos.get("beschreibung") or "",
+                liefertermin=parse_date(pos.get("liefertermin")),
+                reihenfolge=i,
+            ))
         erstellt.append(item)
     db.session.commit()
     return jsonify([i.to_dict() for i in erstellt]), 201
@@ -356,6 +365,57 @@ def update_phase(phase_id):
 def delete_phase(phase_id):
     phase = Phase.query.get_or_404(phase_id)
     db.session.delete(phase)
+    db.session.commit()
+    return "", 204
+
+
+# ---------- Auftrags-Positionen (mehrere Liefertermine je Auftrag) ----------
+@app.route("/api/items/<int:item_id>/positionen", methods=["POST"])
+def add_position(item_id):
+    item = Item.query.get_or_404(item_id)
+    data = request.get_json(force=True)
+    beschreibung = data.get("beschreibung")
+    if not beschreibung:
+        return jsonify({"error": "Beschreibung ist ein Pflichtfeld."}), 400
+    position = AuftragPosition(
+        item_id=item.id,
+        position=data.get("position"),
+        beschreibung=beschreibung,
+        liefertermin=parse_date(data.get("liefertermin")),
+        reihenfolge=len(item.positionen),
+    )
+    db.session.add(position)
+    db.session.commit()
+    return jsonify(position.to_dict()), 201
+
+
+@app.route("/api/positionen/<int:position_id>", methods=["PATCH"])
+def update_position(position_id):
+    position = AuftragPosition.query.get_or_404(position_id)
+    data = request.get_json(force=True)
+    if "position" in data:
+        position.position = data.get("position")
+    if "beschreibung" in data:
+        position.beschreibung = data["beschreibung"]
+    if "liefertermin" in data:
+        neuer_termin = parse_date(data.get("liefertermin"))
+        if neuer_termin != position.liefertermin:
+            db.session.add(LieferterminHistorie(
+                item_id=position.item_id,
+                position_id=position.id,
+                alter_termin=position.liefertermin,
+                neuer_termin=neuer_termin,
+                kommentar=data.get("lieferterminKommentar") or None,
+            ))
+            position.liefertermin = neuer_termin
+    db.session.commit()
+    return jsonify(position.to_dict())
+
+
+@app.route("/api/positionen/<int:position_id>", methods=["DELETE"])
+def delete_position(position_id):
+    position = AuftragPosition.query.get_or_404(position_id)
+    db.session.delete(position)
     db.session.commit()
     return "", 204
 

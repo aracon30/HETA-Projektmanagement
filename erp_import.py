@@ -110,7 +110,8 @@ def parse_positionsansicht_auftrag(file):
                 "kunde": "",
                 "liefertermin": None,
                 "ordnerPfad": None,
-                "positionen": [],
+                "positionenText": [],
+                "positionenDetail": [],
                 "statusWerte": [],
                 "ursprungsauftrag": "",
                 "zulGeliefert": "",
@@ -132,12 +133,24 @@ def parse_positionsansicht_auftrag(file):
 
         pos_text = _cell_text(cell("Position"))
         beschr_text = _cell_text(cell("Positionsbeschreibung"))
-        if beschr_text:
-            g["positionen"].append(f"{pos_text}: {beschr_text}" if pos_text else beschr_text)
-
         lt_cell = cell("LT HETA AB")
-        if lt_cell is not None and lt_cell.value not in (None, "") and g["liefertermin"] is None:
-            g["liefertermin"] = _parse_excel_date(lt_cell.value)
+        pos_liefertermin = (
+            _parse_excel_date(lt_cell.value)
+            if lt_cell is not None and lt_cell.value not in (None, "")
+            else None
+        )
+        if beschr_text:
+            g["positionenText"].append(f"{pos_text}: {beschr_text}" if pos_text else beschr_text)
+            g["positionenDetail"].append({
+                "position": pos_text or None,
+                "beschreibung": beschr_text,
+                "liefertermin": pos_liefertermin,
+            })
+            # Liefertermin auf Auftragsebene = frühester Termin unter den Positionen
+            # (Positionen eines Auftrags können unterschiedliche Liefertermine haben,
+            # z.B. bei Teillieferungen — nicht einfach den ersten gefundenen nehmen).
+            if pos_liefertermin and (g["liefertermin"] is None or pos_liefertermin < g["liefertermin"]):
+                g["liefertermin"] = pos_liefertermin
 
         ordner_cell = cell("Ordner")
         if ordner_cell is not None and ordner_cell.hyperlink and not g["ordnerPfad"]:
@@ -174,10 +187,18 @@ def parse_positionsansicht_auftrag(file):
             "jahr": jahr,
             "kommission": kommission,
             "kunde": g["kunde"],
-            "lieferumfang": "\n".join(g["positionen"]),
+            "lieferumfang": "\n".join(g["positionenText"]),
             "liefertermin": g["liefertermin"],
             "ordnerPfad": g["ordnerPfad"],
-            "positionsAnzahl": len(g["positionen"]),
+            "positionsAnzahl": len(g["positionenText"]),
+            "positionen": [
+                {
+                    "position": p["position"],
+                    "beschreibung": p["beschreibung"],
+                    "liefertermin": p["liefertermin"].isoformat() if p["liefertermin"] else None,
+                }
+                for p in g["positionenDetail"]
+            ],
             "statusWerte": g["statusWerte"],
             "ursprungsauftrag": g["ursprungsauftrag"] or None,
             "zulGeliefert": g["zulGeliefert"] or None,

@@ -198,6 +198,15 @@
   .lt-history-meta{ font-size:0.7rem; color:var(--slate-light); margin-top:3px; }
   .lt-history-comment{ font-size:0.82rem; color:var(--slate); margin-top:6px; line-height:1.4; white-space:pre-wrap; }
 
+  .position-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .position-row{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; }
+  .position-row-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .position-beschreibung{ font-size:0.88rem; color:var(--ink); line-height:1.4; white-space:pre-wrap; }
+  .position-beschreibung b{ font-family:'IBM Plex Mono', monospace; font-weight:600; }
+  .position-meta{ display:flex; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap; }
+  .position-meta .lt-history-list{ margin-top:8px; width:100%; max-height:none; }
+  .position-actions{ display:flex; gap:2px; flex-shrink:0; }
+
   .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--steel-deep); color:#EDEFEA; padding:12px 20px; border-radius:var(--radius); font-size:0.85rem; box-shadow:var(--shadow); z-index:60; display:flex; align-items:center; gap:10px; }
   .toast.error{background:var(--red);}
 
@@ -1504,20 +1513,58 @@ function openLiefertermineDialog(item){
   document.addEventListener("keydown", escCloseOnce);
 }
 
-function renderLtHistorySection(item){
-  const historie = [...(item.lieferterminHistorie || [])].reverse();
-  if(!historie.length) return "";
-  const rowsHtml = historie.map(h => `
+function renderLtHistoryRows(historie){
+  return [...(historie || [])].reverse().map(h => `
     <div class="lt-history-row">
       <div class="lt-history-change">${h.alterTermin ? fmtDate(h.alterTermin) : 'Kein Termin'} → <b>${fmtDate(h.neuerTermin)}</b></div>
       <div class="lt-history-meta">${fmtDateTime(h.erstelltAm)}</div>
       ${h.kommentar ? `<div class="lt-history-comment">${h.kommentar}</div>` : ''}
     </div>
   `).join("");
+}
+function renderLtHistorySection(item){
+  if(!item.lieferterminHistorie || !item.lieferterminHistorie.length) return "";
   return `
     <div class="lt-inline-history">
       <span class="label">Liefertermin-Historie</span>
-      <div class="lt-history-list">${rowsHtml}</div>
+      <div class="lt-history-list">${renderLtHistoryRows(item.lieferterminHistorie)}</div>
+    </div>
+  `;
+}
+
+function renderPositionRow(item, p){
+  return `
+    <div class="position-row">
+      <div class="position-row-top">
+        <div class="position-beschreibung">${p.position ? `<b>${p.position}:</b> ` : ''}${p.beschreibung}</div>
+        <div class="position-actions">
+          <button class="icon-edit-btn" id="positionEditBtn-${p.id}" title="Position bearbeiten" aria-label="Position bearbeiten">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="icon-edit-btn" id="positionDeleteBtn-${p.id}" title="Position löschen" aria-label="Position löschen">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="position-meta">
+        <button class="val mono clickable-text" id="positionTerminBtn-${p.id}" title="Liefertermin dieser Position ändern">${p.liefertermin ? fmtDate(p.liefertermin) : 'Kein Termin'}</button>
+        ${p.historie && p.historie.length ? `<div class="lt-history-list">${renderLtHistoryRows(p.historie)}</div>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function renderPositionenSection(item){
+  const list = item.positionen || [];
+  return `
+    <div class="timeline-head">
+      <h3>Positionen</h3>
+      <button class="btn" id="newPositionBtn">+ Position</button>
+    </div>
+    <div class="position-list">
+      ${list.length
+        ? list.map(p => renderPositionRow(item, p)).join("")
+        : '<div class="no-selection" style="padding:10px 0;">Keine Positionen erfasst — nützlich, wenn einzelne Punkte im Lieferumfang unterschiedliche Liefertermine haben.</div>'}
     </div>
   `;
 }
@@ -1591,6 +1638,7 @@ function renderMain(){
     <div class="lieferumfang"><span class="label">${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"}</span><button class="icon-edit-btn" id="lieferumfangBtn" title="${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"} bearbeiten" aria-label="${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"} bearbeiten">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button><div class="lieferumfang-text">${item.lieferumfang || '—'}</div></div>
+    ${currentTab === "auftrag" ? renderPositionenSection(item) : ""}
     ${currentTab === "auftrag" ? `
     <div class="timeline-head">
       <h3>Zeitplan</h3>
@@ -1624,6 +1672,12 @@ function renderMain(){
     document.getElementById("zulGeliefertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"zulGeliefert", label:"Zul. geliefert", inputType:"text" }));
     document.getElementById("buBtn").addEventListener("click", () => openFieldEditModal(item, { field:"bu", label:"BU (Business Unit)", inputType:"select", emptyLabel:"— keine Angabe —", options: BU_OPTIONS }));
     document.getElementById("tBtn").addEventListener("click", () => openFieldEditModal(item, { field:"t", label:"T", inputType:"select", emptyLabel:"— keine Angabe —", options: T_OPTIONS }));
+    document.getElementById("newPositionBtn").addEventListener("click", () => openPositionModal(item, null));
+    (item.positionen || []).forEach(p => {
+      document.getElementById(`positionEditBtn-${p.id}`).addEventListener("click", () => openPositionModal(item, p));
+      document.getElementById(`positionDeleteBtn-${p.id}`).addEventListener("click", () => openDeletePositionConfirm(item, p));
+      document.getElementById(`positionTerminBtn-${p.id}`).addEventListener("click", () => openPositionLieferterminDialog(item, p));
+    });
   } else if(currentTab === "angebot"){
     document.getElementById("angebotStatusTagBtn").addEventListener("click", () => openAngebotStatusModal(item));
     document.getElementById("wertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"wert", label:"Angebotswert", inputType:"text", placeholder:"z.B. 42.000 €" }));
@@ -2304,6 +2358,148 @@ function openDeletePhaseConfirm(item, phase){
       showToast("Phase gelöscht.");
     }catch(err){
       showToast("Phase konnte nicht gelöscht werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openPositionModal(item, position){
+  const isEdit = !!position;
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="positionModalTitle">
+        <h3 id="positionModalTitle">${isEdit ? "Position bearbeiten" : "Position hinzufügen"}</h3>
+        <div class="sub">${item.kommission} — ${item.kunde}</div>
+        <div class="form-row">
+          <label for="positionNrInput">Positionsnummer (optional)</label>
+          <input type="text" id="positionNrInput" placeholder="z.B. R0-001" value="${isEdit && position.position ? position.position : ''}">
+        </div>
+        <div class="form-row">
+          <label for="positionBeschrInput">Beschreibung</label>
+          <textarea id="positionBeschrInput" rows="3" placeholder="z.B. 20 ST Filterbeutel Ø150, PTFE Nadelfilz">${isEdit ? position.beschreibung : ''}</textarea>
+        </div>
+        ${!isEdit ? `
+        <div class="form-row">
+          <label for="positionTerminInput">Liefertermin (optional)</label>
+          <input type="date" id="positionTerminInput">
+        </div>
+        ` : ""}
+        <div class="modal-actions" style="justify-content:${isEdit ? 'space-between' : 'flex-end'};">
+          ${isEdit ? `<button class="btn text" id="positionDelete" style="color:var(--red);">Löschen</button>` : ``}
+          <div style="display:flex; gap:10px;">
+            <button class="btn text" id="positionCancel">Abbrechen</button>
+            <button class="btn" id="positionSave">${isEdit ? 'Speichern' : 'Hinzufügen'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("positionCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  if(isEdit){
+    document.getElementById("positionDelete").addEventListener("click", () => openDeletePositionConfirm(item, position));
+  }
+  document.getElementById("positionSave").addEventListener("click", async () => {
+    const beschreibung = document.getElementById("positionBeschrInput").value.trim();
+    if(!beschreibung){
+      showToast("Beschreibung ist ein Pflichtfeld.", true);
+      return;
+    }
+    const saveBtn = document.getElementById("positionSave");
+    saveBtn.disabled = true;
+    const positionNr = document.getElementById("positionNrInput").value.trim() || null;
+    try{
+      if(isEdit){
+        await apiPatch(`/positionen/${position.id}`, { position: positionNr, beschreibung });
+      } else {
+        const terminInput = document.getElementById("positionTerminInput");
+        await apiPost(`/items/${item.id}/positionen`, { position: positionNr, beschreibung, liefertermin: terminInput.value || null });
+      }
+      await loadItems(currentTab);
+      closeModal();
+      renderMain();
+      showToast(isEdit ? "Position aktualisiert." : "Position hinzugefügt.");
+    }catch(err){
+      showToast("Position konnte nicht gespeichert werden.", true);
+      saveBtn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openDeletePositionConfirm(item, position){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deletePositionTitle">
+        <h3 id="deletePositionTitle">Position löschen?</h3>
+        <div class="sub">${position.position ? position.position + ': ' : ''}${position.beschreibung}</div>
+        <div class="sub">Wird aus den Positionen von ${item.kommission} entfernt. Das kann nicht rückgängig gemacht werden.</div>
+        <div class="modal-actions">
+          <button class="btn text" id="deletePositionCancel">Abbrechen</button>
+          <button class="btn" id="deletePositionConfirm" style="background:var(--red); border-color:var(--red);">Endgültig löschen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("deletePositionCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("deletePositionConfirm").addEventListener("click", async () => {
+    const btn = document.getElementById("deletePositionConfirm");
+    btn.disabled = true;
+    try{
+      await apiDelete(`/positionen/${position.id}`);
+      await loadItems(currentTab);
+      closeModal();
+      renderMain();
+      showToast("Position gelöscht.");
+    }catch(err){
+      showToast("Position konnte nicht gelöscht werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openPositionLieferterminDialog(item, position){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="posDueModalTitle">
+        <h3 id="posDueModalTitle">Liefertermin der Position ändern</h3>
+        <div class="sub">${item.kommission} — ${position.position ? position.position + ': ' : ''}${position.beschreibung}</div>
+        <div class="form-row">
+          <label for="posDueDateInput">Neuer Liefertermin</label>
+          <input type="date" id="posDueDateInput" value="${position.liefertermin || ''}">
+        </div>
+        <div class="form-row">
+          <label for="posDueCommentInput">Kommentar (optional)</label>
+          <textarea id="posDueCommentInput" rows="2" placeholder="z.B. Grund der Verschiebung"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="posDueCancel">Abbrechen</button>
+          <button class="btn" id="posDueConfirm">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("posDueCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("posDueConfirm").addEventListener("click", async () => {
+    const btn = document.getElementById("posDueConfirm");
+    btn.disabled = true;
+    const newDate = document.getElementById("posDueDateInput").value || null;
+    const kommentar = document.getElementById("posDueCommentInput").value.trim() || null;
+    try{
+      await apiPatch(`/positionen/${position.id}`, { liefertermin: newDate, lieferterminKommentar: kommentar });
+      await loadItems(currentTab);
+      closeModal();
+      renderMain();
+      showToast("Liefertermin der Position aktualisiert.");
+    }catch(err){
+      showToast("Konnte nicht aktualisiert werden.", true);
       btn.disabled = false;
     }
   });
