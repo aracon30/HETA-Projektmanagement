@@ -37,6 +37,7 @@ class Item(db.Model):
     zul_geliefert = db.Column(db.String(60), nullable=True)  # Spalte "zul. geliefert" aus dem ERP-Dashboard
     bu = db.Column(db.String(10), nullable=True)  # Business Unit: he | c | hb | s
     t = db.Column(db.String(10), nullable=True)  # Spalte "T" aus dem ERP-Dashboard: F (Fertigung) | H (Handelsware)
+    projektleiter = db.Column(db.String(120), nullable=True)  # verantwortliche/r Projektleiter/in (Nutzername)
 
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
@@ -84,6 +85,7 @@ class Item(db.Model):
                 "zulGeliefert": self.zul_geliefert,
                 "bu": self.bu,
                 "t": self.t,
+                "projektleiter": self.projektleiter,
             })
         elif self.type == "angebot":
             base.update({

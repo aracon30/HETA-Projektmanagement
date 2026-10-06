@@ -144,6 +144,12 @@ def main():
     else:
         print("Spalte items.t existiert bereits.")
 
+    if not column_exists(cur, "items", "projektleiter"):
+        cur.execute("ALTER TABLE items ADD COLUMN projektleiter VARCHAR(120)")
+        print("Spalte items.projektleiter ergänzt.")
+    else:
+        print("Spalte items.projektleiter existiert bereits.")
+
     if not table_exists(cur, "liefertermin_historie"):
         cur.execute("""
             CREATE TABLE liefertermin_historie (

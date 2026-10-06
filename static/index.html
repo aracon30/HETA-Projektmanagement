@@ -760,6 +760,7 @@ const KIND_CONFIG = {
     metaGrid: (item) => `
       <div class="field"><label>Liefertermin</label><div class="val"><button class="val mono clickable-text" id="lieferterminBtn" title="Liefertermin ändern">${fmtDate(item.liefertermin)}</button></div></div>
       <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button></div></div>
+      <div class="field"><label>Projektleiter</label><div class="val"><button class="val clickable-text" id="projektleiterBtn" title="Projektleiter ändern">${item.projektleiter || '—'}</button></div></div>
       <div class="field"><label>Projektordner</label><div class="val">${folderLinkEditable(item.ordnerPfad, "ordnerBtn")}</div></div>
       <div class="field"><label>Lieferbedingungen</label><div class="val"><button class="val clickable-text" id="lieferbedingungenBtn" title="Lieferbedingungen ändern">${item.lieferbedingungen || '—'}</button></div></div>
       <div class="field"><label>Ursprungsauftrag</label><div class="val"><button class="val clickable-text" id="ursprungsauftragBtn" title="Ursprungsauftrag ändern">${item.ursprungsauftrag || '—'}</button></div></div>
@@ -1616,6 +1617,7 @@ function renderMain(){
     document.getElementById("prioTagBtn").addEventListener("click", () => openPrioModal(item));
     document.getElementById("statusBadgeBtn").addEventListener("click", () => openAuftragStatusModal(item));
     document.getElementById("lieferterminBtn").addEventListener("click", () => openLiefertermineDialog(item));
+    document.getElementById("projektleiterBtn").addEventListener("click", () => openFieldEditModal(item, { field:"projektleiter", label:"Projektleiter", inputType:"select", options: nutzer.map(n => n.name) }));
     document.getElementById("ordnerBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }));
     document.getElementById("lieferbedingungenBtn").addEventListener("click", () => openFieldEditModal(item, { field:"lieferbedingungen", label:"Lieferbedingungen", inputType:"text", placeholder:"z.B. FCA Werk Idar-Oberstein" }));
     document.getElementById("ursprungsauftragBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ursprungsauftrag", label:"Ursprungsauftrag", inputType:"text" }));
@@ -2623,6 +2625,13 @@ function openCreateModal(kind, prefill){
           </select>
         </div>
         <div class="form-row">
+          <label for="createProjektleiter">Projektleiter (optional)</label>
+          <select id="createProjektleiter">
+            <option value="">— niemand —</option>
+            ${nutzer.map(n => `<option value="${n.name}">${n.name}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-row">
           <label for="createLieferbedingungen">Lieferbedingungen (optional)</label>
           <input type="text" id="createLieferbedingungen" placeholder="z.B. FCA Werk Idar-Oberstein">
         </div>
@@ -2706,6 +2715,7 @@ function openCreateModal(kind, prefill){
       body.prio = document.getElementById("createPrio").value;
       body.liefertermin = document.getElementById("createLiefertermin").value || null;
       body.lieferbedingungen = document.getElementById("createLieferbedingungen").value.trim() || null;
+      body.projektleiter = document.getElementById("createProjektleiter").value || null;
     } else if(isAngebot){
       body.status = document.getElementById("createStatus").value;
       body.wert = document.getElementById("createWert").value.trim() || null;

@@ -71,6 +71,7 @@ def create_item():
         item.zul_geliefert = data.get("zulGeliefert")
         item.bu = data.get("bu")
         item.t = data.get("t")
+        item.projektleiter = data.get("projektleiter")
     elif item.type == "angebot":
         item.angebot_status = data.get("status", "in_bearbeitung")
         item.wert = data.get("wert")
@@ -115,6 +116,8 @@ def update_item(item_id):
         item.bu = data.get("bu")
     if "t" in data and item.type == "auftrag":
         item.t = data.get("t")
+    if "projektleiter" in data and item.type == "auftrag":
+        item.projektleiter = data.get("projektleiter")
     if "wert" in data and item.type == "angebot":
         item.wert = data.get("wert")
     if "wiedervorlage" in data and item.type == "angebot":
