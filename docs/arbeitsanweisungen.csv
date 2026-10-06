@@ -1,0 +1,41 @@
+﻿Nummer;Revision;Titel;Geltungsbereich;Prozess;Auswertungsstatus
+AA_F4.2_01;R2;Prüfmittelüberwachung;Werk4;F4.2;Nicht gesichtet
+AA_F4.2_02;R1;Kalibrierung Schweißgeräte;Werk4;F4.2;Nicht gesichtet
+AA_F4.5_01;R1;Umgang Werkstoffprüfzeugnis;Werk4;F4.5;Nicht gesichtet
+AA_F4.5_02;R1;Kennzeichnungen in der Fertigung;Werk4;F4.5;Nicht gesichtet
+AA_F4.6_01;R1;Projektordnerstruktur;Werk4;F4.6;Gesichtet
+AA_F4.6_02;R1;Nummernschlüssel;Werk4;F4.6;Gesichtet
+AA_K1_01;R1;Anwendung DASHBOARD;Werk4;K1;Gesichtet
+AA_K1_02;R3;Verwendung Namenskürzel;Werk4;K1;Nicht gesichtet
+AA_K1_03;R1;Ablagesystem E-Mails;Werk4;K1;Nicht gesichtet
+AA_K1_04;R1;Dokumentation von projektbezogenen Informationen;Werk4;K1;Nicht gesichtet
+AA_K1_05;R1;Erstellen von Angeboten;Werk4;K1.05;In Schritte übernommen
+AA_K2_01;R2;Anweisung Konstruktion;Werk4;K2;In Schritte übernommen
+AA_K2_02;R2;Zeichnungsänderung;Werk4;K2;Nicht gesichtet
+AA_K2_03;R2;Prüfung Konstruktionsunterlagen;Werk4;K2;Nicht gesichtet
+AA_K2_04;R2;Zeichnungen als PDF-Format;Werk4;K2;Nicht gesichtet
+AA_K2_05;R1;Interne Konstruktionsrichtlinien;Werk4;K2;Nicht gesichtet
+AA_K3.1_01;R1;Auftragsbearbeitung;Werk4;K3.1;In Schritte übernommen
+AA_K3.2_01;R1;Versand;Werk4;Versand vorbereiten / Verpackung;In Schritte übernommen
+AA_K3.2_02;R0;Rechnungserstellung;Werk4;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);In Schritte übernommen
+AA_K3.3.11-01;R1;Vorbereitung von Druckproben;ohne Angabe;K3.3;Nicht gesichtet
+AA_K3.3.11-02;R1;Schweisszusatzwerkstoffe;ohne Angabe;K3.3;Nicht gesichtet
+AA_K3.3.11-03;R1;Rücktrocknung von Elektroden;ohne Angabe;K3.3;Nicht gesichtet
+AA_K3.3.11-04;R2;Umstempelung;ohne Angabe;K3.3;Nicht gesichtet
+AA_K3.3.11-05;R1;Lagerwesen;ohne Angabe;Lager, Bestandsführung und Inventur;In Schritte übernommen
+AA_K3.3.11-06;R1;Maschinenwartung;ohne Angabe;K3.3;Nicht gesichtet
+AA_K4_01;R1;Kundenzufriedenheit;Werk4;K4;Nicht gesichtet
+AA_U1.1_01;R2;Bestellung;Werk4;U1.1;In Schritte übernommen
+AA_U1.2_01;R3;Lieferantenauswahl + Lieferantenfreigabe;Werk4;U1.2;Nicht gesichtet
+AA_U1.3_01;R1;Lieferantenbewertung;Werk4;U1.3;Nicht gesichtet
+AA_U1.4_01;R1;Materialeingangsprüfung;Werk4;U1.4;Nicht gesichtet
+AA_U1.4_02;R4;Wareneingang;Werk4;U1.4;In Schritte übernommen
+AA_U2_01;R1;Prüfung von Anschlagmitteln;ohne Angabe;U2;Nicht gesichtet
+AA_U2.2_01;R2;Erstunterweisung;Werk4;U2.2;Nicht gesichtet
+AA_U2.4_01;R2;Abfallentsorgung;Werk4;U2.4;Nicht gesichtet
+AA_U4_01;R1;Sanktionslistenprüfung;Werk4;U4;Nicht gesichtet
+AA_U4.3_01;R1;Arbeitszeiterfassung;Werk4;U4.3;Nicht gesichtet
+AA_U4.3_02;R1;Arbeitszeitnachweis;Werk4;U4.3;Nicht gesichtet
+ES;;Interne Konstruktionsrichtlinien mit Anlage C (ES-Fassung?);ohne Angabe;K2;Nicht gesichtet
+AA_F4_01;;Steuerung von Nichtkonformitäten;Werk4;F;Nicht gesichtet
+AA_U2.3_01;;Umgang Gefahrstoffe;;U2;Nicht gesichtet

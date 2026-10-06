@@ -1,0 +1,18 @@
+﻿Daten-ID;System / Datei / Ablage;Inhalt;Prozessbezug;Pflegeverantwortlicher;Führende Datenquelle;Speicherort;Übertragungswege;Datenqualität;Migrationsbedarf
+S01;"Dashboard – zentrale Oberfläche über die HETA-Excel-Listen, statt PPS-System der PACO Gruppe (Excel-Makrodateien: MASTERDATEN AUFTRAG.xlsx, Auftragsübersicht.xlsm, Positionsansicht Auftrag.xlsm; Passwörter/Berechtigungen je Bereich; Anleitung Stand 12.04.2022)";Anfrage-, Angebots- und Auftragslisten, Ordneranlage, Verknüpfung Bestellung/Zeichnungen;K1.05, K3.1;offen;ja (vermutlich);K:\Datenstruktur\Systemdateien\DB_Statistik\ (Positionsansicht);manuelle Eingabe, Übernahme Angebot → Auftrag;offen;hoch – zentrale Datenquelle
+S02;Projekt-/Auftragsordner K-Laufwerk;Angebots- und Auftragsunterlagen, Kommission;K1.05, K3.1;Vertrieb/Administration;;K-Laufwerk (Struktur lt. AA F4.6_01);Anlage über Dashboard;offen;offen
+S03;Kalkulationsvorlage;Material, Stunden, Preis;K1.05;offen;;offen;;offen;offen
+S04;Angebotsvorlage DE/EN;Angebotsdokument;K1.05;offen;;offen;;;
+S05;AB-Vorlageformular;Auftragsbestätigung;K3.1;offen;;offen;;;
+S06;Debitorenstamm;Kundenstammdaten;K3.1, Buchhaltung;offen;offen;offen (System?);;offen;hoch
+S07;E-Mail / Verteiler „alle MA“;Auftragsinformation mit AB (Rundmail), Eingangsbestätigungen;K1.05, K3.1;;;Outlook (Ablage lt. AA K1_03);;;
+S08;Papierablage (Hardcopy);Angebote;K1.05;;;offen;;;
+S09;Material-Deadline-Liste (MDL, Excel);Zu bestellende Teile je Auftrag, Bestellstatus;U1.1;Einkauf;offen;offen;aus Stückliste (von Hand?);offen;hoch
+S10;Dashboard – Bestellliste;Bestellnummern, Bestelldaten, Lieferungen, Rechnungswerte;U1.1;Einkauf;offen;Dashboard;manuell aus Bestellung, Lieferschein, DATEV;offen;hoch
+S11;DATEV;Eingangsrechnungen, Prüfung und Freigabe;U1.1, Buchhaltung;Buchhaltung/Einkauf;ja (Rechnungen);DATEV;;;Schnittstelle prüfen
+S12;Lagerbestandsliste (Excel, FB_K3.3.11-26);Rohre, Flansche, Stangenmaterial: Zugänge/Entnahmen;Lager, U1.4, U1.1;Justus, Köhler, Häfer;ja (einzige Bestandsführung);K:\02 Lager\Lagerbestand;Wareneingang, Entnahme, Zettel;offen (Zettel-Entnahmen);hoch
+S14;Nummernkreise (AA F4.6_02);Angebot L-XXXXX/JJ-Kunde, Kommission K-XXXXX/JJ-Kunde, AB-XXXX/JJ, Bestellung V-XXXXX/Komm/JJ, Rechnung und Lieferschein JJ/XXXX, Revisionen -R1…;alle;Häfer;;Dashboard (Vergabe);;Doppelbelegungen (V-…, JJ/XXXX);hoch – Nummernkreise im ERP-System abbilden
+S15;Projektordner (Musterordner) auf dem K-Laufwerk;Alle Unterlagen von Anfrage bis Versand, inkl. Fotos;F4.6, K1.05, K3.1, Versand;alle;ja (Dokumente);K:\01 HETA\01 ANGEBOTE bzw. 02 AUFTRÄGE;Anlage/Umwandlung über Dashboard;;hoch (Dokumentenablage)
+S16;Packliste (FB K3.2_01), Versandliste;"Packstücke, Maße, Gewichte; Versandplan 2 Wochen";Versand;Warenausgang / Vertriebsadministration;;offen;Papier?;;mittel
+S17;PPS-System der PACO Gruppe;wird bei HETA nicht genutzt (laut AA K1_01);alle;PACO Gruppe;;;;;klären: Option für die mögliche Einführung?
+S13;Wareneingang: Stempel, Ordner WE, Ablagekästen rot/blau;Lieferscheine unbearbeitet/bearbeitet;U1.4, U1.1;Wareneingang;;Papier + Scan;Papier;;mittel

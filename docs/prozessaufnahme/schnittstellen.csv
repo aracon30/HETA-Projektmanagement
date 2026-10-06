@@ -1,0 +1,53 @@
+﻿Von Prozess;Nach Prozess;Was wird übergeben;Weg;Problem;Notiz;Zu Schritt
+K1.05;K3.1;Angebot (Angebotsliste im Dashboard, Angebotsordner) als Basis der Auftragserfassung;Dashboard;;Laut AA K3.1_01 Schritt 4/5;K3.1 Schritt 4
+K1.05;U4;Sanktionslistenprüfung bei Neukunden;Noch unklar;;"Laut AA K1_05; wer prüft und wo dokumentiert wird, ist offen";K1.05 Schritt 1
+K3.1;U4;Sanktionslistenprüfung bei neuem Debitor;Noch unklar;;Laut AA K3.1_01;K3.1 Schritt 2
+K3.1;K2;Auftragsbestätigung (Rundmail an alle);E-Mail;;"Praxisangabe P. Schreiber: Rundmail mit AB; ob Konstruktion ausdrücklich beauftragt wird, ist offen";K3.1 Schritt 7
+K3.1;U1.1;Auftragsbestätigung (Rundmail an alle);E-Mail;;Praxisangabe P. Schreiber: Rundmail mit AB;K3.1 Schritt 7
+K3.1;K3.3;Auftragsbestätigung (Rundmail an alle);E-Mail;;Praxisangabe P. Schreiber: Rundmail mit AB;K3.1 Schritt 7
+K2;U1.1;Bestelltexte / Materialauswahl, Info bei Zeichnungsänderungen;Noch unklar;ja;Laut AA K2_01. Ob eine Stückliste übergeben wird und in welcher Form, ist ungeklärt.;K2 Schritt 4
+K2;K3.3;Freigegebene Zeichnungsunterlagen;Noch unklar;;"Laut AA K2_01 Schritt 7; Weg der Verteilung offen";K2 Schritt 7
+K3.3;K2;Schweißtechnische Abstimmung (Schweißverfahren, Zusatz);Mündlich / Telefon;;"Laut AA K2_01 Schritt 2 (Schweißaufsicht); Weg angenommen";K2 Schritt 2
+K2;U1.1;Freigegebene Zeichnungen und Stücklisten (Voraussetzung jeder Bestellung);Noch unklar;;Laut AA U1.1_01;U1.1 Schritt 1
+U1.1;K2;Bestellung zur technischen Prüfung und Paraphe;Noch unklar;;Laut AA U1.1_01 Schritt 6;U1.1 Schritt 6
+U1.1;U1.4;Bestelldaten für die Prüfung auf Vollständigkeit;Noch unklar;ja;Wie der Wareneingang die Bestellpositionen kennt, ist offen;U1.4 Schritt 4
+U1.4;U1.1;Bearbeitete Original-Lieferscheine (blauer Ablagekasten);Papier;;Laut AA U1.4_02 / U1.1_01;U1.4 Schritt 8
+U1.4;U1.1;Meldung bei Schaden oder Fehlmenge (Reklamation beim Lieferanten);Noch unklar;;Laut AA U1.4_02;U1.4 Schritt 2
+K2;U1.4;Zeichnungen für die Maßkontrolle;Noch unklar;;Laut AA U1.4_02 Schritt 4;U1.4 Schritt 4
+U1.4;K3.3;Freigegebene Ware, der Kommission zugeordnet (A4-Blatt an Palette/Karton);Papier;;Laut AA U1.4_02;U1.4 Schritt 6
+U1.4;Lager, Bestandsführung und Inventur;Lagermaterial: Zugang in der Lagerbestandsliste;Ordner / K-Laufwerk;;Excel-Liste K:\02 Lager\Lagerbestand;U1.4 Schritt 7
+Lager, Bestandsführung und Inventur;U1.1;Lagerbestandsliste – Nachbestellbedarf;Ordner / K-Laufwerk;ja;"Einkauf erkennt Bedarf nur durch Blick in die Liste; keine Prüfung je Bestellung beschrieben";
+K3.3;Lager, Bestandsführung und Inventur;Entnahmezettel bei akutem Materialbedarf;Papier;ja;Laut AA K3.3.11-05: formloser Zettel;Lager, Bestandsführung und Inventur Schritt 4
+K3.1;Versand vorbereiten / Verpackung;Versandliste (wöchentlich, Aufträge der nächsten 2 Wochen);Noch unklar;;"Laut AA K3.2_01; erstellt von der Vertriebsadministration";Versand vorbereiten / Verpackung Schritt 1
+U1.4;Versand vorbereiten / Verpackung;Freigegebene Handelsware zum Verpacken;Noch unklar;;Laut AA K3.2_01 / U1.4_02;Versand vorbereiten / Verpackung Schritt 3
+Versand vorbereiten / Verpackung;Auslieferung / Spedition beauftragen;Packliste (Maße, Gewichte) als Grundlage für die Spedition;Papier;;Laut AA K3.2_01, FB K3.2_01;Versand vorbereiten / Verpackung Schritt 8
+Versand vorbereiten / Verpackung;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Packzettel mit Versandbelegen;Papier;;Laut AA K3.2_01 / K3.2_02;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen) Schritt 1
+K3.1;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Auftragsdaten (Preise, Zahlungsbedingungen) zur Rechnungsprüfung;Noch unklar;ja;"Laut AA K3.2_02 wird gegen den Auftrag geprüft; woher die Buchhaltung ihn kennt, ist offen";Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen) Schritt 2
+Anfrage erfassen und bewerten;Auslegung und Kalkulation;Technische Anfragedaten, Spezifikation;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Lieferantenanfrage (für Angebote);Auslegung und Kalkulation;Lieferantenpreise und Lieferzeiten;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Auslegung und Kalkulation;K1.05;Auslegung und freigegebener Preis;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Auslegung und Kalkulation;Nachkalkulation / Auftragscontrolling;Plan-Kalkulation (Stunden, Material);Noch unklar;;Vorschlag – im Gespräch prüfen;
+Nachkalkulation / Auftragscontrolling;Auslegung und Kalkulation;Rückkopplung: Stundenansätze und Zuschläge aktualisieren;Noch unklar;;Vorschlag – im Gespräch prüfen;
+K3.1;Auftragsplanung / Projektstart;Auftrag / AB, PM-Benennung;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Auftragsplanung / Projektstart;K2;Terminplan, Spezifikation, Prüfplan;Noch unklar;;Vorschlag – im Gespräch prüfen;
+K3.3;K3.1;Machbarkeit des Liefertermins (Kapazität Fertigung);Noch unklar;ja;Vorschlag: Grundlage der Terminzusage in der AB ist nicht beschrieben;
+U1.1;K3.1;Lieferzeiten Material für die Terminzusage;Noch unklar;;Vorschlag – im Gespräch prüfen;
+K3.1;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Anzahlungsrechnung nach AB;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Liefertermin-Überwachung und Terminänderung (Kunde);U1.1;Kundenänderung: offene Bestellungen anpassen oder stornieren;Noch unklar;ja;Vorschlag: nur für Zeichnungsänderungen beschrieben (AA K2_01);
+Liefertermin-Überwachung und Terminänderung (Kunde);Versand vorbereiten / Verpackung;Geänderter Liefertermin für die Versandliste;Noch unklar;;Vorschlag – im Gespräch prüfen;
+K2;Bestellanforderung aus der Konstruktion;Freigegebene Stückliste;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Bestellanforderung aus der Konstruktion;U1.1;Bestellbedarf (Fehlmenge nach Lagerprüfung);Noch unklar;;Vorschlag – im Gespräch prüfen;
+K2;Arbeitsauftrag / Arbeitsvorbereitung;Freigegebene Zeichnungen für die Werkstatt;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Arbeitsauftrag / Arbeitsvorbereitung;Fremdfertigung / Lohnarbeit;Teile für externe Bearbeitung;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Fremdfertigung / Lohnarbeit;U1.1;Bestellung Lohnarbeit;Noch unklar;;Vorschlag – im Gespräch prüfen;
+U1.4;Herstellerdokumentation erstellen;Werkstoffzeugnisse der Kommission;Noch unklar;ja;Vorschlag: Zuordnung der Zeugnisse zur Kommission ist nicht beschrieben;
+K3.3;Druckprobe und Abnahme (Kunde, TÜV);Gefertigter Behälter / Filter zur Prüfung;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Druckprobe und Abnahme (Kunde, TÜV);Herstellerdokumentation erstellen;Prüf- und Abnahmeprotokolle, Konformitätserklärung;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Druckprobe und Abnahme (Kunde, TÜV);Versand vorbereiten / Verpackung;Freigabe zum Versand;Noch unklar;;Vorschlag – im Gespräch prüfen;
+Herstellerdokumentation erstellen;Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen);Doku übergeben (ggf. Bedingung für Schlusszahlung);Noch unklar;;Vorschlag – im Gespräch prüfen;
+K3.3;Nachkalkulation / Auftragscontrolling;Ist-Stunden je Kommission;Noch unklar;;Vorschlag – im Gespräch prüfen;
+U1.1;Nachkalkulation / Auftragscontrolling;Ist-Materialkosten (Eingangsrechnungen);Noch unklar;;Vorschlag – im Gespräch prüfen;
+K3.3;K3.1;Rückmeldung Fertigungsfortschritt (Material da, Druckprobe, versandbereit);Noch unklar;ja;Vorschlag: nicht beschrieben – wer weiß wann was?;
+Kundenreklamation;U1.3;Lieferantenfehler für die Lieferantenbewertung;Noch unklar;;Vorschlag – im Gespräch prüfen;
+K3.1;Service & Ersatzteile;Unterlagen des Ursprungsauftrags für Ersatzteile (Zeichnung, Stückliste);Ordner / K-Laufwerk;;Vorschlag: laut AA K1_05/K3.1_01 wird auf den Ursprungsauftrag verwiesen;
+Stammdaten pflegen (Kunden, Lieferanten, Artikel);K3.1;Kunden-/Debitorenstamm;Noch unklar;;Vorschlag – im Gespräch prüfen;

@@ -40,7 +40,8 @@
   .topbar .sync-btn:hover{background:rgba(255,255,255,0.16);}
   .topbar .sync-btn:disabled{opacity:0.55; cursor:default;}
 
-  .tabbar{ grid-column:1 / -1; display:flex; gap:2px; background:var(--steel); padding:0 24px; }
+  .tabbar{ grid-column:1 / -1; display:flex; gap:2px; background:var(--steel); padding:0 24px; overflow-x:auto; min-width:0; }
+  .tab-btn{ flex-shrink:0; }
   .tab-btn{ background:none; border:none; color:#CFE0E7; padding:10px 18px; font-size:0.85rem; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; }
   .tab-btn:hover{color:#fff;}
   .tab-btn:focus-visible{outline:2px solid #fff; outline-offset:-2px;}
@@ -464,6 +465,136 @@
     z-index:1;
   }
   .order-timeline-empty{ color:var(--slate); font-size:0.85rem; padding:6px 2px 2px; }
+
+  /* ===== Prozesse ===== */
+  .prozess-board{ grid-column:1 / -1; display:grid; grid-template-columns:clamp(280px, 22vw, 380px) minmax(0, 1fr); min-height:0; min-width:0; }
+  @media (max-width: 880px){ .prozess-board{grid-template-columns:minmax(0, 1fr); overflow-y:auto;} .pz-tree{border-right:none; border-bottom:1px solid var(--line); max-height:40vh;} .pz-main{overflow-y:visible;} }
+  .pz-tree{ border-right:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .pz-tree-list{ overflow-y:auto; flex:1; padding:8px; }
+  .pz-tree-item{ display:flex; align-items:center; gap:8px; width:100%; text-align:left; background:none; border:1px solid transparent; border-radius:var(--radius); padding:6px 8px; cursor:pointer; font-family:inherit; font-size:0.84rem; color:var(--ink); }
+  .pz-tree-item:hover{ background:var(--paper); }
+  .pz-tree-item:focus-visible{ outline:2px solid var(--steel); outline-offset:1px; }
+  .pz-tree-item.selected{ background:var(--steel-soft); border-color:var(--steel-soft); font-weight:600; }
+  .pz-tree-item.ebene0{ font-family:'Archivo', sans-serif; font-weight:700; margin-top:8px; text-transform:uppercase; letter-spacing:0.03em; font-size:0.76rem; color:var(--slate); }
+  .pz-tree-item .nr{ font-family:'IBM Plex Mono', monospace; font-size:0.74rem; color:var(--slate); min-width:42px; }
+  .pz-tree-item .name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pz-tree-item .cnt{ font-size:0.68rem; color:var(--copper); font-weight:600; }
+  .pz-main{ padding:28px clamp(24px, 3vw, 56px) 60px; overflow-y:auto; min-height:0; max-width:1250px; }
+  @media (max-width: 880px){ .pz-main{padding:20px;} }
+  .dot.pz-vorgeschlagen{background:var(--slate-light);} .dot.pz-laut_aa{background:var(--amber);}
+  .dot.pz-aufgenommen{background:var(--steel);} .dot.pz-bestaetigt{background:var(--green);} .dot.pz-anforderungen{background:var(--copper);}
+  .status-badge.pz-vorgeschlagen{background:#ECEEEB; color:var(--slate);}
+  .status-badge.pz-laut_aa{background:var(--amber-soft); color:var(--amber);}
+  .status-badge.pz-aufgenommen{background:var(--steel-soft); color:var(--steel);}
+  .status-badge.pz-bestaetigt{background:var(--green-soft); color:var(--green);}
+  .status-badge.pz-anforderungen{background:var(--copper-soft); color:var(--copper);}
+  .status-badge.beantwortet{background:var(--green-soft); color:var(--green);}
+  .pz-intro{ font-size:0.85rem; color:var(--slate); line-height:1.5; margin:4px 0 18px; max-width:760px; }
+  .pz-toolbar{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 18px; }
+  .pz-toolbar .label{ font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.03em; margin-right:4px; }
+  .pz-progress{ display:flex; flex-wrap:wrap; gap:14px; margin:0 0 18px; font-size:0.8rem; color:var(--slate); }
+  .pz-progress span{ display:inline-flex; align-items:center; gap:6px; }
+  .pz-progress b{ color:var(--ink); }
+  .pz-chain{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0 0 22px; font-size:0.8rem; color:var(--slate); }
+  .pz-chain .label{ font-size:0.72rem; text-transform:uppercase; letter-spacing:0.03em; margin-right:4px; }
+  .pz-map{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; }
+  @media (max-width: 1100px){ .pz-map{grid-template-columns:1fr;} }
+  .pz-col h3{ font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); margin:0 0 8px; }
+  .pz-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 13px; margin-bottom:10px; }
+  .pz-card-head{ display:flex; gap:8px; align-items:flex-start; justify-content:space-between; }
+  .pz-card .clickable-text{ font-weight:600; font-size:0.9rem; }
+  .pz-card .nr{ font-family:'IBM Plex Mono', monospace; font-size:0.74rem; color:var(--slate); display:block; }
+  .pz-card .counts{ font-size:0.72rem; color:var(--slate); margin-top:6px; display:flex; gap:10px; flex-wrap:wrap; }
+  .pz-card .counts .warn{ color:var(--copper); font-weight:600; }
+  .pz-sub{ list-style:none; margin:8px 0 0; padding:8px 0 0; border-top:1px solid #EDEEEA; }
+  .pz-sub li{ display:flex; align-items:center; gap:7px; padding:2px 0; font-size:0.8rem; }
+  .pz-sub .nr{ display:inline; min-width:40px; }
+  .pz-crumbs{ font-size:0.78rem; color:var(--slate); margin-bottom:10px; display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+  .pz-head-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+  .pz-head-actions select{ padding:6px 9px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.8rem; font-family:inherit; background:var(--panel); color:var(--ink); max-width:300px; }
+  .pz-notiz{ font-size:0.85rem; color:var(--ink); line-height:1.5; white-space:pre-wrap; margin:0 0 8px; }
+  .pz-table-wrap{ overflow-x:auto; margin-top:12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel); }
+  .pz-table{ width:100%; border-collapse:collapse; font-size:0.8rem; }
+  .pz-table th{ text-align:left; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); font-weight:600; padding:9px 10px; border-bottom:1px solid var(--line); background:#F7F8F6; white-space:nowrap; }
+  .pz-table td{ padding:9px 10px; border-bottom:1px solid #EDEEEA; vertical-align:top; line-height:1.4; }
+  .pz-table tr:last-child td{ border-bottom:none; }
+  .pz-table .nr{ font-family:'IBM Plex Mono', monospace; color:var(--slate); white-space:nowrap; }
+  .pz-table .small{ font-size:0.74rem; color:var(--slate); margin-top:4px; }
+  .pz-table .quelle{ font-size:0.72rem; color:var(--slate); min-width:140px; }
+  .pz-table .actions{ white-space:nowrap; text-align:right; }
+  .pz-table select{ padding:4px 6px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.76rem; font-family:inherit; background:var(--panel); color:var(--ink); }
+  .pz-icon-btn{ border:none; background:none; padding:3px 5px; margin:0; color:var(--slate); cursor:pointer; border-radius:3px; font-size:0.82rem; font-family:inherit; }
+  .pz-icon-btn:hover{ color:var(--steel); background:var(--steel-soft); }
+  .pz-icon-btn:focus-visible{ outline:2px solid var(--steel); outline-offset:1px; }
+  .pz-icon-btn:disabled{ opacity:0.3; cursor:default; background:none; }
+  .pz-empty{ color:var(--slate); font-size:0.85rem; padding:14px 2px 2px; }
+  .pz-frage{ background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--copper); border-radius:var(--radius); padding:12px 14px; margin-top:10px; }
+  .pz-frage.beantwortet{ border-left-color:var(--green); }
+  .pz-frage-text{ font-size:0.88rem; line-height:1.45; margin:0 0 6px; white-space:pre-wrap; }
+  .pz-frage-meta{ font-size:0.72rem; color:var(--slate); display:flex; gap:12px; flex-wrap:wrap; }
+  .pz-frage-antwort{ font-size:0.84rem; margin-top:8px; padding:8px 10px; background:var(--green-soft); border-radius:var(--radius); white-space:pre-wrap; line-height:1.45; }
+  .pz-frage-antwort .label{ font-size:0.66rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--green); display:block; margin-bottom:2px; font-weight:600; }
+  .pz-modal{ max-height:90vh; overflow-y:auto; }
+  .pz-modal input, .pz-modal select, .pz-modal textarea{ width:100%; font-family:inherit; font-size:0.85rem; padding:8px 10px; border:1px solid var(--line); border-radius:var(--radius); background:var(--paper); color:var(--ink); }
+  .pz-modal input:focus-visible, .pz-modal select:focus-visible, .pz-modal textarea:focus-visible{ outline:2px solid var(--steel); outline-offset:1px; }
+  .pz-modal .form-grid{ grid-template-columns:1fr 1fr; }
+  @media (max-width: 600px){ .pz-modal .form-grid{grid-template-columns:1fr;} }
+  .pz-modal .hint{ font-size:0.72rem; color:var(--slate); margin-top:3px; }
+  a.btn{ text-decoration:none; display:inline-block; }
+  .pz-kette-legende{ display:flex; flex-wrap:wrap; gap:14px; font-size:0.74rem; color:var(--slate); margin:0 0 12px; }
+  .pz-kette-legende > span{ display:inline-flex; align-items:center; gap:5px; }
+  .pz-kette-wrap{ overflow-x:auto; padding-bottom:6px; }
+  .pz-kette{ display:flex; align-items:stretch; gap:0; }
+  .pz-glied{ display:flex; flex-direction:column; gap:8px; flex:1 1 0; min-width:92px; text-align:left; background:var(--panel); border:1px solid var(--line); border-top:3px solid var(--steel); border-radius:var(--radius); padding:10px 11px; cursor:pointer; font-family:inherit; color:var(--ink); }
+  .pz-glied:hover{ border-color:var(--slate-light); border-top-color:var(--steel); }
+  .pz-glied:focus-visible{ outline:2px solid var(--steel); outline-offset:2px; }
+  .pz-glied.aktiv{ background:var(--steel-soft); border-color:var(--steel); box-shadow:var(--shadow); }
+  .pz-glied.hakt{ border-top-color:var(--red); }
+  .pz-glied-titel{ font-family:'Archivo', sans-serif; font-weight:700; font-size:0.84rem; hyphens:auto; line-height:1.2; min-height:2.1em; }
+  .pz-kette-balken{ display:flex; gap:2px; height:8px; }
+  .pz-kette-seg{ flex:1; border-radius:2px; }
+  .pz-kette-seg.pz-vorgeschlagen{background:#DCDFDA;} .pz-kette-seg.pz-laut_aa{background:var(--amber);}
+  .pz-kette-seg.pz-aufgenommen{background:var(--steel);} .pz-kette-seg.pz-bestaetigt{background:var(--green);} .pz-kette-seg.pz-anforderungen{background:var(--copper);}
+  .pz-glied-zahlen{ display:flex; flex-wrap:wrap; gap:4px 8px; font-size:0.7rem; color:var(--slate); }
+  .pz-glied-zahlen .warn{ color:var(--copper); font-weight:600; }
+  .pz-glied-zahlen .hakt{ color:var(--red); font-weight:600; }
+  .pz-kette-pfeil{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:18px; color:var(--slate-light); font-size:1.1rem; flex-shrink:0; }
+  .pz-kette-pfeil small{ font-size:0.62rem; color:var(--slate); }
+  .pz-kette-pfeil.hakt{ color:var(--red); }
+  .pz-glied-detail{ display:grid; grid-template-columns:1fr 1.1fr 1fr; gap:14px; margin-top:10px; }
+  @media (max-width: 1100px){ .pz-glied-detail{ grid-template-columns:1fr; } }
+  .pz-glied-spalte{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; min-width:0; }
+  .pz-spalten-titel{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); font-weight:600; margin-bottom:8px; }
+  .pz-uebergaben, .pz-glied-prozesse{ list-style:none; margin:0; padding:0; }
+  .pz-uebergaben li{ padding:7px 0 7px 9px; border-left:3px solid var(--line); margin-bottom:6px; font-size:0.82rem; line-height:1.35; }
+  .pz-uebergaben li.hakt{ border-left-color:var(--red); }
+  .pz-uebergaben .small, .pz-glied-prozesse .small{ font-size:0.72rem; color:var(--slate); margin-top:2px; }
+  .pz-glied-prozesse li{ display:flex; align-items:center; gap:7px; padding:4px 0; font-size:0.82rem; flex-wrap:wrap; }
+  .pz-begleitend{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .pz-details{ margin-top:24px; }
+  .pz-details summary{ cursor:pointer; font-size:0.85rem; color:var(--steel); font-weight:600; margin-bottom:8px; }
+  .pz-weg{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap; font-size:0.76rem; color:var(--slate); }
+  .pz-weg-linie{ display:inline-block; width:18px; height:3px; border-radius:2px; }
+  .pz-table tr.pz-gruppe td{ background:#F7F8F6; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); font-weight:600; padding:6px 10px; }
+  .pz-karte-wrap{ overflow:auto; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel); max-height:72vh; }
+  .pz-karte-wrap svg{ display:block; font-family:'IBM Plex Sans', sans-serif; }
+  .pz-knoten, .pz-kante{ cursor:pointer; }
+  .pz-knoten:hover rect{ stroke:var(--steel); }
+  .pz-knoten-nr{ font-family:'IBM Plex Mono', monospace; font-size:11px; fill:var(--slate); }
+  .pz-knoten-name{ font-size:12.5px; font-weight:600; fill:var(--ink); }
+  .pz-knoten-fragen{ font-size:10.5px; font-weight:600; fill:var(--copper); }
+  .pz-knoten-dot.pz-vorgeschlagen{fill:var(--slate-light);} .pz-knoten-dot.pz-laut_aa{fill:var(--amber);}
+  .pz-knoten-dot.pz-aufgenommen{fill:var(--steel);} .pz-knoten-dot.pz-bestaetigt{fill:var(--green);} .pz-knoten-dot.pz-anforderungen{fill:var(--copper);}
+  .pz-bahn-name{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; fill:var(--slate); }
+  .pz-kanten-label{ font-size:11px; fill:var(--ink); paint-order:stroke; stroke:#FFFFFF; stroke-width:4px; stroke-linejoin:round; pointer-events:none; }
+  .pz-matrix{ border-collapse:collapse; font-size:0.76rem; }
+  .pz-matrix th, .pz-matrix td{ border:1px solid #EDEEEA; padding:4px 6px; text-align:center; }
+  .pz-matrix tbody th{ text-align:left; font-weight:500; white-space:nowrap; max-width:240px; overflow:hidden; text-overflow:ellipsis; background:#F7F8F6; }
+  .pz-matrix-spalte{ vertical-align:bottom; background:#F7F8F6; font-weight:500; }
+  .pz-matrix-spalte span{ writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap; font-family:'IBM Plex Mono', monospace; }
+  .pz-matrix-leer{ background:#F2F3EF; }
+  .pz-matrix-punkt{ display:inline-block; width:10px; height:10px; border-radius:50%; margin:1px; }
+  .pz-matrix-punkt.hakt{ box-shadow:0 0 0 2px #B0432E; }
 </style>
 </head>
 <body>
@@ -491,6 +622,7 @@
     <button class="tab-btn" data-tab="angebot" role="tab" aria-selected="false">Angebote</button>
     <button class="tab-btn" data-tab="gantt" role="tab" aria-selected="false">Gantt</button>
     <button class="tab-btn" data-tab="wartend" role="tab" aria-selected="false">Wartend</button>
+    <button class="tab-btn" data-tab="prozesse" role="tab" aria-selected="false">Prozesse</button>
   </div>
 
   <div class="sidebar" id="sidebarPane">
@@ -507,6 +639,7 @@
   <div class="main" id="main"></div>
   <div class="gantt-board" id="ganttBoard" style="display:none;"></div>
   <div class="waiting-board" id="waitingBoard" style="display:none;"></div>
+  <div class="prozess-board" id="prozessBoard" style="display:none;"></div>
 </div>
 
 <div id="modalRoot"></div>
@@ -958,12 +1091,18 @@ function activateTab(tab){
 
   const isGantt = tab === "gantt";
   const isWartend = tab === "wartend";
-  const isBoardTab = isGantt || isWartend;
+  const isProzesse = tab === "prozesse";
+  const isBoardTab = isGantt || isWartend || isProzesse;
   document.getElementById("sidebarPane").style.display = isBoardTab ? "none" : "flex";
   document.getElementById("main").style.display = isBoardTab ? "none" : "block";
   document.getElementById("ganttBoard").style.display = isGantt ? "flex" : "none";
   document.getElementById("waitingBoard").style.display = isWartend ? "block" : "none";
+  document.getElementById("prozessBoard").style.display = isProzesse ? "grid" : "none";
 
+  if(isProzesse){
+    openProzesseTab();
+    return;
+  }
   if(isGantt){
     renderGanttBoard();
     updateStatsForGantt();
@@ -2565,6 +2704,1369 @@ function openCreateModal(kind, prefill){
     }catch(err){
       showToast("Konnte nicht angelegt werden.", true);
       confirmBtn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+/* ===================== Prozesse ===================== */
+// Prozessaufnahme zur Vorbereitung einer möglichen ERP-Einführung.
+// Grob → fein: Kategorie (F/K/U) → Hauptprozess → Teilprozess → Arbeitsschritt.
+let prozesse = [];              // Übersicht aller Prozesse (flach, mit parentId)
+let prozessConfig = null;       // Statuswerte vom Server
+let selectedProzessId = "kette"; // "kette" = Prozesskette, null = Landkarte, "karte" = Schnittstellenkarte, sonst Prozess-ID
+let pzKetteAuswahl = null;       // ausgewähltes Glied der Prozesskette
+let pzSearch = "";
+let verbindungen = [];          // Übergaben zwischen Prozessen (Schnittstellen)
+let pzKarteFokus = null;        // in der Schnittstellenkarte hervorgehobener Prozess
+let pzKarteNurProbleme = false;
+let pzKarteModus = (() => { try{ return localStorage.getItem("pzKarteModus") || "grob"; }catch(e){ return "grob"; } })();
+const PZ_STATUS_KURZ = {
+  vorgeschlagen: "Vorgeschlagen", laut_aa: "Laut AA", aufgenommen: "Aufgenommen",
+  bestaetigt: "Bestätigt", anforderungen: "Anforderungen",
+};
+const PZ_NACHWEIS_VORSCHLAEGE = [
+  "Laut Arbeitsanweisung – Praxisabgleich offen",
+  "Im Gespräch aufgenommen mit … am …",
+  "An Beispielvorgang nachvollzogen (Kommission …)",
+  "Von Beteiligten bestätigt",
+];
+const PZ_SCHRITT_FELDER = [
+  { key:"taetigkeit", label:"Tätigkeit *", type:"textarea", full:true },
+  { key:"ausfuehrend", label:"Ausführende Person / Rolle", list:"pzNutzerList", hint:"Person und Rolle, z.B. „Linker (Vertriebsadministration)“" },
+  { key:"freigabe", label:"Freigabe / Entscheidung durch" },
+  { key:"eingaben", label:"Eingaben / benötigte Informationen" },
+  { key:"ergebnis", label:"Ergebnis" },
+  { key:"system", label:"System / Liste / Ablage", hint:"z.B. Dashboard, Excel-Liste, K-Laufwerk, E-Mail, Papier" },
+  { key:"uebergabe", label:"Übergabe an (wen, auf welchem Weg)" },
+  { key:"ausnahme", label:"Ausnahme / was passiert bei fehlenden Angaben", type:"textarea", full:true },
+  { key:"bearbeitungszeit", label:"Bearbeitungszeit (ca.)" },
+  { key:"wartezeit", label:"Wartezeit (ca.)" },
+  { key:"nachweis", label:"Quelle / Nachweis", list:"pzNachweisList", full:true, hint:"Woher stammt die Beschreibung? Arbeitsanweisung, Gespräch, Beispielvorgang, bestätigt" },
+];
+
+function pzEsc(s){
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function pzStatusLabel(value){
+  const s = (prozessConfig?.aufnahmestatus || []).find(o => o.value === value);
+  return s ? s.label : value;
+}
+function pzById(id){ return prozesse.find(p => p.id === id); }
+function pzLabel(p){ return p.nummer ? `${p.nummer} ${p.bezeichnung}` : p.bezeichnung; }
+function pzKinder(parentId){
+  return prozesse.filter(p => p.parentId === parentId)
+    .sort((a, b) => (a.reihenfolge - b.reihenfolge) || (a.id - b.id));
+}
+function pzNachkommen(id){
+  const out = [];
+  const stack = [id];
+  while(stack.length){
+    pzKinder(stack.pop()).forEach(k => { out.push(k.id); stack.push(k.id); });
+  }
+  return out;
+}
+function pzSumme(p, feld){
+  return [p.id, ...pzNachkommen(p.id)].reduce((sum, id) => sum + (pzById(id)?.[feld] || 0), 0);
+}
+function pzAhnen(p){
+  const out = [];
+  let cur = p.parentId !== null ? pzById(p.parentId) : null;
+  while(cur){
+    out.unshift(cur);
+    cur = cur.parentId !== null ? pzById(cur.parentId) : null;
+  }
+  return out;
+}
+// Alle Prozesse in Baum-Reihenfolge (wie links im Baum): jeder Prozess direkt unter seinem übergeordneten.
+// Prozesse mit fehlendem übergeordnetem Prozess kommen ans Ende, damit keiner verloren geht.
+function pzBaumReihenfolge(){
+  const liste = [];
+  const gesehen = new Set();
+  const walk = (parentId) => pzKinder(parentId).forEach(p => {
+    if(gesehen.has(p.id)) return;
+    gesehen.add(p.id);
+    liste.push(p);
+    walk(p.id);
+  });
+  walk(null);
+  prozesse.filter(p => !gesehen.has(p.id)).forEach(p => liste.push(p));
+  return liste;
+}
+
+function pzNutzerDatalist(){
+  return `<datalist id="pzNutzerList">${nutzer.map(n => `<option value="${pzEsc(n.name)}">`).join("")}</datalist>`;
+}
+
+async function loadProzesse(){
+  if(!prozessConfig) prozessConfig = await apiGet("/prozesse/config");
+  [prozesse, verbindungen] = await Promise.all([apiGet("/prozesse"), apiGet("/verbindungen")]);
+}
+
+async function openProzesseTab(){
+  const board = document.getElementById("prozessBoard");
+  if(!board.innerHTML){
+    board.innerHTML = `
+      <div class="pz-tree">
+        <div class="sidebar-controls">
+          <input type="text" class="search" id="pzSearchInput" placeholder="Prozess suchen…" aria-label="Prozess suchen">
+          <button class="btn" id="pzNewBtn" style="width:100%; margin-top:10px;">+ Neuer Prozess</button>
+        </div>
+        <div class="pz-tree-list" id="pzTreeList"></div>
+      </div>
+      <div class="pz-main" id="pzMain"><div class="no-selection">Lädt…</div></div>`;
+    document.getElementById("pzSearchInput").addEventListener("input", (ev) => {
+      pzSearch = ev.target.value;
+      renderPzTree();
+    });
+    document.getElementById("pzNewBtn").addEventListener("click", () => openPzProzessModal(null, typeof selectedProzessId === "number" ? selectedProzessId : null));
+    // Alle Links auf Prozesse (Baum, Landkarte, Brotkrumen) laufen über data-pz-open
+    board.addEventListener("click", (ev) => {
+      const el = ev.target.closest("[data-pz-open]");
+      if(!el) return;
+      const v = el.dataset.pzOpen;
+      pzSelect(v === "" ? null : (v === "karte" || v === "kette") ? v : parseInt(v, 10));
+    });
+  }
+  try{
+    await loadProzesse();
+  }catch(err){
+    document.getElementById("pzMain").innerHTML = `<div class="no-selection">Prozesse konnten nicht geladen werden. Wurde <span class="mono">seed_prozesse.py</span> ausgeführt?</div>`;
+    return;
+  }
+  renderPzTree();
+  await renderPzMain();
+  updateStatsForProzesse();
+}
+
+function pzSelect(id){
+  selectedProzessId = id;
+  renderPzTree();
+  renderPzMain();
+  document.getElementById("pzMain").scrollTop = 0;
+}
+
+async function pzReload(msg){
+  await loadProzesse();
+  renderPzTree();
+  await renderPzMain();
+  updateStatsForProzesse();
+  if(msg) showToast(msg);
+}
+
+function updateStatsForProzesse(){
+  const eigentliche = prozesse.filter(p => p.parentId !== null);
+  const schritte = prozesse.reduce((s, p) => s + p.anzahlSchritte, 0);
+  const fragen = prozesse.reduce((s, p) => s + p.anzahlFragenOffen, 0);
+  document.getElementById("statBar").innerHTML =
+    `<span><b>${eigentliche.length}</b> Prozesse</span><span><b>${schritte}</b> Schritte</span><span><b>${verbindungen.length}</b> Schnittstellen</span><span><b>${fragen}</b> offene Fragen</span>`;
+}
+
+function renderPzTree(){
+  const box = document.getElementById("pzTreeList");
+  if(!box) return;
+  const item = (p, ebene, zugeklappt = 0) => `
+    <button class="pz-tree-item ${ebene === 0 ? 'ebene0' : ''} ${p.id === selectedProzessId ? 'selected' : ''}"
+            data-pz-open="${p.id}" style="padding-left:${8 + Math.max(ebene - 1, 0) * 16}px"
+            title="${pzEsc(pzLabel(p))} – ${pzEsc(pzStatusLabel(p.aufnahmestatus))}">
+      ${ebene > 0 ? `<span class="dot pz-${p.aufnahmestatus}"></span><span class="nr">${pzEsc(p.nummer || '')}</span>` : ''}
+      <span class="name">${pzEsc(p.bezeichnung)}</span>
+      ${zugeklappt ? `<span class="cnt" style="color:var(--slate-light);" title="${zugeklappt} Teilprozesse – anklicken zum Aufklappen">▸ ${zugeklappt}</span>` : ''}
+      ${p.anzahlFragenOffen ? `<span class="cnt" title="${p.anzahlFragenOffen} offene Fragen">? ${p.anzahlFragenOffen}</span>` : ''}
+    </button>`;
+  const rows = [`<button class="pz-tree-item ${selectedProzessId === "kette" ? 'selected' : ''}" data-pz-open="kette">
+      <span class="name">Prozesskette</span></button>`,
+    `<button class="pz-tree-item ${selectedProzessId === null ? 'selected' : ''}" data-pz-open="">
+      <span class="name">Landkarte</span></button>`,
+    `<button class="pz-tree-item ${selectedProzessId === "karte" ? 'selected' : ''}" data-pz-open="karte">
+      <span class="name">Schnittstellenkarte</span><span class="cnt" style="color:var(--slate);">${verbindungen.length}</span></button>`];
+  const term = pzSearch.trim().toLowerCase();
+  if(term){
+    const treffer = prozesse.filter(p => pzLabel(p).toLowerCase().includes(term));
+    treffer.forEach(p => rows.push(item(p, 1)));
+    if(!treffer.length) rows.push(`<div class="empty-list">Kein Prozess gefunden.</div>`);
+  } else {
+    // Teilprozesse nur aufklappen, wenn sie auf dem Weg zum gewählten Prozess liegen
+    const sel = typeof selectedProzessId === "number" ? pzById(selectedProzessId) : null;
+    const offen = new Set(sel ? [sel.id, ...pzAhnen(sel).map(a => a.id)] : []);
+    const walk = (parentId, ebene) => pzKinder(parentId).forEach(p => {
+      const kinder = pzKinder(p.id).length;
+      const aufklappen = ebene === 0 || offen.has(p.id);
+      rows.push(item(p, ebene, kinder && !aufklappen ? kinder : 0));
+      if(aufklappen) walk(p.id, ebene + 1);
+    });
+    walk(null, 0);
+  }
+  box.innerHTML = rows.join("");
+}
+
+async function renderPzMain(){
+  const main = document.getElementById("pzMain");
+  if(selectedProzessId === "kette"){
+    main.innerHTML = renderPzKette();
+    bindPzKette();
+    return;
+  }
+  if(selectedProzessId === "karte"){
+    main.innerHTML = renderPzKarte();
+    bindPzKarte();
+    return;
+  }
+  if(selectedProzessId === null || !pzById(selectedProzessId)){
+    selectedProzessId = null;
+    main.innerHTML = renderPzLandkarte();
+    return;
+  }
+  let p;
+  try{
+    p = await apiGet(`/prozesse/${selectedProzessId}`);
+  }catch(err){
+    main.innerHTML = `<div class="no-selection">Prozess konnte nicht geladen werden.</div>`;
+    return;
+  }
+  if(p.id !== selectedProzessId) return;  // inzwischen anderer Prozess gewählt
+  main.innerHTML = renderPzDetail(p);
+  bindPzDetail(p);
+}
+
+function renderPzLandkarte(){
+  const roots = pzKinder(null);
+  const eigentliche = prozesse.filter(p => p.parentId !== null);
+  const statusCounts = prozessConfig.aufnahmestatus.map(s => `
+    <span><span class="dot pz-${s.value}"></span>${pzEsc(s.label)}: <b>${eigentliche.filter(p => p.aufnahmestatus === s.value).length}</b></span>
+  `).join("");
+  const karte = (p) => {
+    const kinder = pzKinder(p.id);
+    const fragen = pzSumme(p, "anzahlFragenOffen");
+    return `
+      <div class="pz-card">
+        <div class="pz-card-head">
+          <div><span class="nr">${pzEsc(p.nummer || '')}</span><button class="clickable-text" data-pz-open="${p.id}">${pzEsc(p.bezeichnung)}</button></div>
+          <span class="status-badge pz-${p.aufnahmestatus}" title="${pzEsc(pzStatusLabel(p.aufnahmestatus))}">${pzEsc(PZ_STATUS_KURZ[p.aufnahmestatus] || p.aufnahmestatus)}</span>
+        </div>
+        <div class="counts">
+          <span>${pzSumme(p, "anzahlSchritte")} Schritte</span>
+          <span>${pzSumme(p, "anzahlDokumente")} Arbeitsanweisungen</span>
+          <span class="${fragen ? 'warn' : ''}">${fragen} offene Fragen</span>
+        </div>
+        ${kinder.length ? `<ul class="pz-sub">${kinder.map(k => `
+          <li><span class="dot pz-${k.aufnahmestatus}" title="${pzEsc(pzStatusLabel(k.aufnahmestatus))}"></span>
+            <span class="nr">${pzEsc(k.nummer || '')}</span>
+            <button class="clickable-text" data-pz-open="${k.id}">${pzEsc(k.bezeichnung)}</button></li>`).join("")}</ul>` : ''}
+      </div>`;
+  };
+  const exportLink = (blatt, label) => `<a class="btn ghost small" href="${API}/prozesse/export/${blatt}.csv">${label}</a>`;
+  return `
+    <div class="order-head"><div>
+      <div class="komm">Prozessaufnahme · Vorbereitung einer möglichen Einführung eines ERP-Systems</div>
+      <h2 class="display">Prozesslandkarte</h2>
+    </div></div>
+    <p class="pz-intro">Von grob nach fein: Kategorie → Hauptprozess → Teilprozess → Arbeitsschritt. Zuerst wird der
+      <b>tatsächliche Ist-Ablauf</b> erfasst; Unklarheiten gehören in die offenen Fragen, Verbesserungsideen in die Notiz des Prozesses.
+      Die Nummerierung folgt den QM-Arbeitsanweisungen; die Namen der Hauptprozesse sind noch mit dem QM-Handbuch abzugleichen.</p>
+    <div class="pz-progress">${statusCounts}</div>
+
+    <div class="pz-toolbar"><span class="label">Export für Excel</span>
+      ${exportLink("prozessuebersicht", "Prozessübersicht")}
+      ${exportLink("ablaufschritte", "Ablaufschritte")}
+      ${exportLink("offene_fragen", "Offene Fragen")}
+      ${exportLink("arbeitsanweisungen", "Arbeitsanweisungen")}
+      ${exportLink("schnittstellen", "Schnittstellen")}
+      <button class="btn small" data-pz-open="karte" style="margin-left:6px;">Schnittstellenkarte öffnen</button>
+    </div>
+    ${roots.length ? `<div class="pz-map">${roots.map(r => `
+      <div class="pz-col">
+        <h3><button class="clickable-text" data-pz-open="${r.id}">${pzEsc(r.bezeichnung)}</button></h3>
+        ${pzKinder(r.id).map(karte).join("") || '<div class="pz-empty">Noch keine Prozesse.</div>'}
+      </div>`).join("")}</div>`
+      : `<div class="no-selection">Noch keine Prozesse angelegt. Startbestand mit <span class="mono">seed_prozesse.py</span> einspielen oder über „+ Neuer Prozess“ anlegen.</div>`}
+  `;
+}
+
+function renderPzDetail(p){
+  const summary = pzById(p.id);
+  const kinder = pzKinder(p.id);
+  const crumbs = [`<button class="clickable-text" data-pz-open="">Landkarte</button>`,
+    ...pzAhnen(summary).map(a => `<button class="clickable-text" data-pz-open="${a.id}">${pzEsc(pzLabel(a))}</button>`)
+  ].join(`<span aria-hidden="true">›</span>`);
+  const statusOptions = prozessConfig.aufnahmestatus.map(s =>
+    `<option value="${s.value}" ${s.value === p.aufnahmestatus ? 'selected' : ''}>${pzEsc(s.label)}</option>`).join("");
+  const auswertungOptions = (wert) => prozessConfig.auswertungsstatus.map(s =>
+    `<option value="${s.value}" ${s.value === wert ? 'selected' : ''}>${pzEsc(s.label)}</option>`).join("");
+  const feld = (label, wert) => `<div class="field"><label>${label}</label><div class="val">${wert ? pzEsc(wert) : '—'}</div></div>`;
+  const geprueft = [p.geprueftVon, p.geprueftAm ? fmtDate(p.geprueftAm) : null].filter(Boolean).join(", ");
+
+  const schrittZeilen = p.schritte.map((s, i) => `
+    <tr>
+      <td class="nr">${s.reihenfolge}</td>
+      <td>${pzEsc(s.taetigkeit)}
+        ${s.ausnahme ? `<div class="small">Ausnahme: ${pzEsc(s.ausnahme)}</div>` : ''}
+        ${(s.bearbeitungszeit || s.wartezeit) ? `<div class="small">${[s.bearbeitungszeit ? 'Bearbeitung: ' + pzEsc(s.bearbeitungszeit) : '', s.wartezeit ? 'Wartezeit: ' + pzEsc(s.wartezeit) : ''].filter(Boolean).join(' · ')}</div>` : ''}
+      </td>
+      <td>${pzEsc(s.ausfuehrend || '—')}</td>
+      <td>${pzEsc(s.eingaben || '—')}<div class="small">→ ${pzEsc(s.ergebnis || '—')}</div></td>
+      <td>${pzEsc(s.system || '—')}</td>
+      <td>${pzEsc(s.uebergabe || '—')}${s.freigabe ? `<div class="small">Freigabe: ${pzEsc(s.freigabe)}</div>` : ''}</td>
+      <td class="quelle">${pzEsc(s.nachweis || '—')}</td>
+      <td class="actions">
+        <button class="pz-icon-btn" data-schritt-move="hoch" data-id="${s.id}" ${i === 0 ? 'disabled' : ''} title="Nach oben" aria-label="Schritt ${s.reihenfolge} nach oben">↑</button>
+        <button class="pz-icon-btn" data-schritt-move="runter" data-id="${s.id}" ${i === p.schritte.length - 1 ? 'disabled' : ''} title="Nach unten" aria-label="Schritt ${s.reihenfolge} nach unten">↓</button>
+        <button class="pz-icon-btn" data-schritt-edit="${s.id}" title="Bearbeiten" aria-label="Schritt ${s.reihenfolge} bearbeiten">✎</button>
+        <button class="pz-icon-btn" data-schritt-del="${s.id}" title="Löschen" aria-label="Schritt ${s.reihenfolge} löschen">✕</button>
+      </td>
+    </tr>`).join("");
+
+  const fragen = [...p.fragen].sort((a, b) => (a.status === "offen" ? 0 : 1) - (b.status === "offen" ? 0 : 1));
+  const frageKarten = fragen.map(f => `
+    <div class="pz-frage ${f.status}">
+      <div class="entry-top">
+        <p class="pz-frage-text">${pzEsc(f.frage)}</p>
+        <span class="status-badge ${f.status}">${f.status === "beantwortet" ? "Beantwortet" : "Offen"}</span>
+      </div>
+      <div class="pz-frage-meta">
+        ${f.klaerungDurch ? `<span>Klärung durch: <b>${pzEsc(f.klaerungDurch)}</b></span>` : ''}
+        ${f.naechsterSchritt ? `<span>Nächster Schritt: ${pzEsc(f.naechsterSchritt)}</span>` : ''}
+        ${f.faelligkeit ? `<span>Fällig ${fmtDate(f.faelligkeit)}</span>` : ''}
+        ${f.erstelltVon ? `<span>Erfasst von ${pzEsc(f.erstelltVon)}</span>` : ''}
+      </div>
+      ${f.antwort ? `<div class="pz-frage-antwort"><span class="label">Antwort / Entscheidung</span>${pzEsc(f.antwort)}${f.nachweis ? `<div class="pz-frage-meta" style="margin-top:4px;">${pzEsc(f.nachweis)}</div>` : ''}</div>` : ''}
+      <div class="entry-actions" style="margin-top:8px;">
+        <button class="btn text" data-frage-edit="${f.id}">${f.status === "offen" ? "Beantworten / bearbeiten" : "Bearbeiten"}</button>
+        <button class="btn text" data-frage-del="${f.id}" style="color:var(--red);">Löschen</button>
+      </div>
+    </div>`).join("");
+
+  const dokZeilen = p.dokumente.map(d => `
+    <tr>
+      <td class="nr">${pzEsc(d.nummer)}</td>
+      <td>${pzEsc(d.titel)}</td>
+      <td class="nr">${pzEsc(d.revision || '—')}</td>
+      <td>${pzEsc(d.geltungsbereich || '—')}</td>
+      <td><select data-dok-status="${d.id}" aria-label="Auswertungsstatus ${pzEsc(d.nummer)}">${auswertungOptions(d.auswertungsstatus)}</select></td>
+    </tr>`).join("");
+
+  return `
+    <div class="pz-crumbs">${crumbs}</div>
+    <div class="order-head">
+      <div>
+        <div class="komm mono">${pzEsc(p.nummer || '')}</div>
+        <h2 class="display">${pzEsc(p.bezeichnung)}</h2>
+      </div>
+      <div class="pz-head-actions">
+        <select id="pzStatusSelect" aria-label="Aufnahmestatus">${statusOptions}</select>
+        <button class="btn ghost small" id="pzEditBtn">Bearbeiten</button>
+        <button class="btn text" id="pzDeleteBtn" style="color:var(--red);">Löschen</button>
+      </div>
+    </div>
+    <div class="order-meta-grid">
+      ${feld("Verantwortlich", p.verantwortlich)}
+      ${feld("Bereich / Variante", p.variante)}
+      ${feld("Auslöser", p.ausloeser)}
+      ${feld("Ergebnis", p.ergebnis)}
+      ${feld("Beteiligte", p.beteiligte)}
+      ${feld("Systeme", p.systeme)}
+      ${feld("Vorgänge pro Monat", p.vorgaengeMonat)}
+      ${feld("Geprüft", geprueft)}
+    </div>
+    ${p.notiz ? `<div class="lieferumfang"><span class="label">Notiz / Verbesserungsideen</span>${pzEsc(p.notiz)}</div>` : ''}
+
+    <div class="timeline-head">
+      <h3>Unterprozesse (${kinder.length})</h3>
+      <button class="btn ghost small" id="pzAddKindBtn">+ Unterprozess</button>
+    </div>
+    ${kinder.length ? `<ul class="pz-sub" style="border-top:none;">${kinder.map(k => `
+      <li><span class="dot pz-${k.aufnahmestatus}" title="${pzEsc(pzStatusLabel(k.aufnahmestatus))}"></span>
+        <span class="nr mono" style="font-size:0.74rem; color:var(--slate); min-width:48px;">${pzEsc(k.nummer || '')}</span>
+        <button class="clickable-text" data-pz-open="${k.id}">${pzEsc(k.bezeichnung)}</button>
+        <span style="font-size:0.72rem; color:var(--slate);">· ${k.anzahlSchritte} Schritte${k.anzahlFragenOffen ? ` · ${k.anzahlFragenOffen} offene Fragen` : ''}</span></li>`).join("")}</ul>`
+      : `<div class="pz-empty">Keine Unterprozesse.</div>`}
+
+    <div class="timeline-head">
+      <h3>Ablaufschritte (${p.schritte.length})</h3>
+      <button class="btn ghost small" id="pzAddSchrittBtn">+ Schritt</button>
+    </div>
+    ${p.schritte.length ? `<div class="pz-table-wrap"><table class="pz-table">
+      <thead><tr><th>Nr.</th><th>Tätigkeit</th><th>Wer</th><th>Eingaben → Ergebnis</th><th>System</th><th>Übergabe</th><th>Quelle</th><th></th></tr></thead>
+      <tbody>${schrittZeilen}</tbody></table></div>`
+      : `<div class="pz-empty">Noch keine Schritte erfasst. Tipp: an einem realen, abgeschlossenen Vorgang entlanggehen – „Was löst die Arbeit aus? Was machst du konkret? An wen gibst du es weiter?“</div>`}
+
+    <div class="timeline-head">
+      <h3>Schnittstellen (${verbindungen.filter(v => v.vonId === p.id || v.nachId === p.id).length})</h3>
+      <div style="display:flex; gap:8px;">
+        <button class="btn text" id="pzZurKarteBtn">In Karte zeigen</button>
+        <button class="btn ghost small" id="pzAddVerbindungBtn">+ Übergabe</button>
+      </div>
+    </div>
+    ${renderPzVerbindungsListe(p.id, p.schritte)}
+
+    <div class="timeline-head">
+      <h3>Offene Fragen (${p.fragen.filter(f => f.status === "offen").length} offen)</h3>
+      <button class="btn ghost small" id="pzAddFrageBtn">+ Frage</button>
+    </div>
+    ${frageKarten || `<div class="pz-empty">Keine Fragen erfasst.</div>`}
+
+    <div class="timeline-head">
+      <h3>Arbeitsanweisungen (${p.dokumente.length})</h3>
+    </div>
+    ${p.dokumente.length ? `<div class="pz-table-wrap"><table class="pz-table">
+      <thead><tr><th>Nummer</th><th>Titel</th><th>Rev.</th><th>Geltung</th><th>Auswertung</th></tr></thead>
+      <tbody>${dokZeilen}</tbody></table></div>`
+      : `<div class="pz-empty">Keine Arbeitsanweisung zugeordnet.</div>`}
+  `;
+}
+
+function bindPzDetail(p){
+  const main = document.getElementById("pzMain");
+  document.getElementById("pzStatusSelect").addEventListener("change", async (ev) => {
+    try{
+      await apiPatch(`/prozesse/${p.id}`, { aufnahmestatus: ev.target.value });
+      await pzReload("Aufnahmestatus aktualisiert.");
+    }catch(err){
+      showToast("Status konnte nicht geändert werden.", true);
+    }
+  });
+  document.getElementById("pzEditBtn").addEventListener("click", () => openPzProzessModal(p));
+  document.getElementById("pzDeleteBtn").addEventListener("click", () => {
+    if(pzKinder(p.id).length){
+      showToast("Der Prozess hat noch Unterprozesse – bitte zuerst diese löschen oder verschieben.", true);
+      return;
+    }
+    openPzConfirm(`${pzLabel(p)} löschen?`,
+      `Der Prozess wird mit ${p.schritte.length} Schritten und ${p.fragen.length} Fragen unwiderruflich gelöscht. Zugeordnete Arbeitsanweisungen bleiben erhalten.`,
+      async () => {
+        await apiDelete(`/prozesse/${p.id}`);
+        selectedProzessId = p.parentId;
+        await pzReload("Prozess gelöscht.");
+      });
+  });
+  document.getElementById("pzAddKindBtn").addEventListener("click", () => openPzProzessModal(null, p.id));
+  document.getElementById("pzAddSchrittBtn").addEventListener("click", () => openPzSchrittModal(p, null));
+  document.getElementById("pzAddFrageBtn").addEventListener("click", () => openPzFrageModal(p, null));
+
+  main.querySelectorAll("[data-schritt-move]").forEach(btn => btn.addEventListener("click", async () => {
+    try{
+      await apiPost(`/schritte/${btn.dataset.id}/verschieben`, { richtung: btn.dataset.schrittMove });
+      await pzReload();
+    }catch(err){
+      showToast("Schritt konnte nicht verschoben werden.", true);
+    }
+  }));
+  main.querySelectorAll("[data-schritt-edit]").forEach(btn => btn.addEventListener("click", () => {
+    openPzSchrittModal(p, p.schritte.find(s => s.id === parseInt(btn.dataset.schrittEdit, 10)));
+  }));
+  main.querySelectorAll("[data-schritt-del]").forEach(btn => btn.addEventListener("click", () => {
+    const s = p.schritte.find(x => x.id === parseInt(btn.dataset.schrittDel, 10));
+    openPzConfirm(`Schritt ${s.reihenfolge} löschen?`, s.taetigkeit, async () => {
+      await apiDelete(`/schritte/${s.id}`);
+      await pzReload("Schritt gelöscht.");
+    });
+  }));
+  main.querySelectorAll("[data-frage-edit]").forEach(btn => btn.addEventListener("click", () => {
+    openPzFrageModal(p, p.fragen.find(f => f.id === parseInt(btn.dataset.frageEdit, 10)));
+  }));
+  main.querySelectorAll("[data-frage-del]").forEach(btn => btn.addEventListener("click", () => {
+    const f = p.fragen.find(x => x.id === parseInt(btn.dataset.frageDel, 10));
+    openPzConfirm("Frage löschen?", f.frage, async () => {
+      await apiDelete(`/fragen/${f.id}`);
+      await pzReload("Frage gelöscht.");
+    });
+  }));
+  document.getElementById("pzAddVerbindungBtn").addEventListener("click", () => openPzVerbindungModal(p.id, null));
+  document.getElementById("pzZurKarteBtn").addEventListener("click", () => {
+    pzKarteFokus = p.id;
+    pzSelect("karte");
+  });
+  bindPzVerbindungsAktionen(main, p.id);
+  main.querySelectorAll("[data-dok-status]").forEach(sel => sel.addEventListener("change", async () => {
+    try{
+      await apiPatch(`/dokumente/${sel.dataset.dokStatus}`, { auswertungsstatus: sel.value });
+      showToast("Auswertungsstatus gespeichert.");
+    }catch(err){
+      showToast("Auswertungsstatus konnte nicht gespeichert werden.", true);
+    }
+  }));
+}
+
+/* ---------- Schnittstellen (Übergaben zwischen Prozessen) ---------- */
+const PZ_WEG_FARBEN = {
+  email: "#0077DB", dashboard: "#2E8B6F", ordner: "#9C5A34", papier: "#7E62A1",
+  muendlich: "#C4872A", sonstiges: "#1B2430", unklar: "#A9B2B9",
+};
+// Reihenfolge der Kernprozesse in der Karte (entlang eines Auftrags); andere
+// Prozesse werden hinter dem nächsten übergeordneten Prozess aus dieser Liste einsortiert.
+const PZ_KARTE_KERN = ["K1", "K1.05", "K3.1", "K2", "K3.3", "K3", "K3.2", "K4"];
+
+function pzWegLabel(weg){
+  const w = (prozessConfig?.wege || []).find(o => o.value === weg);
+  return w ? w.label : weg;
+}
+function pzWegHtml(weg){
+  const farbe = PZ_WEG_FARBEN[weg] || PZ_WEG_FARBEN.sonstiges;
+  const linie = weg === "unklar"
+    ? `background:repeating-linear-gradient(90deg, ${farbe} 0 4px, transparent 4px 7px);`
+    : `background:${farbe};`;
+  return `<span class="pz-weg"><span class="pz-weg-linie" style="${linie}"></span>${pzEsc(pzWegLabel(weg))}</span>`;
+}
+
+function renderPzVerbindungsListe(prozessIds, schritte){
+  const ids = new Set(Array.isArray(prozessIds) ? prozessIds : [prozessIds]);
+  const ein = verbindungen.filter(v => ids.has(v.nachId) && !ids.has(v.vonId));
+  const aus = verbindungen.filter(v => ids.has(v.vonId) && !ids.has(v.nachId));
+  const intern = ids.size > 1 ? verbindungen.filter(v => ids.has(v.vonId) && ids.has(v.nachId)) : [];
+  if(!ein.length && !aus.length && !intern.length){
+    return `<div class="pz-empty">Noch keine Übergaben erfasst. Über „+ Übergabe“ festhalten, was dieser Prozess von wem bekommt und an wen er etwas weitergibt.</div>`;
+  }
+  const link = (id) => { const a = pzById(id); return a ? `<button class="clickable-text" data-pz-open="${a.id}">${pzEsc(pzLabel(a))}</button>` : '—'; };
+  const zeile = (v, andererId, pfeil) => {
+    const schritt = (schritte || []).find(s => s.id === v.schrittId);
+    // bei mehreren Prozessen (Hauptprozess + Teilprozesse) auch den eigenen Teilprozess nennen
+    const eigener = ids.size > 1 ? (pfeil === "←" ? v.nachId : pfeil === "→" ? v.vonId : null) : null;
+    return `<tr>
+      <td class="nr">${pfeil}</td>
+      <td>${pfeil === "↔" ? `${link(v.vonId)} → ${link(v.nachId)}` : link(andererId)}${eigener ? `<div class="small">${pfeil === "←" ? "an" : "von"} ${pzEsc(pzLabel(pzById(eigener)))}</div>` : ''}</td>
+      <td>${pzEsc(v.inhalt)}${v.notiz ? `<div class="small">${pzEsc(v.notiz)}</div>` : ''}</td>
+      <td>${pzWegHtml(v.weg)}</td>
+      <td class="nr">${schritt ? `Schritt ${schritt.reihenfolge}` : ''}</td>
+      <td>${v.problem ? '<span class="status-badge wartet_extern" title="Hier hakt es">Hakt</span>' : ''}</td>
+      <td class="actions">
+        <button class="pz-icon-btn" data-verb-edit="${v.id}" title="Bearbeiten" aria-label="Übergabe bearbeiten">✎</button>
+        <button class="pz-icon-btn" data-verb-del="${v.id}" title="Löschen" aria-label="Übergabe löschen">✕</button>
+      </td>
+    </tr>`;
+  };
+  const gruppe = (titel, liste, pfeil, feld) => liste.length ? `
+    <tr class="pz-gruppe"><td colspan="7">${titel} (${liste.length})</td></tr>
+    ${liste.map(v => zeile(v, v[feld], pfeil)).join("")}` : '';
+  return `<div class="pz-table-wrap"><table class="pz-table">
+    <thead><tr><th></th><th>Prozess</th><th>Was wird übergeben</th><th>Weg</th><th>Schritt</th><th></th><th></th></tr></thead>
+    <tbody>
+      ${gruppe("Erhält von", ein, "←", "vonId")}
+      ${gruppe("Übergibt an", aus, "→", "nachId")}
+      ${gruppe("Innerhalb (zwischen Teilprozessen)", intern, "↔", "nachId")}
+    </tbody></table></div>`;
+}
+
+function bindPzVerbindungsAktionen(root, kontextId){
+  root.querySelectorAll("[data-verb-edit]").forEach(btn => btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    const v = verbindungen.find(x => x.id === parseInt(btn.dataset.verbEdit, 10));
+    openPzVerbindungModal(kontextId ?? v.vonId, v);
+  }));
+  root.querySelectorAll("[data-verb-del]").forEach(btn => btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    const v = verbindungen.find(x => x.id === parseInt(btn.dataset.verbDel, 10));
+    const von = pzById(v.vonId), nach = pzById(v.nachId);
+    openPzConfirm("Übergabe löschen?", `${pzLabel(von)} → ${pzLabel(nach)}: ${v.inhalt}`, async () => {
+      await apiDelete(`/verbindungen/${v.id}`);
+      await pzReload("Übergabe gelöscht.");
+    });
+  }));
+}
+
+async function openPzVerbindungModal(kontextId, v){
+  let ctx;
+  try{
+    ctx = await apiGet(`/prozesse/${kontextId}`);
+  }catch(err){
+    showToast("Prozess konnte nicht geladen werden.", true);
+    return;
+  }
+  const isNew = !v;
+  const richtung = isNew || v.vonId === ctx.id ? "aus" : "ein";
+  const andererId = isNew ? null : (richtung === "aus" ? v.nachId : v.vonId);
+  const andereOptionen = `<option value="">— bitte wählen —</option>` + pzBaumReihenfolge()
+    .filter(x => x.id !== ctx.id)
+    .map(x => `<option value="${x.id}" ${x.id === andererId ? 'selected' : ''}>${'   '.repeat(pzAhnen(x).length)}${pzEsc(pzLabel(x))}</option>`)
+    .join("");
+  const wegOptionen = prozessConfig.wege.map(w =>
+    `<option value="${w.value}" ${(v ? v.weg : "unklar") === w.value ? 'selected' : ''}>${pzEsc(w.label)}</option>`).join("");
+  let schrittOptionen = `<option value="">— kein bestimmter Schritt —</option>` + ctx.schritte.map(s =>
+    `<option value="${s.id}" ${v?.schrittId === s.id ? 'selected' : ''}>Schritt ${s.reihenfolge}: ${pzEsc(s.taetigkeit.slice(0, 70))}</option>`).join("");
+  if(v?.schrittId && !ctx.schritte.some(s => s.id === v.schrittId)){
+    schrittOptionen += `<option value="${v.schrittId}" selected>Schritt im anderen Prozess</option>`;
+  }
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide pz-modal" role="dialog" aria-modal="true" aria-labelledby="pzvTitle">
+        <h3 id="pzvTitle">${isNew ? 'Neue Übergabe' : 'Übergabe bearbeiten'}</h3>
+        <div class="sub">${pzEsc(pzLabel(ctx))} · Was wird zwischen zwei Prozessen weitergegeben, und auf welchem Weg?</div>
+        <div class="form-grid">
+          <div class="form-row"><label for="pzvRichtung">Richtung</label>
+            <select id="pzvRichtung">
+              <option value="aus" ${richtung === "aus" ? 'selected' : ''}>${pzEsc(ctx.nummer || ctx.bezeichnung)} übergibt an …</option>
+              <option value="ein" ${richtung === "ein" ? 'selected' : ''}>${pzEsc(ctx.nummer || ctx.bezeichnung)} erhält von …</option>
+            </select></div>
+          <div class="form-row"><label for="pzvAnderer">Anderer Prozess *</label><select id="pzvAnderer">${andereOptionen}</select></div>
+          <div class="form-row" style="grid-column:1 / -1;"><label for="pzvInhalt">Was wird übergeben? *</label>
+            <input id="pzvInhalt" value="${pzEsc(v?.inhalt || '')}" placeholder="z.B. Auftragsbestätigung, Stückliste, Zeichnungen, Lieferschein">
+          </div>
+          <div class="form-row"><label for="pzvWeg">Weg</label><select id="pzvWeg">${wegOptionen}</select></div>
+          <div class="form-row"><label for="pzvSchritt">Gehört zu Schritt</label><select id="pzvSchritt">${schrittOptionen}</select></div>
+        </div>
+        <div class="form-row"><label style="display:flex; align-items:center; gap:8px; text-transform:none; letter-spacing:0; font-size:0.85rem; color:var(--ink);">
+          <input type="checkbox" id="pzvProblem" style="width:auto;" ${v?.problem ? 'checked' : ''}>
+          Hier hakt es (Medienbruch, Rückfragen, doppelte Eingabe, Informationen fehlen …)</label></div>
+        <div class="form-row"><label for="pzvNotiz">Notiz</label><textarea id="pzvNotiz" rows="2">${pzEsc(v?.notiz || '')}</textarea></div>
+        <div class="modal-actions">
+          <button class="btn text" id="pzvCancel">Abbrechen</button>
+          <button class="btn" id="pzvSave">${isNew ? 'Hinzufügen' : 'Speichern'}</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("pzvCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById(isNew ? "pzvAnderer" : "pzvInhalt").focus();
+  document.getElementById("pzvSave").addEventListener("click", async () => {
+    const anderer = document.getElementById("pzvAnderer").value;
+    const inhalt = document.getElementById("pzvInhalt").value.trim();
+    if(!anderer || !inhalt){
+      showToast("Bitte den anderen Prozess und den Inhalt der Übergabe angeben.", true);
+      return;
+    }
+    const aus = document.getElementById("pzvRichtung").value === "aus";
+    const schritt = document.getElementById("pzvSchritt").value;
+    const body = {
+      vonId: aus ? ctx.id : parseInt(anderer, 10),
+      nachId: aus ? parseInt(anderer, 10) : ctx.id,
+      inhalt,
+      weg: document.getElementById("pzvWeg").value,
+      schrittId: schritt ? parseInt(schritt, 10) : null,
+      problem: document.getElementById("pzvProblem").checked,
+      notiz: document.getElementById("pzvNotiz").value.trim(),
+    };
+    const btn = document.getElementById("pzvSave");
+    btn.disabled = true;
+    try{
+      if(isNew) await apiPost("/verbindungen", body);
+      else await apiPatch(`/verbindungen/${v.id}`, body);
+      closeModal();
+      await pzReload(isNew ? "Übergabe hinzugefügt." : "Übergabe gespeichert.");
+    }catch(err){
+      showToast("Übergabe konnte nicht gespeichert werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+/* ---------- Prozesskette (einfache Übersicht entlang eines Auftrags) ---------- */
+// Jedes Glied fasst Prozesse zusammen. Zuordnung: ein Prozess gehört zu dem Glied, dessen
+// Schlüssel (Nummer oder Bezeichnung) sein nächster übergeordneter Prozess bzw. er selbst ist.
+const PZ_KETTE_GLIEDER = [
+  { titel: "Anfrage & Angebot", schluessel: ["K1"] },
+  { titel: "Auftrag", schluessel: ["K3.1"] },
+  { titel: "Konstruktion", schluessel: ["K2"] },
+  { titel: "Einkauf", schluessel: ["U1"] },
+  { titel: "Wareneingang & Lager", schluessel: ["U1.4", "Lager, Bestandsführung und Inventur"] },
+  { titel: "Fertigung", schluessel: ["K3.3"] },
+  { titel: "Prüfung & Doku", schluessel: ["Prüfung, Abnahme und Dokumentation"] },
+  { titel: "Versand", schluessel: ["K3.2"] },
+  { titel: "Rechnung", schluessel: ["Rechnungsstellung (inkl. Anzahlungs- und Teilrechnungen)", "Zahlungseingang und Mahnwesen"] },
+  { titel: "Service", schluessel: ["Service & Ersatzteile"] },
+];
+const PZ_STATUS_REIHE = ["vorgeschlagen", "laut_aa", "aufgenommen", "bestaetigt", "anforderungen"];
+
+function pzPasst(p, schluessel){
+  const s = schluessel.trim().toLowerCase();
+  return (p.nummer || "").toLowerCase() === s || p.bezeichnung.trim().toLowerCase() === s;
+}
+
+// Liefert je Glied die zugehörigen Prozesse und die übrigen („begleitende“) Prozesse
+function pzKetteZuordnung(){
+  const glieder = PZ_KETTE_GLIEDER.map(g => ({ ...g, prozesse: [] }));
+  const schluesselKnoten = new Set();
+  const begleitend = [];
+  prozesse.forEach(p => {
+    const kette = [p, ...pzAhnen(p).reverse()];  // nächster zuerst
+    let treffer = null;
+    for(const x of kette){
+      const gi = glieder.findIndex(g => g.schluessel.some(k => pzPasst(x, k)));
+      if(gi >= 0){ treffer = gi; if(x === p) schluesselKnoten.add(p.id); break; }
+    }
+    if(treffer !== null) glieder[treffer].prozesse.push(p);
+    else if(p.parentId !== null) begleitend.push(p);
+  });
+  // reine Gruppierungsknoten (z.B. K3 über K3.1–K3.3) nicht als begleitend zeigen
+  const hatGliedUnter = (p) => pzNachkommen(p.id).some(id => glieder.some(g => g.prozesse.some(q => q.id === id)));
+  return { glieder: glieder.filter(g => g.prozesse.length), begleitend: begleitend.filter(p => !hatGliedUnter(p)) };
+}
+
+function pzGliedKennzahlen(g){
+  const ids = new Set(g.prozesse.map(p => p.id));
+  return {
+    ids,
+    schritte: g.prozesse.reduce((s, p) => s + p.anzahlSchritte, 0),
+    fragen: g.prozesse.reduce((s, p) => s + p.anzahlFragenOffen, 0),
+    hakt: verbindungen.filter(v => v.problem && (ids.has(v.vonId) || ids.has(v.nachId))).length,
+    aufgenommen: g.prozesse.filter(p => PZ_STATUS_REIHE.indexOf(p.aufnahmestatus) >= 2).length,
+  };
+}
+
+function renderPzKette(){
+  const { glieder, begleitend } = pzKetteZuordnung();
+  const kopf = `
+    <div class="order-head"><div>
+      <div class="komm">Prozessaufnahme · Vorbereitung einer möglichen Einführung eines ERP-Systems</div>
+      <h2 class="display">Prozesskette</h2>
+    </div></div>
+    <p class="pz-intro">Der Weg eines Auftrags von der Anfrage bis zur Rechnung. Klick auf ein Glied zeigt, was dazugehört und was es von wem bekommt bzw. weitergibt.</p>`;
+  if(!glieder.length){
+    return kopf + `<div class="no-selection">Noch keine Prozesse der Kette vorhanden.</div>`;
+  }
+  const auswahl = pzKetteAuswahl !== null && glieder[pzKetteAuswahl] ? pzKetteAuswahl : null;
+  const kz = glieder.map(pzGliedKennzahlen);
+
+  const glied = (g, i) => {
+    const k = kz[i];
+    const statusBalken = g.prozesse.map(p =>
+      `<span class="pz-kette-seg pz-${p.aufnahmestatus}" title="${pzEsc(pzLabel(p))}: ${pzEsc(pzStatusLabel(p.aufnahmestatus))}"></span>`).join("");
+    return `<button class="pz-glied ${auswahl === i ? 'aktiv' : ''} ${k.hakt ? 'hakt' : ''}" data-glied="${i}">
+      <span class="pz-glied-titel">${pzEsc(g.titel)}</span>
+      <span class="pz-kette-balken">${statusBalken}</span>
+      <span class="pz-glied-zahlen">
+        <span>${k.aufgenommen}/${g.prozesse.length} aufgenommen</span>
+        ${k.fragen ? `<span class="warn">? ${k.fragen}</span>` : ''}
+        ${k.hakt ? `<span class="hakt">⚠ ${k.hakt}</span>` : ''}
+      </span>
+    </button>`;
+  };
+  const pfeil = (i) => {
+    const a = kz[i].ids, b = kz[i + 1].ids;
+    const liste = verbindungen.filter(v => a.has(v.vonId) && b.has(v.nachId));
+    const hakt = liste.some(v => v.problem);
+    return `<span class="pz-kette-pfeil ${hakt ? 'hakt' : ''}" title="${liste.length ? pzEsc(liste.map(v => v.inhalt).join("\n")) : 'keine Übergabe erfasst'}">
+      <span>→</span>${liste.length ? `<small>${liste.length}</small>` : ''}</span>`;
+  };
+  const kette = glieder.map((g, i) => glied(g, i) + (i < glieder.length - 1 ? pfeil(i) : "")).join("");
+
+  let unten;
+  if(auswahl !== null){
+    unten = renderPzGliedDetail(glieder[auswahl], kz[auswahl], glieder, kz);
+  } else {
+    const hakt = verbindungen.filter(v => v.problem);
+    unten = `<div class="timeline-head"><h3>Wo es hakt (${hakt.length})</h3></div>` + (hakt.length
+      ? `<div class="pz-table-wrap"><table class="pz-table"><tbody>${hakt.map(v => `
+          <tr><td><button class="clickable-text" data-pz-open="${v.vonId}">${pzEsc(pzLabel(pzById(v.vonId)))}</button>
+              → <button class="clickable-text" data-pz-open="${v.nachId}">${pzEsc(pzLabel(pzById(v.nachId)))}</button></td>
+            <td>${pzEsc(v.inhalt)}${v.notiz ? `<div class="small">${pzEsc(v.notiz)}</div>` : ''}</td>
+            <td>${pzWegHtml(v.weg)}</td></tr>`).join("")}</tbody></table></div>`
+      : `<div class="pz-empty">Noch keine Übergabe als „hakt“ markiert.</div>`);
+  }
+
+  const begleitendHtml = begleitend.length ? `
+    <div class="timeline-head"><h3>Begleitende Prozesse</h3></div>
+    <div class="pz-begleitend">${begleitend.map(p => `<button class="chip" data-pz-open="${p.id}" title="${pzEsc(pzStatusLabel(p.aufnahmestatus))}">
+      <span class="dot pz-${p.aufnahmestatus}"></span>${pzEsc(pzLabel(p))}</button>`).join("")}</div>` : '';
+
+  return kopf + `
+    <div class="pz-kette-legende">
+      ${prozessConfig.aufnahmestatus.map(s => `<span><span class="dot pz-${s.value}"></span>${pzEsc(PZ_STATUS_KURZ[s.value] || s.label)}</span>`).join("")}
+      <span><b style="color:var(--copper)">?</b> offene Fragen</span><span><b style="color:var(--red)">⚠</b> hakt</span>
+    </div>
+    <div class="pz-kette-wrap"><div class="pz-kette">${kette}</div></div>
+    ${unten}
+    ${begleitendHtml}`;
+}
+
+function renderPzGliedDetail(g, k, glieder, kz){
+  const gliedVon = (id) => { const i = kz.findIndex(x => x.ids.has(id)); return i >= 0 ? glieder[i].titel : null; };
+  const ein = verbindungen.filter(v => k.ids.has(v.nachId) && !k.ids.has(v.vonId));
+  const aus = verbindungen.filter(v => k.ids.has(v.vonId) && !k.ids.has(v.nachId));
+  const zeile = (v, andererId) => {
+    const a = pzById(andererId);
+    const gl = gliedVon(andererId);
+    return `<li class="${v.problem ? 'hakt' : ''}">
+      <div><b>${pzEsc(v.inhalt)}</b></div>
+      <div class="small">${gl ? `${pzEsc(gl)} · ` : ''}<button class="clickable-text" data-pz-open="${a.id}">${pzEsc(pzLabel(a))}</button> · ${pzWegHtml(v.weg)}${v.problem ? ' · <span class="status-badge wartet_extern">Hakt</span>' : ''}</div>
+    </li>`;
+  };
+  const sortiert = [...g.prozesse].sort((a, b) => pzAhnen(a).length - pzAhnen(b).length || a.reihenfolge - b.reihenfolge);
+  const fragen = g.prozesse.filter(p => p.anzahlFragenOffen).sort((a, b) => b.anzahlFragenOffen - a.anzahlFragenOffen);
+  return `
+    <div class="timeline-head"><h3>${pzEsc(g.titel)}</h3>
+      <button class="btn text" data-glied="${""}">Auswahl aufheben</button></div>
+    <div class="pz-glied-detail">
+      <div class="pz-glied-spalte">
+        <div class="pz-spalten-titel">Bekommt von (${ein.length})</div>
+        ${ein.length ? `<ul class="pz-uebergaben">${ein.map(v => zeile(v, v.vonId)).join("")}</ul>` : '<div class="pz-empty">Keine Übergabe erfasst.</div>'}
+      </div>
+      <div class="pz-glied-spalte">
+        <div class="pz-spalten-titel">Prozesse (${g.prozesse.length})</div>
+        <ul class="pz-glied-prozesse">${sortiert.map(p => `
+          <li style="padding-left:${Math.max(0, pzAhnen(p).length - 2) * 14}px">
+            <span class="dot pz-${p.aufnahmestatus}" title="${pzEsc(pzStatusLabel(p.aufnahmestatus))}"></span>
+            <button class="clickable-text" data-pz-open="${p.id}">${pzEsc(pzLabel(p))}</button>
+            <span class="small">${p.anzahlSchritte} Schr.${p.anzahlFragenOffen ? ` · <span style="color:var(--copper)">? ${p.anzahlFragenOffen}</span>` : ''}</span>
+          </li>`).join("")}</ul>
+      </div>
+      <div class="pz-glied-spalte">
+        <div class="pz-spalten-titel">Gibt weiter an (${aus.length})</div>
+        ${aus.length ? `<ul class="pz-uebergaben">${aus.map(v => zeile(v, v.nachId)).join("")}</ul>` : '<div class="pz-empty">Keine Übergabe erfasst.</div>'}
+      </div>
+    </div>
+    ${fragen.length ? `<p class="pz-intro" style="margin-top:12px;">${k.fragen} offene Fragen in diesem Glied – meiste bei ${fragen.slice(0, 3).map(p => `<button class="clickable-text" data-pz-open="${p.id}">${pzEsc(pzLabel(p))}</button> (${p.anzahlFragenOffen})`).join(", ")}.</p>` : ''}`;
+}
+
+function bindPzKette(){
+  document.getElementById("pzMain").querySelectorAll("[data-glied]").forEach(btn => btn.addEventListener("click", () => {
+    const i = btn.dataset.glied === "" ? null : parseInt(btn.dataset.glied, 10);
+    pzKetteAuswahl = pzKetteAuswahl === i ? null : i;
+    renderPzMain();
+  }));
+}
+
+/* ---------- Schnittstellenkarte ---------- */
+// Zwei Stufen, passend zu „von grob nach fein“:
+//  grob – nur Hauptprozesse (Ebene unter F/K/U), Übergaben zusammengefasst
+//  fein – alle beteiligten Prozesse, Teilprozesse in der Spalte ihres Hauptprozesses gestapelt
+function pzBahn(p){
+  const root = [...pzAhnen(p), p][0];
+  const kennung = (root.nummer || root.bezeichnung || "").toUpperCase();
+  if(kennung.startsWith("F")) return 0;
+  if(kennung.startsWith("K")) return 1;
+  if(kennung.startsWith("U")) return 2;
+  return 3;
+}
+function pzHauptprozess(p){
+  const kette = [...pzAhnen(p), p];
+  return kette[1] || kette[0];
+}
+function pzKernSchluessel(p){
+  for(const x of [p, ...pzAhnen(p).reverse()]){
+    const idx = PZ_KARTE_KERN.indexOf(x.nummer);
+    if(idx >= 0) return idx * 100000 + (x === p ? 0 : 1000) + p.reihenfolge;
+  }
+  return 99 * 100000 + p.reihenfolge;
+}
+function pzSpalte(p, modus){
+  if(modus === "grob") return p;
+  if(pzBahn(p) === 1){
+    for(const x of [p, ...pzAhnen(p).reverse()]){
+      if(PZ_KARTE_KERN.includes(x.nummer)) return x;
+    }
+  }
+  return pzHauptprozess(p);
+}
+
+function pzKarteDaten(modus){
+  if(modus !== "grob"){
+    const ids = new Set();
+    verbindungen.forEach(v => { ids.add(v.vonId); ids.add(v.nachId); });
+    return {
+      knoten: [...ids].map(pzById).filter(Boolean),
+      kanten: verbindungen.map(v => ({ ...v, schluessel: `v${v.id}`, einzeln: [v] })),
+    };
+  }
+  const gruppen = {};
+  verbindungen.forEach(v => {
+    const a = pzById(v.vonId), b = pzById(v.nachId);
+    if(!a || !b) return;
+    const ha = pzHauptprozess(a), hb = pzHauptprozess(b);
+    if(ha.id === hb.id) return;  // Übergabe innerhalb desselben Hauptprozesses
+    const k = `${ha.id}-${hb.id}`;
+    (gruppen[k] = gruppen[k] || { vonId: ha.id, nachId: hb.id, einzeln: [] }).einzeln.push(v);
+  });
+  const kanten = Object.entries(gruppen).map(([k, g]) => {
+    const zaehler = {};
+    g.einzeln.forEach(v => { zaehler[v.weg] = (zaehler[v.weg] || 0) + 1; });
+    const weg = Object.entries(zaehler).sort((x, y) => y[1] - x[1])[0][0];
+    return {
+      ...g, schluessel: `g${k}`, weg,
+      problem: g.einzeln.some(v => v.problem),
+      inhalt: g.einzeln.length === 1 ? g.einzeln[0].inhalt : `${g.einzeln.length} Übergaben`,
+    };
+  });
+  const ids = new Set();
+  kanten.forEach(k => { ids.add(k.vonId); ids.add(k.nachId); });
+  return { knoten: [...ids].map(pzById), kanten };
+}
+
+function pzKarteLayout(daten, modus){
+  const KW = 176, KH = 54, ZEILE = KH + 14, GAP = modus === "grob" ? 110 : 64, LINKS = 120, OBEN = 44, BAHN_ABSTAND = 96;
+  // Spalten bilden (Bahn -> Spalten -> Knoten)
+  const spalten = {};
+  daten.knoten.forEach(p => {
+    const kopf = pzSpalte(p, modus);
+    const k = `${pzBahn(p)}-${kopf.id}`;
+    (spalten[k] = spalten[k] || { bahn: pzBahn(p), kopf, knoten: [] }).knoten.push(p);
+  });
+  Object.values(spalten).forEach(s => s.knoten.sort((a, b) =>
+    (a.id === s.kopf.id ? -1 : b.id === s.kopf.id ? 1 : 0) || (pzAhnen(a).length - pzAhnen(b).length) || (a.reihenfolge - b.reihenfolge)));
+  const genutzt = [0, 1, 2, 3].filter(b => Object.values(spalten).some(s => s.bahn === b));
+  const bahnTop = {};
+  let y = OBEN;
+  genutzt.forEach(b => {
+    bahnTop[b] = y;
+    const hoechste = Math.max(...Object.values(spalten).filter(s => s.bahn === b).map(s => s.knoten.length));
+    y += hoechste * ZEILE - 14 + BAHN_ABSTAND;
+  });
+  const pos = {};
+  const setzeSpalte = (s, x) => s.knoten.forEach((p, i) => { pos[p.id] = { x, y: bahnTop[s.bahn] + i * ZEILE }; });
+  Object.values(spalten).filter(s => s.bahn === 1)
+    .sort((a, b) => pzKernSchluessel(a.kopf) - pzKernSchluessel(b.kopf))
+    .forEach((s, i) => setzeSpalte(s, LINKS + i * (KW + GAP)));
+  [0, 2, 3].forEach(b => {
+    const wunsch = (s) => {
+      const ids = new Set(s.knoten.map(p => p.id));
+      const xs = daten.kanten.filter(k => ids.has(k.vonId) || ids.has(k.nachId))
+        .map(k => pos[ids.has(k.vonId) ? k.nachId : k.vonId]).filter(Boolean).map(q => q.x);
+      return xs.length ? xs.reduce((a, c) => a + c, 0) / xs.length : 1e6 + s.kopf.reihenfolge;
+    };
+    let rechts = LINKS - GAP;
+    Object.values(spalten).filter(s => s.bahn === b).map(s => ({ s, w: wunsch(s) }))
+      .sort((a, c) => a.w - c.w).forEach(({ s, w }) => {
+        const x = Math.max(w > 1e5 ? 0 : w, rechts + GAP, LINKS);
+        setzeSpalte(s, x);
+        rechts = x + KW;
+      });
+  });
+  const breite = Math.max(LINKS + KW, ...Object.values(pos).map(q => q.x + KW)) + 60;
+  const bahnen = genutzt.map(b => {
+    const unten = Math.max(...Object.values(spalten).filter(s => s.bahn === b).map(s => bahnTop[b] + s.knoten.length * ZEILE - 14));
+    return { bahn: b, oben: bahnTop[b], unten };
+  });
+  return { pos, KW, KH, breite, hoehe: y - BAHN_ABSTAND + 100, bahnen };
+}
+
+function pzBezier(p0, p1, p2, p3, t){
+  const u = 1 - t;
+  return u*u*u*p0 + 3*u*u*t*p1 + 3*u*t*t*p2 + t*t*t*p3;
+}
+
+function renderPzKarte(){
+  const kopf = `
+    <div class="pz-crumbs"><button class="clickable-text" data-pz-open="">Landkarte</button><span aria-hidden="true">›</span>Schnittstellenkarte</div>
+    <div class="order-head"><div>
+      <div class="komm">Wer übergibt was an wen – und auf welchem Weg?</div>
+      <h2 class="display">Schnittstellenkarte</h2>
+    </div></div>`;
+  if(!verbindungen.length){
+    return kopf + `<div class="no-selection">Noch keine Übergaben erfasst. Öffne einen Prozess und lege unter „Schnittstellen“ mit „+ Übergabe“ die erste an.</div>`;
+  }
+  const modus = pzKarteModus;
+  const daten = pzKarteDaten(modus);
+  const L = pzKarteLayout(daten, modus);
+  const fokus = pzKarteFokus && L.pos[pzKarteFokus] ? pzKarteFokus : null;
+  const nachbarn = new Set(fokus ? [fokus] : []);
+  if(fokus) daten.kanten.forEach(k => {
+    if(k.vonId === fokus) nachbarn.add(k.nachId);
+    if(k.nachId === fokus) nachbarn.add(k.vonId);
+  });
+
+  // Mehrfachkanten zwischen denselben Prozessen auffächern
+  const paare = {};
+  daten.kanten.forEach(k => { const p = [k.vonId, k.nachId].sort().join("-"); (paare[p] = paare[p] || []).push(k.schluessel); });
+
+  const marker = Object.entries(PZ_WEG_FARBEN).map(([weg, farbe]) =>
+    `<marker id="pzPfeil-${weg}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${farbe}"/></marker>`).join("");
+
+  const belegt = [];  // bereits gesetzte Kantenbeschriftungen
+  const kanten = daten.kanten.map(k => {
+    const a = L.pos[k.vonId], b = L.pos[k.nachId];
+    if(!a || !b) return "";
+    const pk = [k.vonId, k.nachId].sort().join("-");
+    const off = (paare[pk].indexOf(k.schluessel) - (paare[pk].length - 1) / 2) * 12;
+    let x0, y0, x1, y1, x2, y2, x3, y3;
+    if(a.x === b.x){
+      // gleiche Spalte: seitlicher Bogen rechts
+      x0 = a.x + L.KW; y0 = a.y + L.KH / 2 + off; x3 = b.x + L.KW; y3 = b.y + L.KH / 2 + off;
+      const bogen = 26 + Math.abs(b.y - a.y) * 0.15;
+      x1 = x0 + bogen; y1 = y0; x2 = x3 + bogen; y2 = y3;
+    } else if(pzBahnVon(a, L) === pzBahnVon(b, L)){
+      // gleiche Bahn, andere Spalte: von Seite zu Seite; rückwärts gerichtete Übergaben laufen unten herum
+      const rechts = b.x > a.x;
+      x0 = rechts ? a.x + L.KW : a.x; y0 = a.y + L.KH / 2 + off;
+      x3 = rechts ? b.x : b.x + L.KW; y3 = b.y + L.KH / 2 + off;
+      if(rechts){ const dx = (x3 - x0) * 0.5; x1 = x0 + dx; y1 = y0; x2 = x3 - dx; y2 = y3; }
+      else { x1 = x0 - 50; y1 = y0 + 46; x2 = x3 + 50; y2 = y3 + 46; }
+    } else {
+      const runter = b.y > a.y;
+      x0 = a.x + L.KW / 2 + off; y0 = runter ? a.y + L.KH : a.y;
+      x3 = b.x + L.KW / 2 + off; y3 = runter ? b.y : b.y + L.KH;
+      const dy = (y3 - y0) * 0.5;
+      x1 = x0; y1 = y0 + dy; x2 = x3; y2 = y3 - dy;
+    }
+    const d = `M${x0},${y0} C${x1},${y1} ${x2},${y2} ${x3},${y3}`;
+    const farbe = PZ_WEG_FARBEN[k.weg] || PZ_WEG_FARBEN.sonstiges;
+    const aktiv = fokus ? (k.vonId === fokus || k.nachId === fokus) : !pzKarteNurProbleme || k.problem;
+    const titel = `${pzLabel(pzById(k.vonId))} → ${pzLabel(pzById(k.nachId))}\n` +
+      k.einzeln.map(v => `• ${v.inhalt} (${pzWegLabel(v.weg)})${v.problem ? ' – hakt' : ''}`).join("\n");
+    let label = "";
+    if(fokus && aktiv){
+      const mx = pzBezier(x0, x1, x2, x3, 0.5);
+      let my = pzBezier(y0, y1, y2, y3, 0.5) - 5;
+      const text = k.inhalt.length > 38 ? k.inhalt.slice(0, 36) + "…" : k.inhalt;
+      const breite = text.length * 6;
+      while(belegt.some(r => Math.abs(r.x - mx) < (r.b + breite) / 2 && Math.abs(r.y - my) < 14)) my += 14;
+      belegt.push({ x: mx, y: my, b: breite });
+      label = `<text x="${mx}" y="${my}" text-anchor="middle" class="pz-kanten-label">${pzEsc(text)}</text>`;
+    }
+    const staerke = Math.min(1.8 + (k.einzeln.length - 1) * 0.6, 4.5) + (fokus && aktiv ? 0.6 : 0);
+    return `<g class="pz-kante" data-kante="${k.schluessel}" opacity="${aktiv ? 1 : 0.1}">
+      <title>${pzEsc(titel)}</title>
+      ${k.problem ? `<path d="${d}" fill="none" stroke="#B0432E" stroke-opacity="0.3" stroke-width="${staerke + 7}" stroke-linecap="round"/>` : ''}
+      <path d="${d}" fill="none" stroke="transparent" stroke-width="12"/>
+      <path d="${d}" fill="none" stroke="${farbe}" stroke-width="${staerke}" ${k.weg === 'unklar' ? 'stroke-dasharray="5 4"' : ''} marker-end="url(#pzPfeil-${k.weg in PZ_WEG_FARBEN ? k.weg : 'sonstiges'})"/>
+      ${label}
+    </g>`;
+  }).join("");
+
+  const knoten = daten.knoten.map(p => {
+    const q = L.pos[p.id];
+    const aktiv = !fokus || nachbarn.has(p.id);
+    const name = p.bezeichnung.length > 24 ? p.bezeichnung.slice(0, 22) + "…" : p.bezeichnung;
+    const hakt = daten.kanten.some(k => k.problem && (k.vonId === p.id || k.nachId === p.id));
+    const unter = modus === "grob" ? pzNachkommen(p.id).length : 0;
+    const fragen = modus === "grob" ? pzSumme(p, "anzahlFragenOffen") : p.anzahlFragenOffen;
+    return `<g class="pz-knoten" data-knoten="${p.id}" opacity="${aktiv ? 1 : 0.25}">
+      <title>${pzEsc(pzLabel(p))} – ${pzEsc(pzStatusLabel(p.aufnahmestatus))}${fragen ? ` – ${fragen} offene Fragen` : ''}${unter ? ` – ${unter} Teilprozesse` : ''}</title>
+      <rect x="${q.x}" y="${q.y}" width="${L.KW}" height="${L.KH}" rx="4" fill="#FFFFFF"
+            stroke="${p.id === fokus ? '#2C4A63' : hakt ? '#B0432E' : '#DCDFDA'}" stroke-width="${p.id === fokus ? 2.5 : 1.2}"/>
+      ${unter ? `<rect x="${q.x + 3}" y="${q.y + L.KH}" width="${L.KW - 6}" height="3" rx="1" fill="#DCDFDA"/>` : ''}
+      <circle cx="${q.x + 12}" cy="${q.y + 15}" r="4" class="pz-knoten-dot pz-${p.aufnahmestatus}"/>
+      <text x="${q.x + 22}" y="${q.y + 19}" class="pz-knoten-nr">${pzEsc(p.nummer || '')}${unter ? ` · ${unter} Teilpr.` : ''}</text>
+      ${fragen ? `<text x="${q.x + L.KW - 8}" y="${q.y + 19}" text-anchor="end" class="pz-knoten-fragen">? ${fragen}</text>` : ''}
+      <text x="${q.x + 10}" y="${q.y + 40}" class="pz-knoten-name">${pzEsc(name)}</text>
+    </g>`;
+  }).join("");
+
+  const bahnNamen = ["Führung", "Kern", "Unterstützung", "Sonstige"];
+  const bahnen = L.bahnen.map((b, i) => `
+    <rect x="0" y="${b.oben - 18}" width="100%" height="${b.unten - b.oben + 36}" fill="${i % 2 ? '#F4F5F2' : '#FAFAF8'}"/>
+    <text x="12" y="${b.oben + L.KH / 2 + 4}" class="pz-bahn-name">${bahnNamen[b.bahn]}</text>`).join("");
+
+  const legende = prozessConfig.wege.map(w => pzWegHtml(w.value)).join("") +
+    `<span class="pz-weg"><span class="pz-weg-linie" style="background:#B0432E; opacity:0.45; height:7px;"></span>Hakt</span>`;
+
+  let info;
+  if(fokus){
+    const p = pzById(fokus);
+    const ids = modus === "grob" ? [p.id, ...pzNachkommen(p.id)] : [p.id];
+    info = `<div class="timeline-head" style="margin-top:22px;">
+        <h3>${pzEsc(pzLabel(p))}${modus === "grob" && ids.length > 1 ? ` <span style="text-transform:none; letter-spacing:0; font-weight:400;">(mit ${ids.length - 1} Teilprozessen)</span>` : ''}</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn text" id="pzKarteFokusWeg">Auswahl aufheben</button>
+          <button class="btn ghost small" data-pz-open="${p.id}">Prozess öffnen</button>
+          <button class="btn ghost small" id="pzKarteNeu">+ Übergabe</button>
+        </div>
+      </div>
+      ${renderPzVerbindungsListe(ids, null)}`;
+  } else {
+    info = `<p class="pz-intro" style="margin-top:14px;">${modus === "grob"
+      ? "<b>Grob:</b> nur Hauptprozesse, Übergaben zwischen ihren Teilprozessen sind zusammengefasst (dickere Linie = mehr Übergaben). Übergaben innerhalb eines Hauptprozesses sieht man unter „Fein“."
+      : "<b>Fein:</b> alle Teilprozesse, gestapelt in der Spalte ihres Hauptprozesses."}
+      Klick auf einen Prozess hebt seine Übergaben mit Beschriftung hervor. Rot unterlegt = hier hakt es – dort liegen meist die wichtigsten Anforderungen an ein mögliches ERP-System.</p>`;
+  }
+
+  return kopf + `
+    <div class="pz-toolbar">
+      <span class="label">Ansicht</span>
+      <button class="chip ${modus === 'grob' ? 'active' : ''}" data-karte-modus="grob">Grob – Hauptprozesse</button>
+      <button class="chip ${modus === 'fein' ? 'active' : ''}" data-karte-modus="fein">Fein – alle Teilprozesse</button>
+      <label class="pz-weg" style="margin-left:auto; cursor:pointer;"><input type="checkbox" id="pzNurProbleme" ${pzKarteNurProbleme ? 'checked' : ''}> nur wo es hakt</label>
+    </div>
+    <div class="pz-toolbar"><span class="label">Weg</span>${legende}</div>
+    <div class="pz-karte-wrap">
+      <svg id="pzKarteSvg" width="${L.breite}" height="${L.hoehe}" style="min-width:100%;" role="img" aria-label="Schnittstellenkarte der Prozesse">
+        <defs>${marker}</defs>
+        <rect x="0" y="0" width="100%" height="100%" fill="transparent"/>
+        ${bahnen}${kanten}${knoten}
+      </svg>
+    </div>
+    ${info}
+    ${renderPzMatrix(daten, L)}`;
+}
+
+function pzBahnVon(q, L){
+  return L.bahnen.find(b => q.y >= b.oben - 1 && q.y <= b.unten)?.bahn;
+}
+
+function renderPzMatrix(daten, L){
+  const reihen = [...daten.knoten].sort((a, b) => (pzBahn(a) - pzBahn(b)) || (L.pos[a.id].x - L.pos[b.id].x) || (L.pos[a.id].y - L.pos[b.id].y));
+  const kurz = (p) => pzEsc(p.nummer || (p.bezeichnung.length > 18 ? p.bezeichnung.slice(0, 16) + "…" : p.bezeichnung));
+  const kopf = reihen.map(p => `<th class="pz-matrix-spalte" title="${pzEsc(pzLabel(p))}"><span>${kurz(p)}</span></th>`).join("");
+  const zeilen = reihen.map(von => `<tr><th title="${pzEsc(pzLabel(von))}">${pzEsc(pzLabel(von))}</th>${reihen.map(nach => {
+    if(von.id === nach.id) return `<td class="pz-matrix-leer"></td>`;
+    const k = daten.kanten.find(x => x.vonId === von.id && x.nachId === nach.id);
+    return `<td>${k ? k.einzeln.map(v => `<span class="pz-matrix-punkt ${v.problem ? 'hakt' : ''}" style="background:${PZ_WEG_FARBEN[v.weg] || PZ_WEG_FARBEN.sonstiges};" title="${pzEsc(v.inhalt)} (${pzEsc(pzWegLabel(v.weg))})${v.problem ? ' – hakt' : ''}"></span>`).join("") : ''}</td>`;
+  }).join("")}</tr>`).join("");
+  return `
+    <details class="pz-details"><summary>Schnittstellenmatrix anzeigen (${pzKarteModus === "grob" ? "grob" : "fein"})</summary>
+    <p class="pz-intro" style="margin:4px 0 8px;">Zeile übergibt an Spalte. Ein Punkt je Übergabe, Farbe = Weg, roter Rand = hakt. Maus über einen Punkt zeigt den Inhalt.</p>
+    <div class="pz-table-wrap"><table class="pz-matrix"><thead><tr><th>von \\ an</th>${kopf}</tr></thead><tbody>${zeilen}</tbody></table></div>
+    </details>`;
+}
+
+function bindPzKarte(){
+  const main = document.getElementById("pzMain");
+  const svg = document.getElementById("pzKarteSvg");
+  document.getElementById("pzNurProbleme")?.addEventListener("change", (ev) => {
+    pzKarteNurProbleme = ev.target.checked;
+    renderPzMain();
+  });
+  main.querySelectorAll("[data-karte-modus]").forEach(btn => btn.addEventListener("click", () => {
+    pzKarteModus = btn.dataset.karteModus;
+    // Fokus in der anderen Stufe auf den passenden Prozess umsetzen
+    if(pzKarteFokus && pzKarteModus === "grob") pzKarteFokus = pzHauptprozess(pzById(pzKarteFokus)).id;
+    try{ localStorage.setItem("pzKarteModus", pzKarteModus); }catch(e){}
+    renderPzMain();
+  }));
+  if(svg){
+    svg.addEventListener("click", (ev) => {
+      const k = ev.target.closest("[data-knoten]");
+      if(k){
+        const id = parseInt(k.dataset.knoten, 10);
+        pzKarteFokus = pzKarteFokus === id ? null : id;
+        renderPzMain();
+        return;
+      }
+      const kante = ev.target.closest("[data-kante]");
+      if(kante){
+        const schluessel = kante.dataset.kante;
+        if(schluessel.startsWith("v")){
+          const v = verbindungen.find(x => x.id === parseInt(schluessel.slice(1), 10));
+          openPzVerbindungModal(pzKarteFokus && (v.vonId === pzKarteFokus || v.nachId === pzKarteFokus) ? pzKarteFokus : v.vonId, v);
+        } else {
+          // zusammengefasste Übergabe: Fokus auf den abgebenden Hauptprozess
+          pzKarteFokus = parseInt(schluessel.slice(1).split("-")[0], 10);
+          renderPzMain();
+        }
+        return;
+      }
+      if(pzKarteFokus !== null){
+        pzKarteFokus = null;
+        renderPzMain();
+      }
+    });
+  }
+  document.getElementById("pzKarteFokusWeg")?.addEventListener("click", () => { pzKarteFokus = null; renderPzMain(); });
+  document.getElementById("pzKarteNeu")?.addEventListener("click", () => openPzVerbindungModal(pzKarteFokus, null));
+  bindPzVerbindungsAktionen(main, pzKarteFokus);
+}
+
+function openPzConfirm(title, text, onConfirm){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pzConfirmTitle">
+        <h3 id="pzConfirmTitle">${pzEsc(title)}</h3>
+        <div class="sub">${pzEsc(text)}</div>
+        <div class="modal-actions">
+          <button class="btn text" id="pzConfirmCancel">Abbrechen</button>
+          <button class="btn" id="pzConfirmOk" style="background:var(--red); border-color:var(--red);">Endgültig löschen</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("pzConfirmCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("pzConfirmOk").addEventListener("click", async () => {
+    const btn = document.getElementById("pzConfirmOk");
+    btn.disabled = true;
+    try{
+      await onConfirm();
+      closeModal();
+    }catch(err){
+      showToast("Konnte nicht gelöscht werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openPzProzessModal(p, parentIdDefault){
+  const isNew = !p;
+  const ausgeschlossen = isNew ? [] : [p.id, ...pzNachkommen(p.id)];
+  const parentAktuell = isNew ? (parentIdDefault ?? null) : p.parentId;
+  const parentOptions = `<option value="">— keiner (oberste Ebene) —</option>` + pzBaumReihenfolge()
+    .filter(x => !ausgeschlossen.includes(x.id))
+    .map(x => `<option value="${x.id}" ${x.id === parentAktuell ? 'selected' : ''}>${'   '.repeat(pzAhnen(x).length)}${pzEsc(pzLabel(x))}</option>`)
+    .join("");
+  const v = (k) => pzEsc(p?.[k] || "");
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide pz-modal" role="dialog" aria-modal="true" aria-labelledby="pzProzessTitle">
+        <h3 id="pzProzessTitle">${isNew ? 'Neuer Prozess' : 'Prozess bearbeiten'}</h3>
+        <div class="sub">Steckbrief wie im Excel-Blatt „Prozessübersicht“. Nur die Bezeichnung ist Pflicht.</div>
+        <div class="form-grid">
+          <div class="form-row"><label for="pzfNummer">Prozess-ID</label><input id="pzfNummer" value="${v('nummer')}" placeholder="z.B. K3.1"></div>
+          <div class="form-row"><label for="pzfParent">Übergeordneter Prozess</label><select id="pzfParent">${parentOptions}</select></div>
+        </div>
+        <div class="form-row"><label for="pzfBezeichnung">Bezeichnung *</label><input id="pzfBezeichnung" value="${v('bezeichnung')}"></div>
+        <div class="form-grid">
+          <div class="form-row"><label for="pzfVerantwortlich">Verantwortlich</label><input id="pzfVerantwortlich" list="pzNutzerList" value="${v('verantwortlich')}"></div>
+          <div class="form-row"><label for="pzfVariante">Bereich / Variante</label><input id="pzfVariante" value="${v('variante')}"></div>
+          <div class="form-row"><label for="pzfAusloeser">Auslöser</label><textarea id="pzfAusloeser" rows="2">${v('ausloeser')}</textarea></div>
+          <div class="form-row"><label for="pzfErgebnis">Ergebnis</label><textarea id="pzfErgebnis" rows="2">${v('ergebnis')}</textarea></div>
+          <div class="form-row"><label for="pzfBeteiligte">Beteiligte</label><textarea id="pzfBeteiligte" rows="2">${v('beteiligte')}</textarea></div>
+          <div class="form-row"><label for="pzfSysteme">Systeme</label><textarea id="pzfSysteme" rows="2">${v('systeme')}</textarea></div>
+          <div class="form-row"><label for="pzfVorgaenge">Vorgänge pro Monat</label><input id="pzfVorgaenge" value="${v('vorgaengeMonat')}" placeholder="z.B. ca. 40"></div>
+          <div class="form-row"><label for="pzfGeprueftVon">Geprüft von</label><input id="pzfGeprueftVon" list="pzNutzerList" value="${v('geprueftVon')}"></div>
+          <div class="form-row"><label for="pzfGeprueftAm">Geprüft am</label><input type="date" id="pzfGeprueftAm" value="${v('geprueftAm')}"></div>
+        </div>
+        <div class="form-row"><label for="pzfNotiz">Notiz / Verbesserungsideen</label><textarea id="pzfNotiz" rows="3">${v('notiz')}</textarea></div>
+        ${pzNutzerDatalist()}
+        <div class="modal-actions">
+          <button class="btn text" id="pzfCancel">Abbrechen</button>
+          <button class="btn" id="pzfSave">${isNew ? 'Anlegen' : 'Speichern'}</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("pzfCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById(isNew ? "pzfNummer" : "pzfBezeichnung").focus();
+  document.getElementById("pzfSave").addEventListener("click", async () => {
+    const val = (id) => document.getElementById(id).value.trim();
+    if(!val("pzfBezeichnung")){
+      showToast("Bezeichnung ist ein Pflichtfeld.", true);
+      return;
+    }
+    const btn = document.getElementById("pzfSave");
+    btn.disabled = true;
+    const parent = document.getElementById("pzfParent").value;
+    const body = {
+      nummer: val("pzfNummer"), bezeichnung: val("pzfBezeichnung"),
+      parentId: parent ? parseInt(parent, 10) : null,
+      verantwortlich: val("pzfVerantwortlich"), variante: val("pzfVariante"),
+      ausloeser: val("pzfAusloeser"), ergebnis: val("pzfErgebnis"),
+      beteiligte: val("pzfBeteiligte"), systeme: val("pzfSysteme"),
+      vorgaengeMonat: val("pzfVorgaenge"), geprueftVon: val("pzfGeprueftVon"),
+      geprueftAm: val("pzfGeprueftAm") || null, notiz: val("pzfNotiz"),
+    };
+    try{
+      if(isNew){
+        const created = await apiPost("/prozesse", body);
+        selectedProzessId = created.id;
+      } else {
+        await apiPatch(`/prozesse/${p.id}`, body);
+      }
+      closeModal();
+      await pzReload(isNew ? "Prozess angelegt." : "Prozess gespeichert.");
+    }catch(err){
+      showToast("Prozess konnte nicht gespeichert werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openPzSchrittModal(p, s){
+  const isNew = !s;
+  const feldHtml = (f) => {
+    const wert = pzEsc(s?.[f.key] || "");
+    const input = f.type === "textarea"
+      ? `<textarea id="pzs_${f.key}" rows="${f.key === 'taetigkeit' ? 3 : 2}">${wert}</textarea>`
+      : `<input id="pzs_${f.key}" value="${wert}" ${f.list ? `list="${f.list}"` : ''}>`;
+    return `<div class="form-row" ${f.full ? 'style="grid-column:1 / -1;"' : ''}>
+      <label for="pzs_${f.key}">${f.label}</label>${input}${f.hint ? `<div class="hint">${f.hint}</div>` : ''}</div>`;
+  };
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide pz-modal" role="dialog" aria-modal="true" aria-labelledby="pzSchrittTitle">
+        <h3 id="pzSchrittTitle">${isNew ? 'Neuer Arbeitsschritt' : `Schritt ${s.reihenfolge} bearbeiten`}</h3>
+        <div class="sub">${pzEsc(pzLabel(p))} · beschreibt, wie es <b>heute tatsächlich</b> abläuft. Nur die Tätigkeit ist Pflicht.</div>
+        <div class="form-grid">${PZ_SCHRITT_FELDER.map(feldHtml).join("")}</div>
+        ${pzNutzerDatalist()}
+        <datalist id="pzNachweisList">${PZ_NACHWEIS_VORSCHLAEGE.map(n => `<option value="${pzEsc(n)}">`).join("")}</datalist>
+        <div class="modal-actions">
+          <button class="btn text" id="pzsCancel">Abbrechen</button>
+          <button class="btn" id="pzsSave">${isNew ? 'Hinzufügen' : 'Speichern'}</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("pzsCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("pzs_taetigkeit").focus();
+  document.getElementById("pzsSave").addEventListener("click", async () => {
+    const body = {};
+    PZ_SCHRITT_FELDER.forEach(f => { body[f.key] = document.getElementById(`pzs_${f.key}`).value.trim(); });
+    if(!body.taetigkeit){
+      showToast("Tätigkeit ist ein Pflichtfeld.", true);
+      return;
+    }
+    const btn = document.getElementById("pzsSave");
+    btn.disabled = true;
+    try{
+      if(isNew) await apiPost(`/prozesse/${p.id}/schritte`, body);
+      else await apiPatch(`/schritte/${s.id}`, body);
+      closeModal();
+      await pzReload(isNew ? "Schritt hinzugefügt." : "Schritt gespeichert.");
+    }catch(err){
+      showToast("Schritt konnte nicht gespeichert werden.", true);
+      btn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
+}
+
+function openPzFrageModal(p, f){
+  const isNew = !f;
+  const v = (k) => pzEsc(f?.[k] || "");
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide pz-modal" role="dialog" aria-modal="true" aria-labelledby="pzFrageTitle">
+        <h3 id="pzFrageTitle">${isNew ? 'Neue offene Frage' : 'Frage bearbeiten / beantworten'}</h3>
+        <div class="sub">${pzEsc(pzLabel(p))} · Klärungsbedarf ist noch keine Schwachstelle.</div>
+        <div class="form-row"><label for="pzqFrage">Frage *</label><textarea id="pzqFrage" rows="3">${v('frage')}</textarea></div>
+        <div class="form-grid">
+          <div class="form-row"><label for="pzqKlaerung">Klärung durch</label><input id="pzqKlaerung" list="pzNutzerList" value="${v('klaerungDurch')}"></div>
+          <div class="form-row"><label for="pzqFaellig">Fälligkeit</label><input type="date" id="pzqFaellig" value="${v('faelligkeit')}"></div>
+          <div class="form-row" style="grid-column:1 / -1;"><label for="pzqNaechster">Nächster Schritt</label><input id="pzqNaechster" value="${v('naechsterSchritt')}"></div>
+        </div>
+        <div class="form-row"><label for="pzqAntwort">Antwort / Entscheidung</label><textarea id="pzqAntwort" rows="3">${v('antwort')}</textarea></div>
+        <div class="form-grid">
+          <div class="form-row"><label for="pzqNachweis">Nachweis</label><input id="pzqNachweis" value="${v('nachweis')}" placeholder="z.B. Aussage … am …"></div>
+          <div class="form-row"><label for="pzqStatus">Status</label>
+            <select id="pzqStatus">
+              <option value="offen" ${f?.status !== 'beantwortet' ? 'selected' : ''}>Offen</option>
+              <option value="beantwortet" ${f?.status === 'beantwortet' ? 'selected' : ''}>Beantwortet</option>
+            </select>
+            <div class="hint">Wird beim Eintragen einer Antwort automatisch auf „Beantwortet“ gesetzt.</div>
+          </div>
+          ${isNew ? `<div class="form-row"><label for="pzqVon">Erfasst von</label>
+            <select id="pzqVon"><option value="">—</option>${nutzer.map(n => `<option value="${pzEsc(n.name)}">${pzEsc(n.name)}</option>`).join("")}</select></div>` : ''}
+        </div>
+        ${pzNutzerDatalist()}
+        <div class="modal-actions">
+          <button class="btn text" id="pzqCancel">Abbrechen</button>
+          <button class="btn" id="pzqSave">${isNew ? 'Hinzufügen' : 'Speichern'}</button>
+        </div>
+      </div>
+    </div>`;
+  const statusSel = document.getElementById("pzqStatus");
+  const antwortFeld = document.getElementById("pzqAntwort");
+  const hatteAntwort = !!(f && f.antwort);
+  antwortFeld.addEventListener("input", () => {
+    if(!hatteAntwort && antwortFeld.value.trim()) statusSel.value = "beantwortet";
+  });
+  document.getElementById("pzqCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById(isNew ? "pzqFrage" : "pzqAntwort").focus();
+  document.getElementById("pzqSave").addEventListener("click", async () => {
+    const val = (id) => document.getElementById(id).value.trim();
+    if(!val("pzqFrage")){
+      showToast("Die Frage darf nicht leer sein.", true);
+      return;
+    }
+    const btn = document.getElementById("pzqSave");
+    btn.disabled = true;
+    const body = {
+      frage: val("pzqFrage"), klaerungDurch: val("pzqKlaerung"), naechsterSchritt: val("pzqNaechster"),
+      faelligkeit: val("pzqFaellig") || null, antwort: val("pzqAntwort"), nachweis: val("pzqNachweis"),
+      status: statusSel.value,
+    };
+    if(isNew) body.erstelltVon = val("pzqVon");
+    try{
+      if(isNew) await apiPost(`/prozesse/${p.id}/fragen`, body);
+      else await apiPatch(`/fragen/${f.id}`, body);
+      closeModal();
+      await pzReload(isNew ? "Frage hinzugefügt." : "Frage gespeichert.");
+    }catch(err){
+      showToast("Frage konnte nicht gespeichert werden.", true);
+      btn.disabled = false;
     }
   });
   document.addEventListener("keydown", escCloseOnce);

@@ -72,6 +72,58 @@ Im Browser die Server-IP oder den internen Hostnamen öffnen (Port 80).
 sudo systemctl restart projektbesprechung
 ```
 
+## Updates per Git (empfohlen)
+
+Ist `/opt/projektbesprechung` ein Git-Checkout (siehe unten), genügt für
+jedes Update:
+
+```bash
+bash /opt/projektbesprechung/deploy/update.sh
+```
+
+Das Skript sichert die Datenbank (die 10 neuesten Sicherungen bleiben),
+holt den neuesten Stand (`git pull`), führt `migrate.py` und
+`seed_prozesse.py` aus (beide ändern keine bestehenden Daten) und startet
+den Dienst neu.
+
+Einmalige Einrichtung: Deploy-Key (`ssh-keygen -t ed25519 -f
+~/.ssh/github_deploy`) als *Read-only Deploy key* im GitHub-Repo hinterlegen,
+dann in `/opt/projektbesprechung`: `git init`, Remote
+`git@github.com:aracon30/HETA-Projektmanagement.git` hinzufügen,
+`git config core.sshCommand "ssh -i ~/.ssh/github_deploy"`, Branch holen und
+mit `git checkout -f -t origin/<branch>` auschecken. Datenbank, `venv` und
+Sicherungen sind per `.gitignore` bzw. als nicht versionierte Dateien davon
+nicht betroffen.
+
+## Reiter „Prozesse“ einrichten (einmalig)
+
+Neue Dateien: `prozesse_api.py`, `prozess_daten.py`, `seed_prozesse.py`
+(plus geänderte `app.py`, `models.py`, `seed.py`, `static/index.html`).
+Nach dem Kopieren auf den Server — **Befehle einzeln ausführen**:
+
+```bash
+sudo chown -R heta:heta /opt/projektbesprechung
+```
+
+```bash
+cd /opt/projektbesprechung
+```
+
+```bash
+./venv/bin/python seed_prozesse.py
+```
+
+```bash
+sudo systemctl restart projektbesprechung
+```
+
+`seed_prozesse.py` legt nur die neuen Tabellen (`prozesse`,
+`prozess_schritte`, `prozess_fragen`, `dokumente`) an und spielt den
+Startbestand (Prozesslandkarte, Arbeitsanweisungen, Angebots- und
+Auftragsprozess, offene Fragen) ein. Bestehende Aufträge/Angebote bleiben
+unberührt. Existieren schon Prozesse, passiert nichts — das Skript kann also
+gefahrlos erneut ausgeführt werden.
+
 ## Microsoft-To-Do-Anbindung aktivieren
 
 Sobald ihr von IT/Heiko die drei Werte (Tenant-ID, Client-ID, Client-Secret)

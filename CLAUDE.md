@@ -18,7 +18,7 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
   wird von Flask direkt ausgeliefert
 - **Deployment:** Gunicorn als systemd-Dienst (`projektbesprechung.service`),
   nginx als Reverse-Proxy davor
-- **Server:** Ubuntu-Testserver, erreichbar unter `192.168.80.69` (interner
+- **Server:** Ubuntu-Testserver, erreichbar unter `192.168.80.65` (bis 09/2026: .69 — Adresse hat sich geändert, SSH-Host-Key ebenfalls; interner
   Testserver, Nutzer `heta`, Projektpfad `/opt/projektbesprechung`)
 
 ## Dateien im Repo
@@ -100,7 +100,47 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
    Liste (aktuell bewusst nicht umgesetzt, siehe `graph_client.py`
    Docstring).
 
+## Prozessaufnahme / Reiter „Prozesse“ (Stufe 1 umgesetzt)
+
+Konzept: `docs/KONZEPT-PROZESSE.md`. Umgesetzt: Landkarte, Baum, Steckbrief,
+Ablaufschritte (sortierbar per ↑/↓), offene Fragen, Arbeitsanweisungen mit
+Auswertungsstatus, CSV-Export im Excel-Vorlagenformat. Code: `prozesse_api.py`
+(Blueprint), Modelle `Prozess`/`ProzessSchritt`/`ProzessFrage`/`Dokument` in
+`models.py`, Startbestand in `prozess_daten.py` (auch Quelle für
+`docs/prozessaufnahme/_erzeuge_csv.py`), Einspielen per `seed_prozesse.py`
+(idempotent, legt nur fehlende Tabellen an). **Neue Auswertungen (weitere
+Arbeitsanweisungen) als neuen Eintrag in `ERGAENZUNGEN` (prozess_daten.py,
+Version hochzählen) anlegen** – nie den Grundbestand ändern: die Server-DB
+ist schon befüllt, Ergänzungen werden per `update.sh` genau einmal
+eingespielt (Stand in Tabelle `startbestand_stand`), ohne Nutzeränderungen zu
+überschreiben. Ergänzungen finden Prozesse per Nummer oder (bei von Hand angelegten) per Bezeichnung. Ausgewertet: K1_05, K3.1_01, K2_01, U1.1_01, U1.4_02, K3.3.11-05, K1_01, K3.2_01, K3.2_02, F4.6_01, F4.6_02 (Ergänzungen 2–5). Ergänzung 6 = Vorschläge für weiße Flecken (typische Abläufe, Nachweis „Vorschlag: typischer Ablauf – im Gespräch prüfen“, Übergaben „noch unklar“) – keine HETA-Fakten. Wichtig: HETA nutzt laut AA K1_01 bewusst nicht das PPS-System der PACO Gruppe (Frage an GL offen).
+**Einstieg = Prozesskette** (Standardansicht des Reiters, `PZ_KETTE_GLIEDER`):
+Glieder entlang eines Auftrags (Anfrage & Angebot … Rechnung, Service), Zuordnung
+der Prozesse über den nächsten passenden Schlüssel (Nummer oder Bezeichnung),
+Klick = Teilprozesse + „bekommt von/gibt weiter an“, ohne Auswahl Liste „Wo es
+hakt“. Baum links zeigt nur Hauptprozesse, Teilprozesse klappen bei Auswahl auf.
+**Schnittstellenkarte** (Eintrag im Prozess-Baum): Modell `ProzessVerbindung`
+(von → nach, Inhalt, Weg, optional Schritt, „hakt“), API `/api/verbindungen`,
+im Frontend eigenes SVG ohne Bibliothek (feste Bahnen Führung/Kern/
+Unterstützung, Kernprozesse in Auftragsreihenfolge `PZ_KARTE_KERN`,
+Klick = Fokus auf einen Prozess), dazu Schnittstellenmatrix und
+CSV-Export „schnittstellen“. Bewusst kein frei schwebendes Kraft-Layout. Noch offen: Änderungshistorie,
+Probleme/Anforderungen, Systeme & Daten, Swimlane, Excel-Import. **Sprachregelung:** intern und in der
+Oberfläche immer „mögliche Einführung eines ERP-Systems“ — keinen
+Produktnamen (ERPNext) verwenden, keine Entscheidung vorwegnehmen.
+Struktur spiegelt die Excel-Vorlage `HETA_Prozessaufnahme.xlsx`.
+Es heißt **Frau Häfer**.
+
 ## Wichtige Betriebs-Hinweise / Stolperfallen
+
+- **Deployment per Git (seit 28.09.2026):** `/opt/projektbesprechung` ist ein
+  Git-Checkout (Deploy-Key `~/.ssh/github_deploy`, read-only). Update:
+  `bash /opt/projektbesprechung/deploy/update.sh` (sichert DB, `git pull`,
+  `migrate.py`, `seed_prozesse.py`, Neustart). Der Server folgt aktuell dem
+  Branch `claude/erpnext-prozess-dokumentation-ino6q8`; nach Merge auf `main`
+  umstellen (`git checkout main && bash deploy/update.sh`). Nur auf dem Server
+  vorhanden (nicht im Repo): `import_orders.py`.
+- **Nie `seed.py` auf dem Server ausführen** — setzt die Datenbank zurück.
 
 - **Nach jedem `sudo cp ... /opt/projektbesprechung/...` sofort**
   `sudo chown -R heta:heta /opt/projektbesprechung` **ausführen** — sonst

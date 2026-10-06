@@ -166,3 +166,211 @@ class VerlaufEintrag(db.Model):
             "status": self.status,
             "aufgabe": self.aufgabe_erstellt,
         }
+
+
+# ---------- Prozessaufnahme (Reiter "Prozesse") ----------
+
+def _iso(d):
+    return d.isoformat() if d else None
+
+
+class Prozess(db.Model):
+    """Knoten der Prozesslandkarte: Kategorie (F/K/U, ohne parent), Haupt- oder
+    Teilprozess. Nummerierung folgt der QM-Nummerierung (z.B. K3.1)."""
+    __tablename__ = "prozesse"
+    id = db.Column(db.Integer, primary_key=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey("prozesse.id"), nullable=True)
+    nummer = db.Column(db.String(30), nullable=True)
+    bezeichnung = db.Column(db.String(200), nullable=False)
+    variante = db.Column(db.String(300), nullable=True)
+    verantwortlich = db.Column(db.String(200), nullable=True)
+    ausloeser = db.Column(db.Text, nullable=True)
+    ergebnis = db.Column(db.Text, nullable=True)
+    beteiligte = db.Column(db.Text, nullable=True)
+    systeme = db.Column(db.Text, nullable=True)
+    vorgaenge_monat = db.Column(db.String(40), nullable=True)
+    # vorgeschlagen | laut_aa | aufgenommen | bestaetigt | anforderungen
+    aufnahmestatus = db.Column(db.String(30), default="vorgeschlagen")
+    geprueft_von = db.Column(db.String(200), nullable=True)
+    geprueft_am = db.Column(db.Date, nullable=True)
+    notiz = db.Column(db.Text, nullable=True)
+    reihenfolge = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    kinder = db.relationship(
+        "Prozess", backref=db.backref("parent", remote_side=[id]),
+        order_by="Prozess.reihenfolge"
+    )
+    schritte = db.relationship(
+        "ProzessSchritt", backref="prozess", cascade="all, delete-orphan",
+        order_by="ProzessSchritt.reihenfolge"
+    )
+    fragen = db.relationship(
+        "ProzessFrage", backref="prozess", cascade="all, delete-orphan",
+        order_by="ProzessFrage.created_at"
+    )
+    dokumente = db.relationship("Dokument", backref="prozess", order_by="Dokument.nummer")
+    verbindungen_aus = db.relationship(
+        "ProzessVerbindung", foreign_keys="ProzessVerbindung.von_id", backref="von",
+        cascade="all, delete-orphan"
+    )
+    verbindungen_ein = db.relationship(
+        "ProzessVerbindung", foreign_keys="ProzessVerbindung.nach_id", backref="nach",
+        cascade="all, delete-orphan"
+    )
+
+    def to_summary(self):
+        return {
+            "id": self.id,
+            "parentId": self.parent_id,
+            "nummer": self.nummer,
+            "bezeichnung": self.bezeichnung,
+            "verantwortlich": self.verantwortlich,
+            "aufnahmestatus": self.aufnahmestatus,
+            "reihenfolge": self.reihenfolge,
+            "anzahlSchritte": len(self.schritte),
+            "anzahlFragenOffen": sum(1 for f in self.fragen if f.status == "offen"),
+            "anzahlDokumente": len(self.dokumente),
+        }
+
+    def to_dict(self):
+        base = self.to_summary()
+        base.update({
+            "variante": self.variante,
+            "ausloeser": self.ausloeser,
+            "ergebnis": self.ergebnis,
+            "beteiligte": self.beteiligte,
+            "systeme": self.systeme,
+            "vorgaengeMonat": self.vorgaenge_monat,
+            "geprueftVon": self.geprueft_von,
+            "geprueftAm": _iso(self.geprueft_am),
+            "notiz": self.notiz,
+            "geaendertAm": self.updated_at.isoformat() + "Z" if self.updated_at else None,
+            "schritte": [s.to_dict() for s in self.schritte],
+            "fragen": [f.to_dict() for f in self.fragen],
+            "dokumente": [d.to_dict() for d in self.dokumente],
+        })
+        return base
+
+
+class ProzessSchritt(db.Model):
+    """Arbeitsschritt eines Prozesses – Spalten wie Excel-Blatt "Ablaufschritte"."""
+    __tablename__ = "prozess_schritte"
+    id = db.Column(db.Integer, primary_key=True)
+    prozess_id = db.Column(db.Integer, db.ForeignKey("prozesse.id"), nullable=False)
+    reihenfolge = db.Column(db.Integer, default=0)
+    taetigkeit = db.Column(db.Text, nullable=False)
+    ausfuehrend = db.Column(db.String(300), nullable=True)
+    eingaben = db.Column(db.Text, nullable=True)
+    system = db.Column(db.Text, nullable=True)
+    ergebnis = db.Column(db.Text, nullable=True)
+    uebergabe = db.Column(db.Text, nullable=True)
+    freigabe = db.Column(db.Text, nullable=True)
+    ausnahme = db.Column(db.Text, nullable=True)
+    bearbeitungszeit = db.Column(db.String(60), nullable=True)
+    wartezeit = db.Column(db.String(60), nullable=True)
+    nachweis = db.Column(db.String(300), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    FELDER = ["taetigkeit", "ausfuehrend", "eingaben", "system", "ergebnis", "uebergabe",
+              "freigabe", "ausnahme", "bearbeitungszeit", "wartezeit", "nachweis"]
+
+    def to_dict(self):
+        d = {"id": self.id, "prozessId": self.prozess_id, "reihenfolge": self.reihenfolge}
+        d.update({f: getattr(self, f) for f in self.FELDER})
+        return d
+
+
+class ProzessFrage(db.Model):
+    """Offene Frage zu einem Prozess – Spalten wie Excel-Blatt "Offene Fragen"."""
+    __tablename__ = "prozess_fragen"
+    id = db.Column(db.Integer, primary_key=True)
+    prozess_id = db.Column(db.Integer, db.ForeignKey("prozesse.id"), nullable=False)
+    frage = db.Column(db.Text, nullable=False)
+    klaerung_durch = db.Column(db.String(200), nullable=True)
+    naechster_schritt = db.Column(db.Text, nullable=True)
+    faelligkeit = db.Column(db.Date, nullable=True)
+    status = db.Column(db.String(20), default="offen")  # offen | beantwortet
+    antwort = db.Column(db.Text, nullable=True)
+    nachweis = db.Column(db.String(300), nullable=True)
+    erstellt_von = db.Column(db.String(120), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "prozessId": self.prozess_id,
+            "frage": self.frage,
+            "klaerungDurch": self.klaerung_durch,
+            "naechsterSchritt": self.naechster_schritt,
+            "faelligkeit": _iso(self.faelligkeit),
+            "status": self.status,
+            "antwort": self.antwort,
+            "nachweis": self.nachweis,
+            "erstelltVon": self.erstellt_von,
+            "erstelltAm": self.created_at.isoformat() + "Z" if self.created_at else None,
+        }
+
+
+class ProzessVerbindung(db.Model):
+    """Übergabe von einem Prozess an einen anderen (Schnittstelle), z.B.
+    K3.1 -> K2 "AB per Rundmail". Grundlage der Schnittstellenkarte."""
+    __tablename__ = "prozess_verbindungen"
+    id = db.Column(db.Integer, primary_key=True)
+    von_id = db.Column(db.Integer, db.ForeignKey("prozesse.id"), nullable=False)
+    nach_id = db.Column(db.Integer, db.ForeignKey("prozesse.id"), nullable=False)
+    inhalt = db.Column(db.String(300), nullable=False)
+    # email | dashboard | ordner | papier | muendlich | sonstiges | unklar
+    weg = db.Column(db.String(20), default="unklar")
+    schritt_id = db.Column(db.Integer, db.ForeignKey("prozess_schritte.id"), nullable=True)
+    problem = db.Column(db.Boolean, default=False)
+    notiz = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "vonId": self.von_id,
+            "nachId": self.nach_id,
+            "inhalt": self.inhalt,
+            "weg": self.weg,
+            "schrittId": self.schritt_id,
+            "problem": bool(self.problem),
+            "notiz": self.notiz,
+        }
+
+
+class StartbestandStand(db.Model):
+    """Merkt sich, bis zu welcher Ergänzung (prozess_daten.ERGAENZUNGEN) der
+    Startbestand eingespielt ist, damit jede Ergänzung genau einmal läuft."""
+    __tablename__ = "startbestand_stand"
+    id = db.Column(db.Integer, primary_key=True)
+    version = db.Column(db.Integer, nullable=False)
+
+
+class Dokument(db.Model):
+    """Vorhandene Arbeitsanweisung (QM-Dokument) mit Auswertungsstand."""
+    __tablename__ = "dokumente"
+    id = db.Column(db.Integer, primary_key=True)
+    nummer = db.Column(db.String(40), unique=True, nullable=False)
+    titel = db.Column(db.String(300), nullable=False)
+    revision = db.Column(db.String(10), nullable=True)
+    geltungsbereich = db.Column(db.String(60), nullable=True)
+    prozess_id = db.Column(db.Integer, db.ForeignKey("prozesse.id"), nullable=True)
+    # nicht_gesichtet | gesichtet | uebernommen
+    auswertungsstatus = db.Column(db.String(30), default="nicht_gesichtet")
+    notiz = db.Column(db.Text, nullable=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nummer": self.nummer,
+            "titel": self.titel,
+            "revision": self.revision,
+            "geltungsbereich": self.geltungsbereich,
+            "prozessId": self.prozess_id,
+            "auswertungsstatus": self.auswertungsstatus,
+            "notiz": self.notiz,
+        }

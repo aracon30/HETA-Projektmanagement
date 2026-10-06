@@ -2,6 +2,7 @@
 from datetime import date
 from app import app
 from models import db, User, Item, VerlaufEintrag, Phase
+import seed_prozesse
 
 NUTZER = [
     ("Heiko Hensel", "Geschäftsführung", "hensel@heta.de"),
@@ -172,6 +173,8 @@ def run():
 
         db.session.commit()
         print("Datenbank befüllt.")
+
+        seed_prozesse.seed()
 
 
 if __name__ == "__main__":

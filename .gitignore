@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 projektbesprechung.db
 .DS_Store
+projektbesprechung.db.bak*
