@@ -106,7 +106,7 @@
 
   .order-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:6px; }
   .order-head .komm{ font-size:0.85rem; color:var(--slate); margin-bottom:4px; }
-  .order-head h2{ font-size:1.5rem; margin:0 0 2px; }
+  .order-head h2{ font-size:1.5rem; margin:0 0 2px; display:flex; align-items:center; gap:8px; }
   .prio-tag{ display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; font-size:0.76rem; font-weight:600; white-space:nowrap; margin-top:2px; border:none; font-family:inherit; }
   .prio-tag.rot{background:var(--red-soft); color:var(--red);} .prio-tag.gelb{background:var(--amber-soft); color:var(--amber);} .prio-tag.gruen{background:var(--green-soft); color:var(--green);}
   .prio-tag.in_bearbeitung{background:var(--steel-soft); color:var(--steel);} .prio-tag.versendet{background:var(--amber-soft); color:var(--amber);}
@@ -124,8 +124,9 @@
   .clickable-text:hover{ color:var(--steel); text-decoration:underline; }
   .clickable-text:focus-visible{ outline:2px solid var(--steel); outline-offset:2px; }
 
-  .lieferumfang{ margin:16px 0 26px; font-size:0.92rem; color:var(--ink); line-height:1.5; white-space:pre-wrap; }
-  .lieferumfang .label{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); display:block; margin-bottom:4px; }
+  .lieferumfang{ margin:16px 0 26px; }
+  .lieferumfang .label{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); display:inline-block; margin-bottom:4px; margin-right:4px; vertical-align:middle; }
+  .lieferumfang-text{ font-size:0.92rem; color:var(--ink); line-height:1.5; white-space:pre-wrap; }
 
   .folder-link{ display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--steel); text-decoration:none; border-bottom:1px solid transparent; }
   .folder-link:hover{border-bottom-color:var(--steel);} .folder-link svg{flex-shrink:0;}
@@ -1420,7 +1421,9 @@ function renderMain(){
     <div class="order-head">
       <div>
         ${item.kommission ? `<div class="komm mono">${item.kommission}</div>` : ""}
-        <h2 class="display">${item.kunde}</h2>
+        <h2 class="display">${item.kunde}<button class="icon-edit-btn" id="kundeBtn" title="Kundenname bearbeiten" aria-label="Kundenname bearbeiten">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button></h2>
       </div>
       <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
         ${cfg.detailTag(item)}
@@ -1429,7 +1432,9 @@ function renderMain(){
     </div>
     <div class="order-meta-grid">${cfg.metaGrid(item)}</div>
     ${currentTab === "auftrag" ? renderLtHistorySection(item) : ""}
-    <div class="lieferumfang"><span class="label">${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"}</span>${item.lieferumfang || '—'}</div>
+    <div class="lieferumfang"><span class="label">${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"}</span><button class="icon-edit-btn" id="lieferumfangBtn" title="${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"} bearbeiten" aria-label="${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"} bearbeiten">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button><div class="lieferumfang-text">${item.lieferumfang || '—'}</div></div>
     ${currentTab === "auftrag" ? `
     <div class="timeline-head">
       <h3>Zeitplan</h3>
@@ -1447,6 +1452,8 @@ function renderMain(){
 
   document.getElementById("deleteItemBtn").addEventListener("click", () => openDeleteConfirm(item));
   document.getElementById("newEntryBtn").addEventListener("click", () => renderNewEntryForm(item));
+  document.getElementById("kundeBtn").addEventListener("click", () => openFieldEditModal(item, { field:"kunde", label:"Kundenname", inputType:"text" }));
+  document.getElementById("lieferumfangBtn").addEventListener("click", () => openFieldEditModal(item, { field:"lieferumfang", label: currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang", inputType:"textarea", rows:6 }));
 
   if(currentTab === "auftrag"){
     renderOrderTimeline(item);
@@ -1768,7 +1775,7 @@ function openAcceptedAnfragePrompt(anfrage){
 }
 
 function openFieldEditModal(item, opts){
-  // opts: { field, label, inputType ('text'|'date'|'select'), placeholder, options }
+  // opts: { field, label, inputType ('text'|'date'|'select'|'textarea'), placeholder, options, rows }
   const root = document.getElementById("modalRoot");
   const currentValue = item[opts.field] || "";
   const inputHtml = opts.inputType === "select" ? `
@@ -1776,6 +1783,8 @@ function openFieldEditModal(item, opts){
       <option value="">— niemand —</option>
       ${opts.options.map(o => `<option value="${o}" ${currentValue === o ? 'selected' : ''}>${o}</option>`).join("")}
     </select>
+  ` : opts.inputType === "textarea" ? `
+    <textarea id="fieldEditInput" rows="${opts.rows || 5}" ${opts.placeholder ? `placeholder="${opts.placeholder}"` : ""}>${currentValue}</textarea>
   ` : `<input type="${opts.inputType}" id="fieldEditInput" value="${currentValue}" ${opts.placeholder ? `placeholder="${opts.placeholder}"` : ""}>`;
   root.innerHTML = `
     <div class="modal-backdrop" id="modalBackdrop">

@@ -108,6 +108,10 @@ def update_item(item_id):
         item.ablehnungsgrund = data.get("ablehnungsgrund")
     if "ordnerPfad" in data:
         item.ordner_pfad = data.get("ordnerPfad")
+    if "kunde" in data and data.get("kunde"):
+        item.kunde = data["kunde"]
+    if "lieferumfang" in data:
+        item.lieferumfang = data.get("lieferumfang")
     db.session.commit()
     return jsonify(item.to_dict())
 
