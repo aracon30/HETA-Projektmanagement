@@ -16,6 +16,7 @@ EMAIL_MAP = {
     "Heiko Hensel": "hensel@heta.de",
     "Erik Scharmann": "scharmann@heta.de",
     "Gabriele Häfer": "haefer@heta.de",
+    "Häfer, Gabriele": "haefer@heta.de",
     "Sandra Voigt": "voigt@heta.de",
     "Thomas Berger": "berger@heta.de",
     "Julia Krämer": "kraemer@heta.de",
@@ -187,16 +188,23 @@ def main():
     else:
         print("Spalte liefertermin_historie.position_id existiert bereits.")
 
-    # Nutzer ergänzen, falls auf dem Server noch nicht angelegt
-    cur.execute("SELECT id FROM users WHERE name = ?", ("Gabriele Häfer",))
+    # Nutzer ergänzen/umbenennen: Namenskonvention in der echten Nutzerliste ist
+    # "Nachname, Vorname" (nicht "Vorname Nachname" wie im seed.py-Beispielbestand)
+    cur.execute("SELECT id FROM users WHERE name = ?", ("Häfer, Gabriele",))
     if cur.fetchone() is None:
-        cur.execute(
-            "INSERT INTO users (name, abteilung, email) VALUES (?, ?, ?)",
-            ("Gabriele Häfer", "Administration", "haefer@heta.de"),
-        )
-        print("Nutzer 'Gabriele Häfer' ergänzt.")
+        cur.execute("SELECT id FROM users WHERE name = ?", ("Gabriele Häfer",))
+        alt = cur.fetchone()
+        if alt is not None:
+            cur.execute("UPDATE users SET name = ? WHERE id = ?", ("Häfer, Gabriele", alt[0]))
+            print("Nutzer 'Gabriele Häfer' zu 'Häfer, Gabriele' umbenannt (Namenskonvention).")
+        else:
+            cur.execute(
+                "INSERT INTO users (name, abteilung, email) VALUES (?, ?, ?)",
+                ("Häfer, Gabriele", "Administration", "haefer@heta.de"),
+            )
+            print("Nutzer 'Häfer, Gabriele' ergänzt.")
     else:
-        print("Nutzer 'Gabriele Häfer' existiert bereits.")
+        print("Nutzer 'Häfer, Gabriele' existiert bereits.")
 
     # Bekannte Nutzer mit E-Mail-Adresse befüllen (nur wenn noch leer)
     cur.execute("SELECT id, name, email FROM users")
