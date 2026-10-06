@@ -165,6 +165,17 @@ def main():
     else:
         print("Tabelle liefertermin_historie existiert bereits.")
 
+    # Nutzer ergänzen, falls auf dem Server noch nicht angelegt
+    cur.execute("SELECT id FROM users WHERE name = ?", ("Gabriele Häfer",))
+    if cur.fetchone() is None:
+        cur.execute(
+            "INSERT INTO users (name, abteilung, email) VALUES (?, ?, ?)",
+            ("Gabriele Häfer", "Administration", "haefer@heta.de"),
+        )
+        print("Nutzer 'Gabriele Häfer' ergänzt.")
+    else:
+        print("Nutzer 'Gabriele Häfer' existiert bereits.")
+
     # Bekannte Nutzer mit E-Mail-Adresse befüllen (nur wenn noch leer)
     cur.execute("SELECT id, name, email FROM users")
     updated = 0
