@@ -120,6 +120,18 @@ def main():
     else:
         print("Spalte items.lieferbedingungen existiert bereits.")
 
+    if not column_exists(cur, "items", "ursprungsauftrag"):
+        cur.execute("ALTER TABLE items ADD COLUMN ursprungsauftrag VARCHAR(60)")
+        print("Spalte items.ursprungsauftrag ergänzt.")
+    else:
+        print("Spalte items.ursprungsauftrag existiert bereits.")
+
+    if not column_exists(cur, "items", "zul_geliefert"):
+        cur.execute("ALTER TABLE items ADD COLUMN zul_geliefert VARCHAR(60)")
+        print("Spalte items.zul_geliefert ergänzt.")
+    else:
+        print("Spalte items.zul_geliefert existiert bereits.")
+
     if not table_exists(cur, "liefertermin_historie"):
         cur.execute("""
             CREATE TABLE liefertermin_historie (

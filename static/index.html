@@ -618,6 +618,8 @@ const KIND_CONFIG = {
       <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button></div></div>
       <div class="field"><label>Projektordner</label><div class="val">${folderLinkEditable(item.ordnerPfad, "ordnerBtn")}</div></div>
       <div class="field"><label>Lieferbedingungen</label><div class="val"><button class="val clickable-text" id="lieferbedingungenBtn" title="Lieferbedingungen ändern">${item.lieferbedingungen || '—'}</button></div></div>
+      <div class="field"><label>Ursprungsauftrag</label><div class="val"><button class="val clickable-text" id="ursprungsauftragBtn" title="Ursprungsauftrag ändern">${item.ursprungsauftrag || '—'}</button></div></div>
+      <div class="field"><label>Zul. geliefert</label><div class="val"><button class="val clickable-text" id="zulGeliefertBtn" title="Zul. geliefert ändern">${item.zulGeliefert || '—'}</button></div></div>
     `,
     stats: (list) => {
       const offen = list.filter(o => o.status !== "erledigt").length;
@@ -1075,7 +1077,7 @@ function openImportReviewModal(result){
               <input type="checkbox" class="import-check" data-idx="${idx}" checked>
               <div style="flex:1;">
                 <div class="komm">${k.kommission} — ${k.kunde || "(kein Kunde erkannt)"}</div>
-                <div class="meta">${k.positionsAnzahl} Position(en)${k.liefertermin ? " · Liefertermin " + fmtDate(k.liefertermin) : ""}${k.statusWerte && k.statusWerte.length ? " · Status: " + k.statusWerte.join(", ") : ""}</div>
+                <div class="meta">${k.positionsAnzahl} Position(en)${k.liefertermin ? " · Liefertermin " + fmtDate(k.liefertermin) : ""}${k.statusWerte && k.statusWerte.length ? " · Status: " + k.statusWerte.join(", ") : ""}${k.ursprungsauftrag ? " · Ursprungsauftrag: " + k.ursprungsauftrag : ""}${k.zulGeliefert ? " · Zul. geliefert: " + k.zulGeliefert : ""}</div>
                 ${k.lieferumfang ? `<div class="lieferumfang">${k.lieferumfang.replace(/</g, "&lt;")}</div>` : ""}
               </div>
             </label>
@@ -1464,6 +1466,8 @@ function renderMain(){
     document.getElementById("lieferterminBtn").addEventListener("click", () => openLiefertermineDialog(item));
     document.getElementById("ordnerBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }));
     document.getElementById("lieferbedingungenBtn").addEventListener("click", () => openFieldEditModal(item, { field:"lieferbedingungen", label:"Lieferbedingungen", inputType:"text", placeholder:"z.B. FCA Werk Idar-Oberstein" }));
+    document.getElementById("ursprungsauftragBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ursprungsauftrag", label:"Ursprungsauftrag", inputType:"text" }));
+    document.getElementById("zulGeliefertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"zulGeliefert", label:"Zul. geliefert", inputType:"text" }));
   } else if(currentTab === "angebot"){
     document.getElementById("angebotStatusTagBtn").addEventListener("click", () => openAngebotStatusModal(item));
     document.getElementById("wertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"wert", label:"Angebotswert", inputType:"text", placeholder:"z.B. 42.000 €" }));

@@ -17,7 +17,10 @@ from datetime import datetime, date
 from openpyxl import load_workbook
 
 REQUIRED_HEADERS = ["AB", "Jahr", "Kunde"]
-KNOWN_HEADERS = REQUIRED_HEADERS + ["Position", "Positionsbeschreibung", "LT HETA AB", "Status", "Ordner"]
+KNOWN_HEADERS = REQUIRED_HEADERS + [
+    "Position", "Positionsbeschreibung", "LT HETA AB", "Status", "Ordner",
+    "Ursprungsauftrag", "zul. geliefert",
+]
 
 
 def _cell_text(cell):
@@ -109,6 +112,8 @@ def parse_positionsansicht_auftrag(file):
                 "ordnerPfad": None,
                 "positionen": [],
                 "statusWerte": [],
+                "ursprungsauftrag": "",
+                "zulGeliefert": "",
             }
         g = groups[ab_number]
 
@@ -140,6 +145,14 @@ def parse_positionsansicht_auftrag(file):
         if status_text and status_text not in g["statusWerte"]:
             g["statusWerte"].append(status_text)
 
+        ursprung_text = _cell_text(cell("Ursprungsauftrag"))
+        if ursprung_text and not g["ursprungsauftrag"]:
+            g["ursprungsauftrag"] = ursprung_text
+
+        zul_text = _cell_text(cell("zul. geliefert"))
+        if zul_text and not g["zulGeliefert"]:
+            g["zulGeliefert"] = zul_text
+
     results = []
     for ab_number in order:
         g = groups[ab_number]
@@ -156,5 +169,7 @@ def parse_positionsansicht_auftrag(file):
             "ordnerPfad": g["ordnerPfad"],
             "positionsAnzahl": len(g["positionen"]),
             "statusWerte": g["statusWerte"],
+            "ursprungsauftrag": g["ursprungsauftrag"] or None,
+            "zulGeliefert": g["zulGeliefert"] or None,
         })
     return results

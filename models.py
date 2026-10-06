@@ -33,6 +33,8 @@ class Item(db.Model):
     liefertermin = db.Column(db.Date, nullable=True)
     auftrag_status = db.Column(db.String(20), nullable=True)  # neu | in_bearbeitung | in_fertigung | versandbereit | erledigt
     lieferbedingungen = db.Column(db.String(200), nullable=True)  # z.B. Incoterm an den Kunden
+    ursprungsauftrag = db.Column(db.String(60), nullable=True)  # Referenz auf den Auftrag, aus dem dieser hervorgegangen ist
+    zul_geliefert = db.Column(db.String(60), nullable=True)  # Spalte "zul. geliefert" aus dem ERP-Dashboard
 
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
@@ -76,6 +78,8 @@ class Item(db.Model):
                 "status": self.auftrag_status,
                 "lieferterminHistorie": [h.to_dict() for h in self.liefertermin_historie],
                 "lieferbedingungen": self.lieferbedingungen,
+                "ursprungsauftrag": self.ursprungsauftrag,
+                "zulGeliefert": self.zul_geliefert,
             })
         elif self.type == "angebot":
             base.update({
