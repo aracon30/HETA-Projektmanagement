@@ -64,6 +64,7 @@ def create_item():
         item.prio = data.get("prio", "gelb")
         item.liefertermin = parse_date(data.get("liefertermin"))
         item.auftrag_status = data.get("status", "neu")
+        item.lieferbedingungen = data.get("lieferbedingungen")
     elif item.type == "angebot":
         item.angebot_status = data.get("status", "in_bearbeitung")
         item.wert = data.get("wert")
@@ -98,6 +99,8 @@ def update_item(item_id):
             item.anfrage_status = data["status"]
     if "prio" in data and item.type == "auftrag":
         item.prio = data["prio"]
+    if "lieferbedingungen" in data and item.type == "auftrag":
+        item.lieferbedingungen = data.get("lieferbedingungen")
     if "wert" in data and item.type == "angebot":
         item.wert = data.get("wert")
     if "wiedervorlage" in data and item.type == "angebot":
@@ -181,6 +184,7 @@ def import_auftraege_confirm():
             prio="gelb",
             liefertermin=parse_date(k.get("liefertermin")),
             auftrag_status="neu",
+            lieferbedingungen=k.get("lieferbedingungen"),
         )
         db.session.add(item)
         erstellt.append(item)

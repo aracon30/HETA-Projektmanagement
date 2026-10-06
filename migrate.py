@@ -114,6 +114,12 @@ def main():
     else:
         print("Tabelle phasen existiert bereits.")
 
+    if not column_exists(cur, "items", "lieferbedingungen"):
+        cur.execute("ALTER TABLE items ADD COLUMN lieferbedingungen VARCHAR(200)")
+        print("Spalte items.lieferbedingungen ergänzt.")
+    else:
+        print("Spalte items.lieferbedingungen existiert bereits.")
+
     if not table_exists(cur, "liefertermin_historie"):
         cur.execute("""
             CREATE TABLE liefertermin_historie (

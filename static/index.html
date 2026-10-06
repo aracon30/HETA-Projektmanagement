@@ -617,6 +617,7 @@ const KIND_CONFIG = {
       <div class="field"><label>Liefertermin</label><div class="val"><button class="val mono clickable-text" id="lieferterminBtn" title="Liefertermin ändern">${fmtDate(item.liefertermin)}</button></div></div>
       <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button></div></div>
       <div class="field"><label>Projektordner</label><div class="val">${folderLinkEditable(item.ordnerPfad, "ordnerBtn")}</div></div>
+      <div class="field"><label>Lieferbedingungen</label><div class="val"><button class="val clickable-text" id="lieferbedingungenBtn" title="Lieferbedingungen ändern">${item.lieferbedingungen || '—'}</button></div></div>
     `,
     stats: (list) => {
       const offen = list.filter(o => o.status !== "erledigt").length;
@@ -1462,6 +1463,7 @@ function renderMain(){
     document.getElementById("statusBadgeBtn").addEventListener("click", () => openAuftragStatusModal(item));
     document.getElementById("lieferterminBtn").addEventListener("click", () => openLiefertermineDialog(item));
     document.getElementById("ordnerBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }));
+    document.getElementById("lieferbedingungenBtn").addEventListener("click", () => openFieldEditModal(item, { field:"lieferbedingungen", label:"Lieferbedingungen", inputType:"text", placeholder:"z.B. FCA Werk Idar-Oberstein" }));
   } else if(currentTab === "angebot"){
     document.getElementById("angebotStatusTagBtn").addEventListener("click", () => openAngebotStatusModal(item));
     document.getElementById("wertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"wert", label:"Angebotswert", inputType:"text", placeholder:"z.B. 42.000 €" }));
@@ -2457,6 +2459,10 @@ function openCreateModal(kind, prefill){
             <option value="erledigt">Erledigt</option>
           </select>
         </div>
+        <div class="form-row">
+          <label for="createLieferbedingungen">Lieferbedingungen (optional)</label>
+          <input type="text" id="createLieferbedingungen" placeholder="z.B. FCA Werk Idar-Oberstein">
+        </div>
   ` : isAngebot ? `
         <div class="form-row">
           <label for="createStatus">Status</label>
@@ -2536,6 +2542,7 @@ function openCreateModal(kind, prefill){
       body.status = document.getElementById("createStatus").value;
       body.prio = document.getElementById("createPrio").value;
       body.liefertermin = document.getElementById("createLiefertermin").value || null;
+      body.lieferbedingungen = document.getElementById("createLieferbedingungen").value.trim() || null;
     } else if(isAngebot){
       body.status = document.getElementById("createStatus").value;
       body.wert = document.getElementById("createWert").value.trim() || null;

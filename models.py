@@ -32,6 +32,7 @@ class Item(db.Model):
     prio = db.Column(db.String(10), nullable=True)          # rot | gelb | gruen
     liefertermin = db.Column(db.Date, nullable=True)
     auftrag_status = db.Column(db.String(20), nullable=True)  # neu | in_bearbeitung | in_fertigung | versandbereit | erledigt
+    lieferbedingungen = db.Column(db.String(200), nullable=True)  # z.B. Incoterm an den Kunden
 
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
@@ -74,6 +75,7 @@ class Item(db.Model):
                 "liefertermin": self.liefertermin.isoformat() if self.liefertermin else None,
                 "status": self.auftrag_status,
                 "lieferterminHistorie": [h.to_dict() for h in self.liefertermin_historie],
+                "lieferbedingungen": self.lieferbedingungen,
             })
         elif self.type == "angebot":
             base.update({
