@@ -657,6 +657,17 @@ let searchTerm = { anfrage: "", auftrag: "", angebot: "" };
 let sortOrder = { anfrage: "erstellt_neu", auftrag: "erstellt_neu", angebot: "erstellt_neu" };
 let ganttSortOrder = "liefertermin_auf";
 
+const BU_OPTIONS = [
+  { value:"he", label:"he – HETA Ersatzteil" },
+  { value:"c", label:"c – Consumables" },
+  { value:"hb", label:"hb – HETA Behälter" },
+  { value:"s", label:"s – Service" },
+];
+const T_OPTIONS = [
+  { value:"F", label:"F – Fertigung" },
+  { value:"H", label:"H – Handelsware" },
+];
+
 const GANTT_SORT_OPTIONS = [
   { value:"liefertermin_auf", label:"Liefertermin aufsteigend" },
   { value:"liefertermin_ab", label:"Liefertermin absteigend" },
@@ -753,6 +764,8 @@ const KIND_CONFIG = {
       <div class="field"><label>Lieferbedingungen</label><div class="val"><button class="val clickable-text" id="lieferbedingungenBtn" title="Lieferbedingungen ändern">${item.lieferbedingungen || '—'}</button></div></div>
       <div class="field"><label>Ursprungsauftrag</label><div class="val"><button class="val clickable-text" id="ursprungsauftragBtn" title="Ursprungsauftrag ändern">${item.ursprungsauftrag || '—'}</button></div></div>
       <div class="field"><label>Zul. geliefert</label><div class="val"><button class="val clickable-text" id="zulGeliefertBtn" title="Zul. geliefert ändern">${item.zulGeliefert || '—'}</button></div></div>
+      <div class="field"><label>BU</label><div class="val"><button class="val clickable-text" id="buBtn" title="Business Unit ändern">${item.bu || '—'}</button></div></div>
+      <div class="field"><label>T</label><div class="val"><button class="val clickable-text" id="tBtn" title="T ändern">${item.t || '—'}</button></div></div>
     `,
     stats: (list) => {
       const offen = list.filter(o => o.status !== "erledigt").length;
@@ -1216,7 +1229,7 @@ function openImportReviewModal(result){
               <input type="checkbox" class="import-check" data-idx="${idx}" checked>
               <div style="flex:1;">
                 <div class="komm">${k.kommission} — ${k.kunde || "(kein Kunde erkannt)"}</div>
-                <div class="meta">${k.positionsAnzahl} Position(en)${k.liefertermin ? " · Liefertermin " + fmtDate(k.liefertermin) : ""}${k.statusWerte && k.statusWerte.length ? " · Status: " + k.statusWerte.join(", ") : ""}${k.ursprungsauftrag ? " · Ursprungsauftrag: " + k.ursprungsauftrag : ""}${k.zulGeliefert ? " · Zul. geliefert: " + k.zulGeliefert : ""}</div>
+                <div class="meta">${k.positionsAnzahl} Position(en)${k.liefertermin ? " · Liefertermin " + fmtDate(k.liefertermin) : ""}${k.statusWerte && k.statusWerte.length ? " · Status: " + k.statusWerte.join(", ") : ""}${k.ursprungsauftrag ? " · Ursprungsauftrag: " + k.ursprungsauftrag : ""}${k.zulGeliefert ? " · Zul. geliefert: " + k.zulGeliefert : ""}${k.bu ? " · BU: " + k.bu : ""}${k.t ? " · T: " + k.t : ""}</div>
                 ${k.lieferumfang ? `<div class="lieferumfang">${k.lieferumfang.replace(/</g, "&lt;")}</div>` : ""}
               </div>
             </label>
@@ -1607,6 +1620,8 @@ function renderMain(){
     document.getElementById("lieferbedingungenBtn").addEventListener("click", () => openFieldEditModal(item, { field:"lieferbedingungen", label:"Lieferbedingungen", inputType:"text", placeholder:"z.B. FCA Werk Idar-Oberstein" }));
     document.getElementById("ursprungsauftragBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ursprungsauftrag", label:"Ursprungsauftrag", inputType:"text" }));
     document.getElementById("zulGeliefertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"zulGeliefert", label:"Zul. geliefert", inputType:"text" }));
+    document.getElementById("buBtn").addEventListener("click", () => openFieldEditModal(item, { field:"bu", label:"BU (Business Unit)", inputType:"select", emptyLabel:"— keine Angabe —", options: BU_OPTIONS }));
+    document.getElementById("tBtn").addEventListener("click", () => openFieldEditModal(item, { field:"t", label:"T", inputType:"select", emptyLabel:"— keine Angabe —", options: T_OPTIONS }));
   } else if(currentTab === "angebot"){
     document.getElementById("angebotStatusTagBtn").addEventListener("click", () => openAngebotStatusModal(item));
     document.getElementById("wertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"wert", label:"Angebotswert", inputType:"text", placeholder:"z.B. 42.000 €" }));
@@ -1920,13 +1935,18 @@ function openAcceptedAnfragePrompt(anfrage){
 }
 
 function openFieldEditModal(item, opts){
-  // opts: { field, label, inputType ('text'|'date'|'select'|'textarea'), placeholder, options, rows }
+  // opts: { field, label, inputType ('text'|'date'|'select'|'textarea'), placeholder, options, rows, emptyLabel }
+  // options: Array<string> oder Array<{value, label}>
   const root = document.getElementById("modalRoot");
   const currentValue = item[opts.field] || "";
   const inputHtml = opts.inputType === "select" ? `
     <select id="fieldEditInput">
-      <option value="">— niemand —</option>
-      ${opts.options.map(o => `<option value="${o}" ${currentValue === o ? 'selected' : ''}>${o}</option>`).join("")}
+      <option value="">${opts.emptyLabel || "— niemand —"}</option>
+      ${opts.options.map(o => {
+        const value = typeof o === "string" ? o : o.value;
+        const label = typeof o === "string" ? o : o.label;
+        return `<option value="${value}" ${currentValue === value ? 'selected' : ''}>${label}</option>`;
+      }).join("")}
     </select>
   ` : opts.inputType === "textarea" ? `
     <textarea id="fieldEditInput" rows="${opts.rows || 5}" ${opts.placeholder ? `placeholder="${opts.placeholder}"` : ""}>${currentValue}</textarea>

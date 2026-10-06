@@ -19,7 +19,7 @@ from openpyxl import load_workbook
 REQUIRED_HEADERS = ["AB", "Jahr", "Kunde"]
 KNOWN_HEADERS = REQUIRED_HEADERS + [
     "Position", "Positionsbeschreibung", "LT HETA AB", "Status", "Ordner",
-    "Ursprungsauftrag", "zul. geliefert",
+    "Ursprungsauftrag", "zul. geliefert", "BU", "T",
 ]
 
 
@@ -114,6 +114,8 @@ def parse_positionsansicht_auftrag(file):
                 "statusWerte": [],
                 "ursprungsauftrag": "",
                 "zulGeliefert": "",
+                "bu": "",
+                "t": "",
             }
         g = groups[ab_number]
 
@@ -153,6 +155,14 @@ def parse_positionsansicht_auftrag(file):
         if zul_text and not g["zulGeliefert"]:
             g["zulGeliefert"] = zul_text
 
+        bu_text = _cell_text(cell("BU"))
+        if bu_text and not g["bu"]:
+            g["bu"] = bu_text
+
+        t_text = _cell_text(cell("T"))
+        if t_text and not g["t"]:
+            g["t"] = t_text
+
     results = []
     for ab_number in order:
         g = groups[ab_number]
@@ -171,5 +181,7 @@ def parse_positionsansicht_auftrag(file):
             "statusWerte": g["statusWerte"],
             "ursprungsauftrag": g["ursprungsauftrag"] or None,
             "zulGeliefert": g["zulGeliefert"] or None,
+            "bu": g["bu"] or None,
+            "t": g["t"] or None,
         })
     return results
