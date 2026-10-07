@@ -105,9 +105,9 @@
   @media (max-width: 880px){ .main{padding:20px; max-width:100%;} }
   .no-selection{ color:var(--slate); padding-top:80px; text-align:center; font-size:0.95rem; }
 
-  .order-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:6px; }
-  .order-head .komm{ font-size:0.85rem; color:var(--slate); margin-bottom:4px; }
-  .order-head h2{ font-size:1.5rem; margin:0 0 2px; display:flex; align-items:center; gap:8px; }
+  .order-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding-bottom:16px; margin-bottom:18px; border-bottom:1px solid var(--line); }
+  .order-head .komm{ display:inline-block; font-size:0.72rem; font-family:'IBM Plex Mono', monospace; font-weight:600; letter-spacing:0.02em; color:var(--steel); background:var(--steel-soft); padding:3px 10px; border-radius:20px; margin-bottom:9px; }
+  .order-head h2{ font-size:1.55rem; margin:0; display:flex; align-items:center; gap:8px; }
   .prio-tag{ display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; font-size:0.76rem; font-weight:600; white-space:nowrap; margin-top:2px; border:none; font-family:inherit; }
   .prio-tag.rot{background:var(--red-soft); color:var(--red);} .prio-tag.gelb{background:var(--amber-soft); color:var(--amber);} .prio-tag.gruen{background:var(--green-soft); color:var(--green);}
   .prio-tag.in_bearbeitung{background:var(--steel-soft); color:var(--steel);} .prio-tag.versendet{background:var(--amber-soft); color:var(--amber);}
@@ -118,9 +118,15 @@
   .prio-tag.clickable:hover{ filter:brightness(0.95); }
   .prio-tag.clickable:focus-visible{ outline:2px solid var(--steel); outline-offset:2px; }
 
-  .order-meta-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:14px; margin:20px 0 8px; padding:16px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); }
+  .order-meta-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:16px; margin:0 0 10px; padding:18px 20px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
   .order-meta-grid .field label{ display:block; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); margin-bottom:4px; }
   .order-meta-grid .field .val{font-size:0.9rem;} .order-meta-grid .field .val.mono{font-size:0.85rem;}
+
+  .order-meta-secondary{ display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 26px; margin:0 2px 20px; padding-top:2px; }
+  .order-meta-secondary .field{ display:flex; align-items:baseline; gap:6px; }
+  .order-meta-secondary .field label{ font-size:0.64rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate-light); }
+  .order-meta-secondary .field .val{ font-size:0.8rem; color:var(--slate); }
+  .order-meta-secondary .field .val.clickable-text:hover{ color:var(--steel); }
   .clickable-text{ display:inline-block; border:none; background:none; padding:0; margin:0; font:inherit; color:inherit; cursor:pointer; text-align:left; }
   .clickable-text:hover{ color:var(--steel); text-decoration:underline; }
   .clickable-text:focus-visible{ outline:2px solid var(--steel); outline-offset:2px; }
@@ -771,11 +777,13 @@ const KIND_CONFIG = {
       <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button></div></div>
       <div class="field"><label>Projektleiter</label><div class="val"><button class="val clickable-text" id="projektleiterBtn" title="Projektleiter ändern">${item.projektleiter || '—'}</button></div></div>
       <div class="field"><label>Projektordner</label><div class="val">${folderLinkEditable(item.ordnerPfad, "ordnerBtn")}</div></div>
+    `,
+    metaSecondary: (item) => `
       <div class="field"><label>Lieferbedingungen</label><div class="val"><button class="val clickable-text" id="lieferbedingungenBtn" title="Lieferbedingungen ändern">${item.lieferbedingungen || '—'}</button></div></div>
       <div class="field"><label>Ursprungsauftrag</label><div class="val"><button class="val clickable-text" id="ursprungsauftragBtn" title="Ursprungsauftrag ändern">${item.ursprungsauftrag || '—'}</button></div></div>
       <div class="field"><label>Zul. geliefert</label><div class="val"><button class="val clickable-text" id="zulGeliefertBtn" title="Zul. geliefert ändern">${item.zulGeliefert || '—'}</button></div></div>
-      <div class="field"><label>BU</label><div class="val"><button class="val clickable-text" id="buBtn" title="Business Unit ändern">${item.bu || '—'}</button></div></div>
-      <div class="field"><label>T</label><div class="val"><button class="val clickable-text" id="tBtn" title="T ändern">${item.t || '—'}</button></div></div>
+      <div class="field"><label>Business Unit (BU)</label><div class="val"><button class="val clickable-text" id="buBtn" title="Business Unit ändern">${item.bu || '—'}</button></div></div>
+      <div class="field"><label>Typ (T)</label><div class="val"><button class="val clickable-text" id="tBtn" title="Typ ändern">${item.t || '—'}</button></div></div>
     `,
     stats: (list) => {
       const offen = list.filter(o => o.status !== "erledigt").length;
@@ -1554,19 +1562,55 @@ function renderPositionRow(item, p){
   `;
 }
 
-function renderPositionenSection(item){
-  const list = item.positionen || [];
+function renderLieferumfangSection(item){
+  const pencilSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  if(currentTab !== "auftrag"){
+    const label = currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang";
+    return `
+      <div class="lieferumfang"><span class="label">${label}</span><button class="icon-edit-btn" id="lieferumfangBtn" title="${label} bearbeiten" aria-label="${label} bearbeiten">${pencilSvg}</button><div class="lieferumfang-text">${item.lieferumfang || '—'}</div></div>
+    `;
+  }
+  const positionen = item.positionen || [];
+  const hasPositionen = positionen.length > 0;
+  const hasLegacyText = !hasPositionen && item.lieferumfang && item.lieferumfang.trim();
   return `
     <div class="timeline-head">
-      <h3>Positionen</h3>
-      <button class="btn" id="newPositionBtn">+ Position</button>
+      <h3>Lieferumfang</h3>
+      <div style="display:flex; gap:10px; align-items:center;">
+        ${hasLegacyText ? `<button class="btn ghost" id="splitLieferumfangBtn">In Positionen aufteilen</button>` : ""}
+        ${!hasPositionen ? `<button class="icon-edit-btn" id="lieferumfangBtn" title="Lieferumfang bearbeiten" aria-label="Lieferumfang bearbeiten">${pencilSvg}</button>` : ""}
+        <button class="btn" id="newPositionBtn">+ Position</button>
+      </div>
     </div>
-    <div class="position-list">
-      ${list.length
-        ? list.map(p => renderPositionRow(item, p)).join("")
-        : '<div class="no-selection" style="padding:10px 0;">Keine Positionen erfasst — nützlich, wenn einzelne Punkte im Lieferumfang unterschiedliche Liefertermine haben.</div>'}
-    </div>
+    ${hasPositionen
+      ? `<div class="position-list">${positionen.map(p => renderPositionRow(item, p)).join("")}</div>`
+      : hasLegacyText
+        ? `<div class="lieferumfang-text" style="margin-bottom:18px;">${item.lieferumfang}</div>`
+        : `<div class="no-selection" style="padding:6px 0 20px; text-align:left;">Noch kein Lieferumfang erfasst. Mit „+ Position" einzelne Punkte mit eigenem Liefertermin anlegen.</div>`}
   `;
+}
+
+async function splitLieferumfangInPositionen(item){
+  const lines = (item.lieferumfang || "").split("\n").map(l => l.trim()).filter(Boolean);
+  if(!lines.length) return;
+  const btn = document.getElementById("splitLieferumfangBtn");
+  if(btn) btn.disabled = true;
+  try{
+    for(const line of lines){
+      const match = /^([^\s:]+):\s*(.+)$/.exec(line);
+      await apiPost(`/items/${item.id}/positionen`, {
+        position: match ? match[1] : null,
+        beschreibung: match ? match[2] : line,
+        liefertermin: null,
+      });
+    }
+    await loadItems(currentTab);
+    renderMain();
+    showToast("Lieferumfang in Positionen aufgeteilt — jetzt je Punkt mit eigenem Liefertermin versehbar.");
+  }catch(err){
+    showToast("Aufteilen fehlgeschlagen.", true);
+    if(btn) btn.disabled = false;
+  }
 }
 
 /* ===================== List rendering ===================== */
@@ -1634,11 +1678,9 @@ function renderMain(){
       </div>
     </div>
     <div class="order-meta-grid">${cfg.metaGrid(item)}</div>
+    ${cfg.metaSecondary ? `<div class="order-meta-secondary">${cfg.metaSecondary(item)}</div>` : ""}
     ${currentTab === "auftrag" ? renderLtHistorySection(item) : ""}
-    <div class="lieferumfang"><span class="label">${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"}</span><button class="icon-edit-btn" id="lieferumfangBtn" title="${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"} bearbeiten" aria-label="${currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang"} bearbeiten">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button><div class="lieferumfang-text">${item.lieferumfang || '—'}</div></div>
-    ${currentTab === "auftrag" ? renderPositionenSection(item) : ""}
+    ${renderLieferumfangSection(item)}
     ${currentTab === "auftrag" ? `
     <div class="timeline-head">
       <h3>Zeitplan</h3>
@@ -1657,7 +1699,8 @@ function renderMain(){
   document.getElementById("deleteItemBtn").addEventListener("click", () => openDeleteConfirm(item));
   document.getElementById("newEntryBtn").addEventListener("click", () => renderNewEntryForm(item));
   document.getElementById("kundeBtn").addEventListener("click", () => openFieldEditModal(item, { field:"kunde", label:"Kundenname", inputType:"text" }));
-  document.getElementById("lieferumfangBtn").addEventListener("click", () => openFieldEditModal(item, { field:"lieferumfang", label: currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang", inputType:"textarea", rows:6 }));
+  document.getElementById("lieferumfangBtn")?.addEventListener("click", () => openFieldEditModal(item, { field:"lieferumfang", label: currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang", inputType:"textarea", rows:6 }));
+  document.getElementById("splitLieferumfangBtn")?.addEventListener("click", () => splitLieferumfangInPositionen(item));
 
   if(currentTab === "auftrag"){
     renderOrderTimeline(item);
@@ -1670,8 +1713,8 @@ function renderMain(){
     document.getElementById("lieferbedingungenBtn").addEventListener("click", () => openFieldEditModal(item, { field:"lieferbedingungen", label:"Lieferbedingungen", inputType:"text", placeholder:"z.B. FCA Werk Idar-Oberstein" }));
     document.getElementById("ursprungsauftragBtn").addEventListener("click", () => openFieldEditModal(item, { field:"ursprungsauftrag", label:"Ursprungsauftrag", inputType:"text" }));
     document.getElementById("zulGeliefertBtn").addEventListener("click", () => openFieldEditModal(item, { field:"zulGeliefert", label:"Zul. geliefert", inputType:"text" }));
-    document.getElementById("buBtn").addEventListener("click", () => openFieldEditModal(item, { field:"bu", label:"BU (Business Unit)", inputType:"select", emptyLabel:"— keine Angabe —", options: BU_OPTIONS }));
-    document.getElementById("tBtn").addEventListener("click", () => openFieldEditModal(item, { field:"t", label:"T", inputType:"select", emptyLabel:"— keine Angabe —", options: T_OPTIONS }));
+    document.getElementById("buBtn").addEventListener("click", () => openFieldEditModal(item, { field:"bu", label:"Business Unit (BU)", inputType:"select", emptyLabel:"— keine Angabe —", options: BU_OPTIONS }));
+    document.getElementById("tBtn").addEventListener("click", () => openFieldEditModal(item, { field:"t", label:"Typ (T)", inputType:"select", emptyLabel:"— keine Angabe —", options: T_OPTIONS }));
     document.getElementById("newPositionBtn").addEventListener("click", () => openPositionModal(item, null));
     (item.positionen || []).forEach(p => {
       document.getElementById(`positionEditBtn-${p.id}`).addEventListener("click", () => openPositionModal(item, p));
