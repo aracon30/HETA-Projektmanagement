@@ -245,6 +245,9 @@
     max-width:min(1100px, 96%);
   }
   @media (max-width: 880px){ .waiting-board{padding:20px; max-width:100%;} }
+  .waiting-toolbar{ display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+  .waiting-toolbar label{ font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.03em; }
+  .waiting-toolbar select{ padding:6px 9px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.82rem; font-family:inherit; background:var(--panel); color:var(--ink); }
   .waiting-row{
     display:flex;
     align-items:flex-start;
@@ -681,6 +684,7 @@ let activeStatusFilter = { auftrag: "alle" };
 let searchTerm = { anfrage: "", auftrag: "", angebot: "" };
 let sortOrder = { anfrage: "erstellt_neu", auftrag: "erstellt_neu", angebot: "erstellt_neu" };
 let ganttSortOrder = "liefertermin_auf";
+let wartendVerantwortlichFilter = "alle";
 
 const BU_OPTIONS = [
   { value:"he", label:"he – HETA Ersatzteil" },
@@ -1342,29 +1346,59 @@ function updateStatsForWaiting(){
 
 function renderWaitingBoard(){
   const board = document.getElementById("waitingBoard");
-  const rows = collectWaitingRows();
+  const allRows = collectWaitingRows();
 
-  if(rows.length === 0){
+  if(allRows.length === 0){
     board.innerHTML = `<div class="no-selection">Keine wartenden Aufgaben — alles im Fluss.</div>`;
     return;
   }
 
-  board.innerHTML = rows.map(({item, e, type}) => {
-    const ueberfaellig = item.liefertermin && e.faelligkeit && e.faelligkeit > item.liefertermin;
-    return `
-      <button class="waiting-row" data-item-id="${item.id}" data-type="${type}">
-        <div class="waiting-main">
-          <div class="waiting-komm">${item.kommission ? item.kommission + ' — ' : ''}${item.kunde}</div>
-          <div class="waiting-text">${e.text}</div>
-          <div class="waiting-meta">
-            ${e.verantwortlich ? `<span>Verantwortlich: ${e.verantwortlich}</span>` : ''}
-            <span class="${ueberfaellig ? 'warn' : ''}">${e.faelligkeit ? 'Fällig ' + fmtDate(e.faelligkeit) : 'Keine Fälligkeit'}${ueberfaellig ? ' · nach Liefertermin!' : ''}</span>
-          </div>
-        </div>
-        <span class="status-badge ${e.status}">${taskStatusLabel(e.status)}</span>
-      </button>
-    `;
-  }).join("");
+  const personen = [...new Set(allRows.map(r => r.e.verantwortlich).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  if(wartendVerantwortlichFilter !== "alle" && wartendVerantwortlichFilter !== "ohne" && !personen.includes(wartendVerantwortlichFilter)){
+    wartendVerantwortlichFilter = "alle";
+  }
+  const rows = allRows.filter(r => {
+    if(wartendVerantwortlichFilter === "alle") return true;
+    if(wartendVerantwortlichFilter === "ohne") return !r.e.verantwortlich;
+    return r.e.verantwortlich === wartendVerantwortlichFilter;
+  });
+
+  const toolbarHtml = `
+    <div class="waiting-toolbar">
+      <label for="wartendVerantwortlichSelect">Verantwortlich</label>
+      <select id="wartendVerantwortlichSelect">
+        <option value="alle" ${wartendVerantwortlichFilter === "alle" ? "selected" : ""}>Alle</option>
+        ${personen.map(p => `<option value="${p.replace(/"/g, "&quot;")}" ${wartendVerantwortlichFilter === p ? "selected" : ""}>${p}</option>`).join("")}
+        <option value="ohne" ${wartendVerantwortlichFilter === "ohne" ? "selected" : ""}>Ohne Zuweisung</option>
+      </select>
+    </div>
+  `;
+
+  const rowsHtml = rows.length
+    ? rows.map(({item, e, type}) => {
+        const ueberfaellig = item.liefertermin && e.faelligkeit && e.faelligkeit > item.liefertermin;
+        return `
+          <button class="waiting-row" data-item-id="${item.id}" data-type="${type}">
+            <div class="waiting-main">
+              <div class="waiting-komm">${item.kommission ? item.kommission + ' — ' : ''}${item.kunde}</div>
+              <div class="waiting-text">${e.text}</div>
+              <div class="waiting-meta">
+                ${e.verantwortlich ? `<span>Verantwortlich: ${e.verantwortlich}</span>` : ''}
+                <span class="${ueberfaellig ? 'warn' : ''}">${e.faelligkeit ? 'Fällig ' + fmtDate(e.faelligkeit) : 'Keine Fälligkeit'}${ueberfaellig ? ' · nach Liefertermin!' : ''}</span>
+              </div>
+            </div>
+            <span class="status-badge ${e.status}">${taskStatusLabel(e.status)}</span>
+          </button>
+        `;
+      }).join("")
+    : `<div class="no-selection" style="padding-top:30px;">Keine wartenden Aufgaben für diese Auswahl.</div>`;
+
+  board.innerHTML = toolbarHtml + rowsHtml;
+
+  document.getElementById("wartendVerantwortlichSelect").addEventListener("change", (ev) => {
+    wartendVerantwortlichFilter = ev.target.value;
+    renderWaitingBoard();
+  });
 
   board.querySelectorAll(".waiting-row").forEach(row => {
     row.addEventListener("click", () => {
