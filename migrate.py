@@ -188,6 +188,12 @@ def main():
     else:
         print("Spalte liefertermin_historie.position_id existiert bereits.")
 
+    if not column_exists(cur, "items", "bestelleingang"):
+        cur.execute("ALTER TABLE items ADD COLUMN bestelleingang DATE")
+        print("Spalte items.bestelleingang ergänzt (Datum des Bestelleingangs im Auftragskopf).")
+    else:
+        print("Spalte items.bestelleingang existiert bereits.")
+
     if not column_exists(cur, "items", "archiviert"):
         cur.execute("ALTER TABLE items ADD COLUMN archiviert BOOLEAN DEFAULT 0")
         print("Spalte items.archiviert ergänzt (manuelles Archivieren erledigter Aufträge).")

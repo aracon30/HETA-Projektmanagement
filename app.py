@@ -65,6 +65,7 @@ def create_item():
     if item.type == "auftrag":
         item.prio = data.get("prio", "gelb")
         item.liefertermin = parse_date(data.get("liefertermin"))
+        item.bestelleingang = parse_date(data.get("bestelleingang"))
         item.auftrag_status = data.get("status", "neu")
         item.lieferbedingungen = data.get("lieferbedingungen")
         item.ursprungsauftrag = data.get("ursprungsauftrag")
@@ -108,6 +109,8 @@ def update_item(item_id):
             item.anfrage_status = data["status"]
     if "prio" in data and item.type == "auftrag":
         item.prio = data["prio"]
+    if "bestelleingang" in data and item.type == "auftrag":
+        item.bestelleingang = parse_date(data.get("bestelleingang"))
     if "lieferbedingungen" in data and item.type == "auftrag":
         item.lieferbedingungen = data.get("lieferbedingungen")
     if "ursprungsauftrag" in data and item.type == "auftrag":

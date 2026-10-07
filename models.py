@@ -31,6 +31,7 @@ class Item(db.Model):
     # Auftrag-spezifisch
     prio = db.Column(db.String(10), nullable=True)          # rot | gelb | gruen
     liefertermin = db.Column(db.Date, nullable=True)
+    bestelleingang = db.Column(db.Date, nullable=True)  # Datum, an dem die Kundenbestellung einging
     auftrag_status = db.Column(db.String(20), nullable=True)  # neu | in_bearbeitung | in_fertigung | versandbereit | erledigt
     lieferbedingungen = db.Column(db.String(200), nullable=True)  # z.B. Incoterm an den Kunden
     ursprungsauftrag = db.Column(db.String(60), nullable=True)  # Referenz auf den Auftrag, aus dem dieser hervorgegangen ist
@@ -83,6 +84,7 @@ class Item(db.Model):
             base.update({
                 "prio": self.prio,
                 "liefertermin": self.liefertermin.isoformat() if self.liefertermin else None,
+                "bestelleingang": self.bestelleingang.isoformat() if self.bestelleingang else None,
                 "status": self.auftrag_status,
                 "lieferterminHistorie": [h.to_dict() for h in self.liefertermin_historie if h.position_id is None],
                 "lieferbedingungen": self.lieferbedingungen,

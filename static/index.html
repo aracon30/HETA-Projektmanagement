@@ -799,6 +799,7 @@ const KIND_CONFIG = {
       <div class="field"><label>Projektordner</label><div class="val">${folderLinkEditable(item.ordnerPfad, "ordnerBtn")}</div></div>
     `,
     metaSecondary: (item) => `
+      <div class="field"><label>Bestelleingang</label><div class="val"><button class="val mono clickable-text" id="bestelleingangBtn" title="Bestelleingang ändern">${fmtDate(item.bestelleingang)}</button></div></div>
       <div class="field"><label>Lieferbedingungen</label><div class="val"><button class="val clickable-text" id="lieferbedingungenBtn" title="Lieferbedingungen ändern">${item.lieferbedingungen || '—'}</button></div></div>
       <div class="field"><label>Ursprungsauftrag</label><div class="val"><button class="val clickable-text" id="ursprungsauftragBtn" title="Ursprungsauftrag ändern">${item.ursprungsauftrag || '—'}</button></div></div>
       <div class="field"><label>Zul. geliefert</label><div class="val"><button class="val clickable-text" id="zulGeliefertBtn" title="Zul. geliefert ändern">${item.zulGeliefert || '—'}</button></div></div>
@@ -1811,6 +1812,7 @@ function renderMain(){
     document.getElementById("lieferterminBtn").addEventListener("click", () => openLiefertermineDialog(item));
     document.getElementById("projektleiterBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"projektleiter", label:"Projektleiter", inputType:"select", options: nutzer.map(n => n.name) }, ev.currentTarget));
     document.getElementById("ordnerBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }, ev.currentTarget));
+    document.getElementById("bestelleingangBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"bestelleingang", label:"Bestelleingang", inputType:"date" }, ev.currentTarget));
     document.getElementById("lieferbedingungenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"lieferbedingungen", label:"Lieferbedingungen", inputType:"text", placeholder:"z.B. FCA Werk Idar-Oberstein" }, ev.currentTarget));
     document.getElementById("ursprungsauftragBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"ursprungsauftrag", label:"Ursprungsauftrag", inputType:"text" }, ev.currentTarget));
     document.getElementById("zulGeliefertBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"zulGeliefert", label:"Zul. geliefert", inputType:"text" }, ev.currentTarget));
