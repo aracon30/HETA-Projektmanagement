@@ -1014,16 +1014,25 @@ async function loadItems(kind){
 // Wählt beim ersten Laden den neuesten Eintrag aus - nach Kommissions-/Angebotsnummer
 // (siehe kommissionRecency), nicht nach DB-Erstelldatum, damit nachträglich importierte
 // Altaufträge das nicht verfälschen. Fällt auf erstelltAm zurück, wenn keine Nummer passt.
+// Erledigte Aufträge gelten als archiviert und sollen die Liste/Standardauswahl
+// nicht mehr belegen — weiterhin erreichbar über den Status-Filter "Erledigt"
+// oder die Suche.
+function isArchived(kind, item){
+  return kind === "auftrag" && item.status === "erledigt";
+}
+
 function newestItemId(kind, list){
   const cfg = KIND_CONFIG[kind];
-  const byErstelltAm = () => list.reduce((best, item) =>
+  const pool = list.filter(item => !isArchived(kind, item));
+  const candidates = pool.length ? pool : list;
+  const byErstelltAm = () => candidates.reduce((best, item) =>
     (!best || new Date(item.erstelltAm) > new Date(best.erstelltAm)) ? item : best
   ).id;
   if(cfg.useKommissionRecency === false){
     return byErstelltAm();
   }
   let best = null, bestRec = -Infinity;
-  for(const item of list){
+  for(const item of candidates){
     const rec = kommissionRecency(item.kommission);
     if(rec !== null && rec > bestRec){ bestRec = rec; best = item; }
   }
@@ -1670,16 +1679,24 @@ function renderList(){
   const statusFilterVal = activeStatusFilter[currentTab] || "alle";
   const term = searchTerm[currentTab].trim().toLowerCase();
 
-  let filtered = itemsCache[currentTab].filter(item => {
+  const baseMatches = item => {
     const matchesFilter = filterVal === "alle" || item[cfg.statusField] === filterVal;
     const matchesStatusFilter = !cfg.statusFilterChips || statusFilterVal === "alle" || item.status === statusFilterVal;
     const matchesSearch = !term || item.kommission.toLowerCase().includes(term) || item.kunde.toLowerCase().includes(term);
     return matchesFilter && matchesStatusFilter && matchesSearch;
-  });
+  };
+  // Archivierte (erledigte) Aufträge nur zeigen, wenn gezielt per Status-Filter
+  // "Erledigt" oder per Suche danach gesucht wird — nicht in der Standardansicht.
+  const matchesArchiv = item => !!term || statusFilterVal !== "alle" || !isArchived(currentTab, item);
+
+  let filtered = itemsCache[currentTab].filter(item => baseMatches(item) && matchesArchiv(item));
   filtered = sortItems(filtered);
 
   if(filtered.length === 0){
-    list.innerHTML = `<div class="empty-list">Keine Einträge gefunden.</div>`;
+    const nurArchiviert = itemsCache[currentTab].some(item => baseMatches(item) && !matchesArchiv(item));
+    list.innerHTML = nurArchiviert
+      ? `<div class="empty-list">Nur archivierte (erledigte) Aufträge gefunden. Mit dem Status-Filter „Erledigt" oben wieder ansehen.</div>`
+      : `<div class="empty-list">Keine Einträge gefunden.</div>`;
     return;
   }
 
