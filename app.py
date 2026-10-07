@@ -100,6 +100,8 @@ def update_item(item_id):
     if "status" in data:
         if item.type == "auftrag":
             item.auftrag_status = data["status"]
+            if item.auftrag_status != "erledigt":
+                item.archiviert = False
         elif item.type == "angebot":
             item.angebot_status = data["status"]
         else:
@@ -118,6 +120,8 @@ def update_item(item_id):
         item.t = data.get("t")
     if "projektleiter" in data and item.type == "auftrag":
         item.projektleiter = data.get("projektleiter")
+    if "archiviert" in data and item.type == "auftrag":
+        item.archiviert = bool(data.get("archiviert"))
     if "wert" in data and item.type == "angebot":
         item.wert = data.get("wert")
     if "wiedervorlage" in data and item.type == "angebot":

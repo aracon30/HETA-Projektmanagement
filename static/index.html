@@ -790,7 +790,13 @@ const KIND_CONFIG = {
     detailTag: (item) => `<button class="prio-tag ${item.prio} clickable" id="prioTagBtn"><span class="dot ${item.prio}"></span>Priorität ${({rot:"Rot",gelb:"Gelb",gruen:"Grün"})[item.prio]}</button>`,
     metaGrid: (item) => `
       <div class="field"><label>Liefertermin</label><div class="val"><button class="val mono clickable-text" id="lieferterminBtn" title="Liefertermin ändern">${fmtDate(item.liefertermin)}</button></div></div>
-      <div class="field"><label>Status</label><div class="val"><button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button></div></div>
+      <div class="field"><label>Status</label><div class="val" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <button class="status-badge ${item.status} clickable" id="statusBadgeBtn">${statusLabel(item.status)}</button>
+        ${item.status === "erledigt" ? (item.archiviert
+          ? `<button class="btn text" id="archivToggleBtn" title="Wieder in der Liste einblenden">Archiviert ↩</button>`
+          : `<button class="btn text" id="archivToggleBtn" title="Aus der Liste ausblenden">Archivieren</button>`
+        ) : ""}
+      </div></div>
       <div class="field"><label>Projektleiter</label><div class="val"><button class="val clickable-text" id="projektleiterBtn" title="Projektleiter ändern">${item.projektleiter || '—'}</button></div></div>
       <div class="field"><label>Projektordner</label><div class="val">${folderLinkEditable(item.ordnerPfad, "ordnerBtn")}</div></div>
     `,
@@ -1016,11 +1022,11 @@ async function loadItems(kind){
 // Wählt beim ersten Laden den neuesten Eintrag aus - nach Kommissions-/Angebotsnummer
 // (siehe kommissionRecency), nicht nach DB-Erstelldatum, damit nachträglich importierte
 // Altaufträge das nicht verfälschen. Fällt auf erstelltAm zurück, wenn keine Nummer passt.
-// Erledigte Aufträge gelten als archiviert und sollen die Liste/Standardauswahl
-// nicht mehr belegen — weiterhin erreichbar über den Status-Filter "Erledigt"
-// oder die Suche.
+// Manuell archivierte Aufträge (per "Archivieren"-Button bei Status "Erledigt")
+// sollen die Liste/Standardauswahl nicht mehr belegen — weiterhin erreichbar
+// über den Status-Filter "Erledigt" oder die Suche.
 function isArchived(kind, item){
-  return kind === "auftrag" && item.status === "erledigt";
+  return kind === "auftrag" && !!item.archiviert;
 }
 
 function newestItemId(kind, list){
@@ -1791,6 +1797,19 @@ function renderMain(){
     document.getElementById("newPhaseBtn").addEventListener("click", () => openPhaseModal(item, null));
     document.getElementById("prioTagBtn").addEventListener("click", () => openPrioModal(item));
     document.getElementById("statusBadgeBtn").addEventListener("click", () => openAuftragStatusModal(item));
+    document.getElementById("archivToggleBtn")?.addEventListener("click", async () => {
+      const neu = !item.archiviert;
+      try{
+        await apiPatch(`/items/${item.id}`, { archiviert: neu });
+        await loadItems(currentTab);
+        renderList();
+        renderMain();
+        updateStats();
+        showToast(neu ? "Auftrag archiviert." : "Auftrag wieder eingeblendet.");
+      }catch(err){
+        showToast("Konnte nicht aktualisiert werden.", true);
+      }
+    });
     document.getElementById("lieferterminBtn").addEventListener("click", () => openLiefertermineDialog(item));
     document.getElementById("projektleiterBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"projektleiter", label:"Projektleiter", inputType:"select", options: nutzer.map(n => n.name) }, ev.currentTarget));
     document.getElementById("ordnerBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }, ev.currentTarget));

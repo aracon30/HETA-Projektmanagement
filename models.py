@@ -38,6 +38,7 @@ class Item(db.Model):
     bu = db.Column(db.String(10), nullable=True)  # Business Unit: he | c | hb | s
     t = db.Column(db.String(10), nullable=True)  # Spalte "T" aus dem ERP-Dashboard: F (Fertigung) | H (Handelsware)
     projektleiter = db.Column(db.String(120), nullable=True)  # verantwortliche/r Projektleiter/in (Nutzername)
+    archiviert = db.Column(db.Boolean, default=False)  # manuell gesetzt, blendet den Auftrag aus der Liste aus
 
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
@@ -91,6 +92,7 @@ class Item(db.Model):
                 "t": self.t,
                 "projektleiter": self.projektleiter,
                 "positionen": [p.to_dict() for p in self.positionen],
+                "archiviert": bool(self.archiviert),
             })
         elif self.type == "angebot":
             base.update({

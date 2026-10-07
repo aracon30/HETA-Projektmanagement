@@ -188,6 +188,12 @@ def main():
     else:
         print("Spalte liefertermin_historie.position_id existiert bereits.")
 
+    if not column_exists(cur, "items", "archiviert"):
+        cur.execute("ALTER TABLE items ADD COLUMN archiviert BOOLEAN DEFAULT 0")
+        print("Spalte items.archiviert ergänzt (manuelles Archivieren erledigter Aufträge).")
+    else:
+        print("Spalte items.archiviert existiert bereits.")
+
     # Nutzer ergänzen/umbenennen: Namenskonvention in der echten Nutzerliste ist
     # "Nachname, Vorname" (nicht "Vorname Nachname" wie im seed.py-Beispielbestand)
     cur.execute("SELECT id FROM users WHERE name = ?", ("Häfer, Gabriele",))
