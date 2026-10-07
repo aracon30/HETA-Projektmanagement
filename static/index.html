@@ -245,8 +245,9 @@
     max-width:min(1100px, 96%);
   }
   @media (max-width: 880px){ .waiting-board{padding:20px; max-width:100%;} }
-  .waiting-toolbar{ display:flex; align-items:center; gap:8px; margin-bottom:16px; }
-  .waiting-toolbar label{ font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.03em; }
+  .waiting-toolbar{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .waiting-toolbar label{ font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.03em; margin-left:14px; }
+  .waiting-toolbar label:first-child{ margin-left:0; }
   .waiting-toolbar select{ padding:6px 9px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.82rem; font-family:inherit; background:var(--panel); color:var(--ink); }
   .waiting-row{
     display:flex;
@@ -649,7 +650,7 @@
     <button class="tab-btn active" data-tab="auftrag" role="tab" aria-selected="true">Aufträge</button>
     <button class="tab-btn" data-tab="angebot" role="tab" aria-selected="false">Angebote</button>
     <button class="tab-btn" data-tab="gantt" role="tab" aria-selected="false">Gantt</button>
-    <button class="tab-btn" data-tab="wartend" role="tab" aria-selected="false">Wartend</button>
+    <button class="tab-btn" data-tab="wartend" role="tab" aria-selected="false">Aufgaben</button>
     <button class="tab-btn" data-tab="prozesse" role="tab" aria-selected="false">Prozesse</button>
   </div>
 
@@ -685,6 +686,7 @@ let searchTerm = { anfrage: "", auftrag: "", angebot: "" };
 let sortOrder = { anfrage: "erstellt_neu", auftrag: "erstellt_neu", angebot: "erstellt_neu" };
 let ganttSortOrder = "liefertermin_auf";
 let wartendVerantwortlichFilter = "alle";
+let wartendStatusFilter = "alle";
 
 const BU_OPTIONS = [
   { value:"he", label:"he – HETA Ersatzteil" },
@@ -910,7 +912,7 @@ const TASK_STATUS_CONFIG = {
     { value:"erledigt", label:"Erledigt" }
   ]
 };
-const WARTET_STATUSES = ["wartet_intern", "wartet_extern", "wartet_kunde", "wartet_lieferant"];
+const ALLE_TASK_STATUSES = ["offen", "in_bearbeitung", "wartet_intern", "wartet_extern", "wartet_kunde", "wartet_lieferant", "erledigt"];
 function taskStatusLabel(s){
   return {
     offen:"Offen", in_bearbeitung:"In Bearbeitung",
@@ -1335,7 +1337,7 @@ function collectWaitingRows(){
   ["anfrage", "auftrag", "angebot"].forEach(type => {
     itemsCache[type].forEach(item => {
       item.verlauf.forEach(e => {
-        if(WARTET_STATUSES.includes(e.status)) rows.push({ item, e, type });
+        rows.push({ item, e, type });
       });
     });
   });
@@ -1350,7 +1352,7 @@ function collectWaitingRows(){
 
 function updateStatsForWaiting(){
   const count = collectWaitingRows().length;
-  document.getElementById("statBar").innerHTML = `<span><b>${count}</b> wartende Aufgaben</span>`;
+  document.getElementById("statBar").innerHTML = `<span><b>${count}</b> Aufgaben</span>`;
 }
 
 function renderWaitingBoard(){
@@ -1358,7 +1360,7 @@ function renderWaitingBoard(){
   const allRows = collectWaitingRows();
 
   if(allRows.length === 0){
-    board.innerHTML = `<div class="no-selection">Keine wartenden Aufgaben — alles im Fluss.</div>`;
+    board.innerHTML = `<div class="no-selection">Keine Aufgaben vorhanden.</div>`;
     return;
   }
 
@@ -1366,14 +1368,22 @@ function renderWaitingBoard(){
   if(wartendVerantwortlichFilter !== "alle" && wartendVerantwortlichFilter !== "ohne" && !personen.includes(wartendVerantwortlichFilter)){
     wartendVerantwortlichFilter = "alle";
   }
+  const vorhandeneStatus = ALLE_TASK_STATUSES.filter(s => allRows.some(r => r.e.status === s));
   const rows = allRows.filter(r => {
-    if(wartendVerantwortlichFilter === "alle") return true;
-    if(wartendVerantwortlichFilter === "ohne") return !r.e.verantwortlich;
-    return r.e.verantwortlich === wartendVerantwortlichFilter;
+    const matchesPerson = wartendVerantwortlichFilter === "alle" ? true
+      : wartendVerantwortlichFilter === "ohne" ? !r.e.verantwortlich
+      : r.e.verantwortlich === wartendVerantwortlichFilter;
+    const matchesStatus = wartendStatusFilter === "alle" || r.e.status === wartendStatusFilter;
+    return matchesPerson && matchesStatus;
   });
 
   const toolbarHtml = `
     <div class="waiting-toolbar">
+      <label for="wartendStatusSelect">Status</label>
+      <select id="wartendStatusSelect">
+        <option value="alle" ${wartendStatusFilter === "alle" ? "selected" : ""}>Alle</option>
+        ${vorhandeneStatus.map(s => `<option value="${s}" ${wartendStatusFilter === s ? "selected" : ""}>${taskStatusLabel(s)}</option>`).join("")}
+      </select>
       <label for="wartendVerantwortlichSelect">Verantwortlich</label>
       <select id="wartendVerantwortlichSelect">
         <option value="alle" ${wartendVerantwortlichFilter === "alle" ? "selected" : ""}>Alle</option>
@@ -1400,10 +1410,14 @@ function renderWaitingBoard(){
           </button>
         `;
       }).join("")
-    : `<div class="no-selection" style="padding-top:30px;">Keine wartenden Aufgaben für diese Auswahl.</div>`;
+    : `<div class="no-selection" style="padding-top:30px;">Keine Aufgaben für diese Auswahl.</div>`;
 
   board.innerHTML = toolbarHtml + rowsHtml;
 
+  document.getElementById("wartendStatusSelect").addEventListener("change", (ev) => {
+    wartendStatusFilter = ev.target.value;
+    renderWaitingBoard();
+  });
   document.getElementById("wartendVerantwortlichSelect").addEventListener("change", (ev) => {
     wartendVerantwortlichFilter = ev.target.value;
     renderWaitingBoard();
