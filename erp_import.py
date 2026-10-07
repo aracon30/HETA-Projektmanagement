@@ -19,7 +19,7 @@ from openpyxl import load_workbook
 REQUIRED_HEADERS = ["AB", "Jahr", "Kunde"]
 KNOWN_HEADERS = REQUIRED_HEADERS + [
     "Position", "Positionsbeschreibung", "LT HETA AB", "Status", "Ordner",
-    "Ursprungsauftrag", "zul. geliefert", "BU", "T",
+    "Pfad Ordner", "Ursprungsauftrag", "zul. geliefert", "BU", "T",
 ]
 
 
@@ -152,9 +152,17 @@ def parse_positionsansicht_auftrag(file):
             if pos_liefertermin and (g["liefertermin"] is None or pos_liefertermin < g["liefertermin"]):
                 g["liefertermin"] = pos_liefertermin
 
-        ordner_cell = cell("Ordner")
-        if ordner_cell is not None and ordner_cell.hyperlink and not g["ordnerPfad"]:
-            g["ordnerPfad"] = ordner_cell.hyperlink.target
+        if not g["ordnerPfad"]:
+            pfad_text = _cell_text(cell("Pfad Ordner"))
+            if pfad_text:
+                g["ordnerPfad"] = pfad_text
+            else:
+                # Fallback für Dateien, in denen "Ordner" noch ein echter
+                # Excel-Hyperlink ist statt einer HYPERLINK()-Formel, die nur
+                # den Anzeigetext liefert (dann steht der Pfad in "Pfad Ordner").
+                ordner_cell = cell("Ordner")
+                if ordner_cell is not None and ordner_cell.hyperlink:
+                    g["ordnerPfad"] = ordner_cell.hyperlink.target
 
         status_text = _cell_text(cell("Status"))
         if status_text and status_text not in g["statusWerte"]:
