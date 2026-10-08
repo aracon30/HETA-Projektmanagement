@@ -961,6 +961,13 @@ function taskStatusLabel(s){
     erledigt:"Erledigt"
   }[s] || s;
 }
+function aufgabeKanalLabel(kanal){
+  return {
+    graph: "Aufgabe in To Do erstellt",
+    mail: "Per E-Mail benachrichtigt",
+    webhook: "Per Webhook benachrichtigt",
+  }[kanal] || "Lokal markiert";
+}
 function fmtDate(iso){
   if(!iso) return "—";
   const d = new Date(iso + "T00:00:00");
@@ -2876,7 +2883,7 @@ function renderEntry(e, item){
         <div class="entry-foot">
           <span class="entry-due ${e.faelligkeit ? '' : 'none'} ${ueberfaellig ? 'warn' : ''}">${e.faelligkeit ? 'Fällig ' + fmtDate(e.faelligkeit) : 'Keine Fälligkeit'}${ueberfaellig ? ' · nach Liefertermin!' : ''}</span>
           ${e.aufgabe
-            ? `<span class="task-badge">Aufgabe in To Do erstellt</span>`
+            ? `<span class="task-badge">${aufgabeKanalLabel(e.aufgabeKanal)}</span>`
             : (e.verantwortlich ? `<button class="btn ghost small" id="taskBtn-${e.id}">Aufgabe erstellen</button>` : '')}
         </div>
         ${updates.length ? `<div class="entry-updates">${updates.map(renderUpdateEntry).join("")}</div>` : ""}
@@ -3096,7 +3103,7 @@ function openTaskModal(item, entry){
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <h3 id="modalTitle">Aufgabe erstellen</h3>
-        <div class="sub">Wird direkt in Microsoft To Do von ${entry.verantwortlich} angelegt.</div>
+        <div class="sub">Benachrichtigt ${entry.verantwortlich} automatisch — über Microsoft To Do, E-Mail oder Webhook, je nachdem, was gerade konfiguriert ist.</div>
         <div class="form-row">
           <label for="modalAssignee">Verantwortliche Person</label>
           <select id="modalAssignee">

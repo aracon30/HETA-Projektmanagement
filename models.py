@@ -203,6 +203,7 @@ class VerlaufEintrag(db.Model):
     # Angebot: offen | in_bearbeitung | wartet_kunde | erledigt
     status = db.Column(db.String(20), default="offen")
     aufgabe_erstellt = db.Column(db.Boolean, default=False)
+    aufgabe_kanal = db.Column(db.String(20), nullable=True)  # graph | mail | webhook | None (nur lokal)
     msgraph_list_id = db.Column(db.String(200), nullable=True)
     msgraph_task_id = db.Column(db.String(200), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -224,6 +225,7 @@ class VerlaufEintrag(db.Model):
             "faelligkeit": self.faelligkeit.isoformat() if self.faelligkeit else None,
             "status": self.status,
             "aufgabe": self.aufgabe_erstellt,
+            "aufgabeKanal": self.aufgabe_kanal,
             "updates": [u.to_dict() for u in self.updates],
         }
 

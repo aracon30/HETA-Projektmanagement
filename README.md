@@ -148,10 +148,34 @@ Person automatisch angelegt wird). Voraussetzung: Die Person hat in der
 Datenbank eine hinterlegte E-Mail-Adresse (siehe `seed.py` bzw. Tabelle
 `users`).
 
-## Übergangslösung bis zur Azure-Freigabe: persönliche To-Do-Webhooks
+## Übergangslösung bis zur Azure-Freigabe: E-Mail-Benachrichtigung
 
-Solange die Azure-AD-App-Registrierung noch nicht freigegeben ist, kann sich
-jede Person **ohne IT/Admin-Freigabe** selbst einen Ersatz einrichten:
+Solange die Azure-AD-App-Registrierung noch nicht freigegeben ist, aber
+zuständige Personen trotzdem benachrichtigt werden sollen, ohne ins Tool
+schauen zu müssen: `SMTP_*`-Umgebungsvariablen in der `.service`-Datei setzen
+(auskommentierte Platzhalter siehe `deploy/projektbesprechung.service`) —
+Host/Port/ggf. Zugangsdaten für einen SMTP-Server oder -Relay, den IT euch
+nennen kann. Das ist eine deutlich kleinere Anfrage als eine komplette
+Graph-App-Registrierung (kein Azure-AD-Admin-Consent nötig, meist reicht ein
+interner Relay oder ein Postfach mit SMTP-Zugangsdaten).
+
+Danach:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart projektbesprechung
+```
+
+Ab dann bekommt die zuständige Person bei "Aufgabe erstellen" automatisch
+eine E-Mail mit Aufgabentext und Fälligkeit (sofern sie eine E-Mail-Adresse
+in der Datenbank hinterlegt hat) — vorausgesetzt, die Graph-Anbindung ist
+(noch) nicht konfiguriert, die hat weiterhin Vorrang.
+
+## Übergangslösung, nur falls Power Automate im eigenen Tenant nicht gesperrt ist: persönliche To-Do-Webhooks
+
+**Bei HETA aktuell nicht nutzbar:** Der "Request"/HTTP-Trigger ist in der
+Power-Automate-Umgebung "PACO Gruppe" per Data-Loss-Prevention-Richtlinie
+gesperrt. Dieser Weg bleibt im Code, falls sich das einmal ändert oder für
+einen anderen Tenant relevant wird:
 
 1. In [Power Automate](https://make.powerautomate.com) einen neuen Flow anlegen
 2. Trigger: "Wenn eine HTTP-Anfrage eingeht"
@@ -160,13 +184,11 @@ jede Person **ohne IT/Admin-Freigabe** selbst einen Ersatz einrichten:
 4. Flow speichern, die angezeigte HTTP-POST-URL im Tool über den Button
    "⚙ To-Do-Webhooks" (Kopfzeile) bei sich selbst eintragen
 
-Ist für eine Person eine solche URL hinterlegt und die Graph-Anbindung (noch)
-nicht konfiguriert, nutzt "Aufgabe erstellen" automatisch diesen Webhook statt
-Microsoft Graph. Einschränkung: Der Status einer per Webhook angelegten
-Aufgabe lässt sich (anders als bei echten Graph-Aufgaben) nicht per "To Do
-abgleichen" zurücklesen, da dafür keine Task-ID vorliegt — das Häkchen muss
-in diesem Fall weiterhin im Tool selbst gesetzt werden. Sobald die
-Graph-Anbindung aktiv ist, hat sie automatisch Vorrang vor dem Webhook.
+Ist für eine Person eine solche URL hinterlegt, weder Graph noch E-Mail
+konfiguriert sind, nutzt "Aufgabe erstellen" automatisch diesen Webhook.
+Einschränkung: Der Status einer per Webhook angelegten Aufgabe lässt sich
+(anders als bei echten Graph-Aufgaben) nicht per "To Do abgleichen"
+zurücklesen, da dafür keine Task-ID vorliegt.
 
 ## Bekannte Grenzen dieses Stands
 

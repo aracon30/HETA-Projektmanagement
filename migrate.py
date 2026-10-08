@@ -56,6 +56,12 @@ def main():
     else:
         print("Spalte users.webhook_url existiert bereits.")
 
+    if not column_exists(cur, "verlauf_eintraege", "aufgabe_kanal"):
+        cur.execute("ALTER TABLE verlauf_eintraege ADD COLUMN aufgabe_kanal VARCHAR(20)")
+        print("Spalte verlauf_eintraege.aufgabe_kanal ergänzt (graph/mail/webhook/lokal).")
+    else:
+        print("Spalte verlauf_eintraege.aufgabe_kanal existiert bereits.")
+
     if not column_exists(cur, "verlauf_eintraege", "msgraph_list_id"):
         cur.execute("ALTER TABLE verlauf_eintraege ADD COLUMN msgraph_list_id VARCHAR(200)")
         print("Spalte verlauf_eintraege.msgraph_list_id ergänzt.")

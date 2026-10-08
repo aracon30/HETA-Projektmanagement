@@ -3,6 +3,7 @@ from datetime import datetime, date
 from flask import Flask, jsonify, request, send_from_directory
 from models import db, User, Item, VerlaufEintrag, VerlaufUpdate, Phase, LieferterminHistorie, AuftragPosition
 import graph_client
+import mail_client
 from erp_import import parse_positionsansicht_auftrag, hat_offene_position
 from prozesse_api import bp as prozesse_bp
 
@@ -265,10 +266,10 @@ def add_verlauf(item_id):
 
 @app.route("/api/verlauf/<int:eintrag_id>/aufgabe", methods=["POST"])
 def create_aufgabe(eintrag_id):
-    """Legt die Aufgabe in Microsoft To Do der zuständigen Person an: über die
-    Graph-API (falls GRAPH_* Umgebungsvariablen gesetzt sind), sonst über deren
-    persönlichen Power-Automate-Webhook (falls hinterlegt, Übergangslösung bis
-    zur Azure-Freigabe), sonst nur lokale Markierung."""
+    """Benachrichtigt die zuständige Person über die Aufgabe — der Reihe nach über
+    Microsoft Graph (falls GRAPH_* Umgebungsvariablen gesetzt sind), sonst per
+    E-Mail (falls SMTP_* gesetzt ist), sonst über deren persönlichen
+    Power-Automate-Webhook (falls hinterlegt), sonst nur lokale Markierung."""
     eintrag = VerlaufEintrag.query.get_or_404(eintrag_id)
     data = request.get_json(force=True)
     eintrag.verantwortlich = data.get("verantwortlich", eintrag.verantwortlich)
@@ -287,12 +288,22 @@ def create_aufgabe(eintrag_id):
                 result = graph_client.create_task(user.email, title, eintrag.text, due_iso)
                 if result:
                     eintrag.msgraph_list_id, eintrag.msgraph_task_id = result
+                eintrag.aufgabe_kanal = "graph"
             except Exception as exc:
                 return jsonify({"error": "Graph-API-Fehler: " + str(exc)}), 502
+        elif mail_client.is_configured() and user.email:
+            # Übergangslösung bis zur Azure-Freigabe: E-Mail per SMTP, kein Admin-Consent nötig
+            try:
+                mail_client.send_task_mail(user.email, title, eintrag.text, due_iso)
+                eintrag.aufgabe_kanal = "mail"
+            except Exception as exc:
+                return jsonify({"error": "E-Mail-Fehler: " + str(exc)}), 502
         elif user.webhook_url:
-            # Übergangslösung bis zur Azure-Freigabe: persönlicher Power-Automate-Flow
+            # Weitere Übergangslösung: persönlicher Power-Automate-Flow (falls in eurem
+            # Tenant nicht per DLP-Richtlinie gesperrt — bei HETA aktuell nicht nutzbar)
             try:
                 graph_client.create_task_via_webhook(user.webhook_url, title, eintrag.text, due_iso)
+                eintrag.aufgabe_kanal = "webhook"
             except Exception as exc:
                 return jsonify({"error": "Webhook-Fehler: " + str(exc)}), 502
 

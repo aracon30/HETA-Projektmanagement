@@ -16,6 +16,17 @@ Environment="PATH=/opt/projektbesprechung/venv/bin"
 # Environment="GRAPH_CLIENT_ID=..."
 # Environment="GRAPH_CLIENT_SECRET=..."
 
+# Übergangslösung bis zur Azure-Freigabe: E-Mail-Benachrichtigung per SMTP
+# (einfacher als Graph — braucht nur Zugangsdaten für einen Mail-Relay, kein
+# Azure-AD-App-Registrierung/Admin-Consent). Hat Vorrang vor dem Webhook unten,
+# wird aber von GRAPH_* oben automatisch wieder abgelöst, sobald das konfiguriert ist.
+# Environment="SMTP_HOST=..."
+# Environment="SMTP_PORT=587"
+# Environment="SMTP_USER=..."
+# Environment="SMTP_PASSWORD=..."
+# Environment="MAIL_FROM=auftragspipeline@heta.de"
+# Environment="APP_BASE_URL=http://192.168.80.65"
+
 ExecStart=/opt/projektbesprechung/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 app:app
 Restart=on-failure
 
