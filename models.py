@@ -201,6 +201,11 @@ class VerlaufEintrag(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     status_changed_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    updates = db.relationship(
+        "VerlaufUpdate", backref="verlauf", cascade="all, delete-orphan",
+        order_by="VerlaufUpdate.created_at"
+    )
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -212,6 +217,28 @@ class VerlaufEintrag(db.Model):
             "faelligkeit": self.faelligkeit.isoformat() if self.faelligkeit else None,
             "status": self.status,
             "aufgabe": self.aufgabe_erstellt,
+            "updates": [u.to_dict() for u in self.updates],
+        }
+
+
+class VerlaufUpdate(db.Model):
+    """Ein datiertes Update zu einem Verlaufseintrag (z.B. "Bestellung verschickt
+    am 07.10.2026"), damit der Fortschritt einer Aufgabe über die Zeit mit Autor
+    und Zeitstempel nachvollziehbar bleibt, statt als weiterer Satz in den
+    Ursprungstext des Eintrags geschrieben zu werden."""
+    __tablename__ = "verlauf_updates"
+    id = db.Column(db.Integer, primary_key=True)
+    verlauf_id = db.Column(db.Integer, db.ForeignKey("verlauf_eintraege.id"), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    erstellt_von = db.Column(db.String(120), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "text": self.text,
+            "erstelltVon": self.erstellt_von,
+            "erstelltAm": self.created_at.isoformat() + "Z" if self.created_at else None,
         }
 
 

@@ -186,6 +186,30 @@
   .entry-due.warn{ color:var(--red); font-weight:600; }
   .task-badge{ font-size:0.7rem; background:var(--copper-soft); color:var(--copper); padding:3px 9px; border-radius:20px; font-weight:600; }
 
+  .entry-updates{ margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); display:flex; flex-direction:column; gap:9px; }
+  .entry-update{ display:flex; gap:8px; align-items:flex-start; }
+  .entry-update .upd-rail{ display:flex; flex-direction:column; align-items:center; align-self:stretch; flex-shrink:0; }
+  .entry-update .upd-dot{ width:6px; height:6px; border-radius:50%; background:var(--sage); margin-top:5px; flex-shrink:0; }
+  .entry-update .upd-line{ width:1px; flex:1; background:var(--line); margin-top:3px; }
+  .entry-update:last-child .upd-line{ display:none; }
+  .entry-update .upd-body{ flex:1; min-width:0; display:flex; justify-content:space-between; gap:8px; }
+  .entry-update .upd-main{ min-width:0; }
+  .entry-update .upd-meta{ font-size:0.7rem; color:var(--slate); }
+  .entry-update .upd-meta b{ color:var(--ink); font-weight:600; }
+  .entry-update .upd-time{ font-family:'IBM Plex Mono', monospace; font-size:0.66rem; color:var(--slate-light); margin-left:6px; }
+  .entry-update .upd-text{ font-size:0.82rem; color:var(--ink); margin:2px 0 0; line-height:1.45; white-space:pre-wrap; }
+  .upd-delete{ flex-shrink:0; border:none; background:none; color:var(--slate-light); cursor:pointer; padding:2px 4px; border-radius:3px; font-size:0.68rem; font-family:inherit; font-weight:600; }
+  .upd-delete:hover{ color:var(--red); background:var(--red-soft); }
+  .entry-updates-add{ margin-top:10px; }
+  .entry-updates-add > .btn.text{ font-size:0.74rem; padding:2px 0; }
+  .update-form{ display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+  .update-form textarea{ width:100%; font-family:inherit; font-size:0.82rem; padding:7px 9px; border:1px solid var(--line); border-radius:var(--radius); background:var(--paper); color:var(--ink); resize:vertical; }
+  .update-form select{ font-family:inherit; font-size:0.78rem; padding:5px 7px; border:1px solid var(--line); border-radius:var(--radius); background:var(--paper); color:var(--ink); max-width:220px; }
+  .update-form textarea:focus-visible, .update-form select:focus-visible{ outline:2px solid var(--steel); outline-offset:1px; }
+  .update-form-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:space-between; }
+  .update-form-actions{ display:flex; gap:10px; }
+  .update-form-actions .btn.text{ font-size:0.74rem; }
+
   .new-entry-form{ background:var(--panel); border:1px dashed var(--slate-light); border-radius:var(--radius); padding:14px 15px; margin-top:14px; }
   .new-entry-form textarea, .new-entry-form select, .new-entry-form input{ width:100%; font-family:inherit; font-size:0.85rem; padding:8px 10px; border:1px solid var(--line); border-radius:var(--radius); background:var(--paper); color:var(--ink); margin-top:4px; }
   .new-entry-form textarea:focus-visible, .new-entry-form select:focus-visible, .new-entry-form input:focus-visible{ outline:2px solid var(--steel); outline-offset:1px; }
@@ -1842,6 +1866,24 @@ function renderMain(){
     if(deleteBtn) deleteBtn.addEventListener("click", () => openDeleteVerlaufConfirm(item, e));
     const statusBtn = document.getElementById(`entryStatusBtn-${e.id}`);
     if(statusBtn) statusBtn.addEventListener("click", () => openEntryStatusModal(item, e));
+    const addUpdateBtn = document.getElementById(`addUpdateBtn-${e.id}`);
+    if(addUpdateBtn) addUpdateBtn.addEventListener("click", () => renderUpdateForm(item, e));
+    (e.updates || []).forEach(u => {
+      const delUpdateBtn = document.getElementById(`deleteUpdateBtn-${u.id}`);
+      if(delUpdateBtn) delUpdateBtn.addEventListener("click", async () => {
+        delUpdateBtn.disabled = true;
+        try{
+          await apiDelete(`/verlauf/updates/${u.id}`);
+          await loadItems(currentTab);
+          renderList();
+          renderMain();
+          showToast("Update gelöscht.");
+        }catch(err){
+          showToast("Update konnte nicht gelöscht werden.", true);
+          delUpdateBtn.disabled = false;
+        }
+      });
+    });
     if(!e.verantwortlich || e.aufgabe) return;
     const btn = document.getElementById(`taskBtn-${e.id}`);
     if(btn) btn.addEventListener("click", () => openTaskModal(item, e));
@@ -2724,9 +2766,25 @@ function openPositionLieferterminDialog(item, position){
   document.addEventListener("keydown", escCloseOnce);
 }
 
+function renderUpdateEntry(u){
+  return `
+    <div class="entry-update" data-update-id="${u.id}">
+      <div class="upd-rail"><div class="upd-dot"></div><div class="upd-line"></div></div>
+      <div class="upd-body">
+        <div class="upd-main">
+          <div class="upd-meta"><b>${u.erstelltVon || 'Unbekannt'}</b><span class="upd-time">${fmtDateTime(u.erstelltAm)}</span></div>
+          <p class="upd-text">${u.text}</p>
+        </div>
+        <button class="upd-delete" id="deleteUpdateBtn-${u.id}" title="Update löschen">✕</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderEntry(e, item){
   const classes = ["entry", e.status];
   const ueberfaellig = item && item.liefertermin && e.faelligkeit && e.faelligkeit > item.liefertermin;
+  const updates = e.updates || [];
   return `
     <div class="${classes.join(' ')}">
       <div class="node" aria-hidden="true"></div>
@@ -2751,9 +2809,56 @@ function renderEntry(e, item){
             ? `<span class="task-badge">Aufgabe in To Do erstellt</span>`
             : (e.verantwortlich ? `<button class="btn ghost small" id="taskBtn-${e.id}">Aufgabe erstellen</button>` : '')}
         </div>
+        ${updates.length ? `<div class="entry-updates">${updates.map(renderUpdateEntry).join("")}</div>` : ""}
+        <div class="entry-updates-add">
+          <button class="btn text" id="addUpdateBtn-${e.id}">+ Update</button>
+          <div id="updateFormSlot-${e.id}"></div>
+        </div>
       </div>
     </div>
   `;
+}
+
+function renderUpdateForm(item, entry){
+  const slot = document.getElementById(`updateFormSlot-${entry.id}`);
+  const addBtn = document.getElementById(`addUpdateBtn-${entry.id}`);
+  addBtn.style.display = "none";
+  slot.innerHTML = `
+    <div class="update-form">
+      <textarea id="updateText-${entry.id}" rows="2" placeholder="Was hat sich seitdem getan?"></textarea>
+      <div class="update-form-row">
+        <select id="updateCreatedBy-${entry.id}">
+          <option value="">— wer trägt das ein? —</option>
+          ${nutzer.map(n => `<option value="${n.name}">${n.name}</option>`).join("")}
+        </select>
+        <div class="update-form-actions">
+          <button class="btn text" id="cancelUpdateBtn-${entry.id}">Abbrechen</button>
+          <button class="btn" id="saveUpdateBtn-${entry.id}">Speichern</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const textEl = document.getElementById(`updateText-${entry.id}`);
+  textEl.focus();
+  function restore(){ slot.innerHTML = ""; addBtn.style.display = ""; }
+  document.getElementById(`cancelUpdateBtn-${entry.id}`).addEventListener("click", restore);
+  document.getElementById(`saveUpdateBtn-${entry.id}`).addEventListener("click", async () => {
+    const text = textEl.value.trim();
+    if(!text){ textEl.focus(); return; }
+    const erstelltVon = document.getElementById(`updateCreatedBy-${entry.id}`).value || null;
+    const saveBtn = document.getElementById(`saveUpdateBtn-${entry.id}`);
+    saveBtn.disabled = true;
+    try{
+      await apiPost(`/verlauf/${entry.id}/updates`, { text, erstelltVon });
+      await loadItems(currentTab);
+      renderList();
+      renderMain();
+      showToast("Update gespeichert.");
+    }catch(err){
+      showToast("Update konnte nicht gespeichert werden.", true);
+      saveBtn.disabled = false;
+    }
+  });
 }
 
 function openEditEntryModal(item, entry){

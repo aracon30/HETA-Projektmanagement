@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, date
 from flask import Flask, jsonify, request, send_from_directory
-from models import db, User, Item, VerlaufEintrag, Phase, LieferterminHistorie, AuftragPosition
+from models import db, User, Item, VerlaufEintrag, VerlaufUpdate, Phase, LieferterminHistorie, AuftragPosition
 import graph_client
 from erp_import import parse_positionsansicht_auftrag, hat_offene_position
 from prozesse_api import bp as prozesse_bp
@@ -334,6 +334,32 @@ def sync_aufgaben():
 def delete_verlauf(eintrag_id):
     eintrag = VerlaufEintrag.query.get_or_404(eintrag_id)
     db.session.delete(eintrag)
+    db.session.commit()
+    return "", 204
+
+
+# ---------- Updates zu einem Verlaufseintrag (datierte Fortschrittsnotizen) ----------
+@app.route("/api/verlauf/<int:eintrag_id>/updates", methods=["POST"])
+def add_verlauf_update(eintrag_id):
+    VerlaufEintrag.query.get_or_404(eintrag_id)
+    data = request.get_json(force=True)
+    text = (data.get("text") or "").strip()
+    if not text:
+        return jsonify({"error": "Text darf nicht leer sein."}), 400
+    update = VerlaufUpdate(
+        verlauf_id=eintrag_id,
+        text=text,
+        erstellt_von=data.get("erstelltVon"),
+    )
+    db.session.add(update)
+    db.session.commit()
+    return jsonify(update.to_dict()), 201
+
+
+@app.route("/api/verlauf/updates/<int:update_id>", methods=["DELETE"])
+def delete_verlauf_update(update_id):
+    update = VerlaufUpdate.query.get_or_404(update_id)
+    db.session.delete(update)
     db.session.commit()
     return "", 204
 

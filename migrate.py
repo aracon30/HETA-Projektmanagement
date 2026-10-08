@@ -188,6 +188,20 @@ def main():
     else:
         print("Spalte liefertermin_historie.position_id existiert bereits.")
 
+    if not table_exists(cur, "verlauf_updates"):
+        cur.execute("""
+            CREATE TABLE verlauf_updates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                verlauf_id INTEGER NOT NULL REFERENCES verlauf_eintraege(id),
+                text TEXT NOT NULL,
+                erstellt_von VARCHAR(120),
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle verlauf_updates angelegt (datierte Updates je Verlaufseintrag).")
+    else:
+        print("Tabelle verlauf_updates existiert bereits.")
+
     if not column_exists(cur, "items", "bestelleingang"):
         cur.execute("ALTER TABLE items ADD COLUMN bestelleingang DATE")
         print("Spalte items.bestelleingang ergänzt (Datum des Bestelleingangs im Auftragskopf).")
