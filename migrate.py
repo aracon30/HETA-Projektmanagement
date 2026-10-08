@@ -50,6 +50,12 @@ def main():
     else:
         print("Spalte users.email existiert bereits.")
 
+    if not column_exists(cur, "users", "webhook_url"):
+        cur.execute("ALTER TABLE users ADD COLUMN webhook_url VARCHAR(500)")
+        print("Spalte users.webhook_url ergänzt (persönlicher Power-Automate-Flow).")
+    else:
+        print("Spalte users.webhook_url existiert bereits.")
+
     if not column_exists(cur, "verlauf_eintraege", "msgraph_list_id"):
         cur.execute("ALTER TABLE verlauf_eintraege ADD COLUMN msgraph_list_id VARCHAR(200)")
         print("Spalte verlauf_eintraege.msgraph_list_id ergänzt.")

@@ -33,6 +33,21 @@ def get_users():
     return jsonify([u.to_dict() for u in User.query.order_by(User.name).all()])
 
 
+@app.route("/api/users/<int:user_id>", methods=["PATCH"])
+def update_user(user_id):
+    """Aktuell nur für die persönliche Webhook-URL (Power-Automate-Übergangslösung
+    für 'Aufgabe erstellen', bis die Azure-AD-App-Registrierung freigegeben ist)."""
+    user = User.query.get_or_404(user_id)
+    data = request.get_json(force=True)
+    if "webhookUrl" in data:
+        webhook_url = (data.get("webhookUrl") or "").strip() or None
+        if webhook_url and not webhook_url.startswith("https://"):
+            return jsonify({"error": "Webhook-URL muss mit https:// beginnen."}), 400
+        user.webhook_url = webhook_url
+    db.session.commit()
+    return jsonify(user.to_dict())
+
+
 # ---------- Items (Aufträge / Angebote) ----------
 @app.route("/api/items")
 def get_items():
@@ -250,8 +265,10 @@ def add_verlauf(item_id):
 
 @app.route("/api/verlauf/<int:eintrag_id>/aufgabe", methods=["POST"])
 def create_aufgabe(eintrag_id):
-    """Legt die Aufgabe in Microsoft To Do der zuständigen Person an (falls
-    GRAPH_* Umgebungsvariablen gesetzt sind), sonst nur lokale Markierung."""
+    """Legt die Aufgabe in Microsoft To Do der zuständigen Person an: über die
+    Graph-API (falls GRAPH_* Umgebungsvariablen gesetzt sind), sonst über deren
+    persönlichen Power-Automate-Webhook (falls hinterlegt, Übergangslösung bis
+    zur Azure-Freigabe), sonst nur lokale Markierung."""
     eintrag = VerlaufEintrag.query.get_or_404(eintrag_id)
     data = request.get_json(force=True)
     eintrag.verantwortlich = data.get("verantwortlich", eintrag.verantwortlich)
@@ -260,18 +277,24 @@ def create_aufgabe(eintrag_id):
     if data.get("text"):
         eintrag.text = data.get("text")
 
-    if graph_client.is_configured() and eintrag.verantwortlich:
-        user = User.query.filter_by(name=eintrag.verantwortlich).first()
-        if user and user.email:
-            item = eintrag.item
-            title = f"{item.kommission} — {item.kunde}"
-            due_iso = eintrag.faelligkeit.isoformat() if eintrag.faelligkeit else None
+    user = User.query.filter_by(name=eintrag.verantwortlich).first() if eintrag.verantwortlich else None
+    if user:
+        item = eintrag.item
+        title = f"{item.kommission} — {item.kunde}"
+        due_iso = eintrag.faelligkeit.isoformat() if eintrag.faelligkeit else None
+        if graph_client.is_configured() and user.email:
             try:
                 result = graph_client.create_task(user.email, title, eintrag.text, due_iso)
                 if result:
                     eintrag.msgraph_list_id, eintrag.msgraph_task_id = result
             except Exception as exc:
                 return jsonify({"error": "Graph-API-Fehler: " + str(exc)}), 502
+        elif user.webhook_url:
+            # Übergangslösung bis zur Azure-Freigabe: persönlicher Power-Automate-Flow
+            try:
+                graph_client.create_task_via_webhook(user.webhook_url, title, eintrag.text, due_iso)
+            except Exception as exc:
+                return jsonify({"error": "Webhook-Fehler: " + str(exc)}), 502
 
     eintrag.aufgabe_erstellt = True
     db.session.commit()

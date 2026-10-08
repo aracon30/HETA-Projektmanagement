@@ -10,9 +10,16 @@ class User(db.Model):
     name = db.Column(db.String(120), unique=True, nullable=False)
     abteilung = db.Column(db.String(80), nullable=True)
     email = db.Column(db.String(160), nullable=True)
+    webhook_url = db.Column(db.String(500), nullable=True)  # persönlicher Power-Automate-Flow, Übergang bis zur Azure-Freigabe
 
     def to_dict(self):
-        return {"id": self.id, "name": self.name, "abteilung": self.abteilung, "email": self.email}
+        return {
+            "id": self.id,
+            "name": self.name,
+            "abteilung": self.abteilung,
+            "email": self.email,
+            "webhookUrl": self.webhook_url,
+        }
 
 
 class Item(db.Model):

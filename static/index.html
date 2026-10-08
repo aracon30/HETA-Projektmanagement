@@ -221,6 +221,16 @@
   .modal-backdrop{ position:fixed; inset:0; background:rgba(27,36,48,0.45); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; }
   .modal{ background:var(--panel); border-radius:var(--radius); max-width:440px; width:100%; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,0.25); }
   .modal.wide{ max-width:720px; }
+  .webhook-list{ display:flex; flex-direction:column; gap:10px; max-height:50vh; overflow-y:auto; margin:14px 0; }
+  .webhook-row{ display:flex; align-items:center; gap:10px; }
+  .webhook-row .wh-name{ width:150px; flex-shrink:0; font-size:0.86rem; font-weight:600; color:var(--ink); }
+  .webhook-row input{ flex:1; min-width:0; font-family:inherit; font-size:0.84rem; padding:7px 9px; border:1px solid var(--line); border-radius:var(--radius); background:var(--paper); color:var(--ink); }
+  .webhook-row input:focus-visible{ outline:2px solid var(--steel); outline-offset:1px; }
+  .webhook-row .wh-save{ flex-shrink:0; }
+  .webhook-row .wh-status{ width:18px; flex-shrink:0; text-align:center; color:var(--green); font-weight:700; }
+  .webhook-howto{ background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; font-size:0.82rem; color:var(--slate); line-height:1.6; }
+  .webhook-howto b{ color:var(--ink); }
+  .webhook-howto ol{ margin:6px 0 0; padding-left:20px; }
   .import-list{ max-height:420px; overflow-y:auto; border:1px solid var(--line); border-radius:8px; }
   .import-row{ display:flex; gap:12px; padding:10px 12px; border-bottom:1px solid var(--line); align-items:flex-start; }
   .import-row:last-child{ border-bottom:none; }
@@ -665,6 +675,7 @@
     <button class="sync-btn" id="syncTodoBtn" title="Bei Microsoft To Do nachfragen, ob verknüpfte Aufgaben dort erledigt wurden">↻ To Do abgleichen</button>
     <button class="sync-btn" id="importErpBtn" title="Neue Aufträge aus der Positionsansicht Auftrag.xlsm erkennen">⇪ Aufträge aus Excel</button>
     <input type="file" id="importErpFile" accept=".xlsm,.xlsx" style="display:none;">
+    <button class="sync-btn" id="webhooksBtn" title="Persönliche To-Do-Webhooks verwalten (Übergang bis zur Azure-Freigabe)">⚙ To-Do-Webhooks</button>
   </div>
 
   <div class="tabbar" role="tablist" aria-label="Bereich wählen">
@@ -1279,6 +1290,65 @@ document.getElementById("importErpFile").addEventListener("change", async (ev) =
     btn.textContent = originalText;
   }
 });
+
+document.getElementById("webhooksBtn").addEventListener("click", () => openWebhooksModal());
+
+function openWebhooksModal(){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="webhooksModalTitle">
+        <h3 id="webhooksModalTitle">Persönliche To-Do-Webhooks</h3>
+        <div class="sub">Übergangslösung für „Aufgabe erstellen", solange die Microsoft-Graph-Anbindung noch nicht freigegeben ist.</div>
+        <div class="webhook-howto">
+          Jede Person kann sich das selbst einrichten, ganz ohne IT/Admin-Freigabe:
+          <ol>
+            <li>In <b>Power Automate</b> (<a href="https://make.powerautomate.com" target="_blank" rel="noopener">make.powerautomate.com</a>) einen neuen Flow anlegen</li>
+            <li>Trigger: <b>„Wenn eine HTTP-Anfrage eingeht"</b></li>
+            <li>Aktion: <b>„Aufgabe erstellen (V2)"</b> (To Do-Connector), Titel/Notizen/Fälligkeit aus den Feldern <code>title</code>/<code>body</code>/<code>dueDate</code> der Anfrage übernehmen</li>
+            <li>Flow speichern, die angezeigte <b>HTTP-POST-URL</b> hier unten bei sich selbst eintragen</li>
+          </ol>
+        </div>
+        <div class="webhook-list" id="webhookList">
+          ${nutzer.map(n => `
+            <div class="webhook-row" data-user-id="${n.id}">
+              <span class="wh-name">${n.name}</span>
+              <input type="url" placeholder="https://prod-….logic.azure.com/…" value="${n.webhookUrl || ''}">
+              <button class="btn ghost small wh-save" type="button">Speichern</button>
+              <span class="wh-status"></span>
+            </div>
+          `).join("")}
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="webhooksClose">Schließen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("webhooksClose").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  root.querySelectorAll(".webhook-row").forEach(row => {
+    const userId = parseInt(row.dataset.userId, 10);
+    const input = row.querySelector("input");
+    const saveBtn = row.querySelector(".wh-save");
+    const statusEl = row.querySelector(".wh-status");
+    saveBtn.addEventListener("click", async () => {
+      statusEl.textContent = "";
+      saveBtn.disabled = true;
+      try{
+        await apiPatch(`/users/${userId}`, { webhookUrl: input.value.trim() });
+        const user = nutzer.find(n => n.id === userId);
+        if(user) user.webhookUrl = input.value.trim() || null;
+        statusEl.textContent = "✓";
+        showToast("Webhook-URL gespeichert.");
+      }catch(err){
+        showToast("Konnte nicht gespeichert werden.", true);
+      }finally{
+        saveBtn.disabled = false;
+      }
+    });
+  });
+}
 
 function openImportReviewModal(result){
   const root = document.getElementById("modalRoot");

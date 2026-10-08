@@ -14,6 +14,12 @@ Konfiguration über Umgebungsvariablen:
 Ist eine dieser Variablen nicht gesetzt, ist die Integration "deaktiviert"
 und create_task() gibt None zurück, ohne einen Fehler zu werfen — das Tool
 funktioniert dann weiter wie bisher (Aufgabe wird nur lokal markiert).
+
+Übergangslösung bis zur Azure-Freigabe: create_task_via_webhook() schickt die
+Aufgabe stattdessen an eine persönliche Power-Automate-Webhook-URL, die sich
+jede Person selbst einrichten kann (kein Admin-Consent, kein IT-Ticket nötig,
+siehe README). app.py nutzt das nur, wenn Graph nicht konfiguriert ist UND
+die Person eine Webhook-URL hinterlegt hat.
 """
 import os
 import requests
@@ -113,3 +119,18 @@ def get_task_status(user_email, list_id, task_id):
     )
     res.raise_for_status()
     return res.json().get("status") == "completed"
+
+
+def create_task_via_webhook(webhook_url, title, body_text=None, due_date_iso=None):
+    """
+    Übergangslösung: schickt die Aufgabe per HTTP POST an eine persönliche
+    Power-Automate-Webhook-URL (Flow-Trigger "Wenn eine HTTP-Anfrage eingeht"
+    -> Aktion "Aufgabe erstellen (To Do)"), die sich jede Person selbst ohne
+    Admin-Zustimmung einrichten kann. Wirft eine Exception bei einem
+    Verbindungs- oder HTTP-Fehler; der Aufruf in app.py fängt das ab.
+    """
+    if not webhook_url or not webhook_url.startswith("https://"):
+        raise ValueError("Webhook-URL muss mit https:// beginnen.")
+    payload = {"title": title, "body": body_text, "dueDate": due_date_iso}
+    res = requests.post(webhook_url, json=payload, timeout=10)
+    res.raise_for_status()
