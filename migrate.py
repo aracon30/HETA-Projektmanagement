@@ -265,6 +265,7 @@ def main():
                 versand VARCHAR(120),
                 asme_edition VARCHAR(120),
                 coded_marking VARCHAR(200),
+                material_art VARCHAR(120),
                 weitere_standards TEXT,
                 zahlungsbedingungen VARCHAR(200),
                 mwst_satz FLOAT DEFAULT 19.0,
@@ -274,6 +275,10 @@ def main():
         print("Tabelle lieferanten_bestellungen angelegt (ASME-Dokumente).")
     else:
         print("Tabelle lieferanten_bestellungen existiert bereits.")
+
+    if not column_exists(cur, "lieferanten_bestellungen", "material_art"):
+        cur.execute("ALTER TABLE lieferanten_bestellungen ADD COLUMN material_art VARCHAR(120)")
+        print("Spalte lieferanten_bestellungen.material_art ergänzt.")
 
     if not table_exists(cur, "bestell_positionen"):
         cur.execute("""

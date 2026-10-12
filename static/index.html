@@ -2018,10 +2018,11 @@ async function openBestellungModal(item, b){
             ${asmeInput("bIhrSachbearbeiter", "Ihr Sachbearbeiter", v("ihrSachbearbeiter"))}
             ${asmeInput("bUnserZeichen", "Unser Zeichen", v("unserZeichen"))}
             ${asmeInput("bLieferdatum", "Lieferdatum", v("lieferdatum"), { type: "date" })}
-            ${asmeInput("bVersand", "Versand / Incoterm", v("versand", vorgaben.versand || ""))}
+            ${asmeInput("bVersand", "Versand / Incoterm", v("versand", vorgaben.versand || ""), { list: auswahl.versand })}
             ${asmeInput("bAsmeEdition", "ASME (Section / Edition)", v("asmeEdition", vorgaben.asme_edition || ""))}
+            ${asmeInput("bMaterialArt", "Material nach Sec. II Part A", v("materialArt"), { list: auswahl.material_art, placeholder: "leer = Werkstoffe der Positionen" })}
             ${asmeInput("bCodedMarking", "Coded marking", v("codedMarking"), { list: auswahl.coded_marking })}
-            ${asmeInput("bZahlung", "Zahlungsbedingungen", v("zahlungsbedingungen", vorgaben.zahlungsbedingungen || ""))}
+            ${asmeInput("bZahlung", "Zahlungsbedingungen", v("zahlungsbedingungen", vorgaben.zahlungsbedingungen || ""), { list: auswahl.zahlungsbedingungen })}
             ${asmeInput("bMwst", "MwSt. %", v("mwstSatz", vorgaben.mwst_satz ?? 19), { type: "number" })}
           </div>
           <div class="form-row">
@@ -2047,7 +2048,7 @@ async function openBestellungModal(item, b){
       bestellNr: val("bBestellNr"), datum: val("bDatum") || null, lieferant: document.getElementById("bLieferant").value.trim(),
       ihrAngebot: val("bIhrAngebot"), ihrSachbearbeiter: val("bIhrSachbearbeiter"), unserZeichen: val("bUnserZeichen"),
       lieferdatum: val("bLieferdatum") || null, versand: val("bVersand"), asmeEdition: val("bAsmeEdition"),
-      codedMarking: val("bCodedMarking"), zahlungsbedingungen: val("bZahlung"), mwstSatz: val("bMwst"),
+      codedMarking: val("bCodedMarking"), materialArt: val("bMaterialArt"), zahlungsbedingungen: val("bZahlung"), mwstSatz: val("bMwst"),
       weitereStandards: [...document.querySelectorAll(".bStd:checked")].map(c => c.value),
     };
     asmeSpeichern(ev.currentTarget, async () => {
@@ -2079,6 +2080,7 @@ async function openBestellPositionModal(item, b, p){
             ${asmeInput("pEinheit", "Einheit", v("einheit", "Stk"), { list: ["Stk", "m", "kg", "m²", "Satz"] })}
           </div>
           ${asmeInput("pBezeichnung", "Bezeichnung / Abmessungen *", v("bezeichnung"), { textarea: true, rows: 3, placeholder: "z.B. Blech 20 x 2000 x 6000 mm" })}
+          ${(auswahl.bauteil || []).length ? `<div class="asme-std" style="margin:-6px 0 12px;">${auswahl.bauteil.map(b => `<button type="button" class="chip asme-bauteil" data-v="${asmeEsc(b)}">${asmeEsc(b)}</button>`).join("")}</div>` : ""}
           <div class="form-grid">
             ${asmeInput("pWerkstoff", "Werkstoff (Sec. II Part A)", v("werkstoff"), { placeholder: "z.B. SA-516 Gr.70", list: auswahl.werkstoff })}
             ${asmeInput("pSpezifikation", "Spezifikation", v("spezifikation"), { list: auswahl.spezifikation })}
@@ -2097,6 +2099,11 @@ async function openBestellPositionModal(item, b, p){
   document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
   document.addEventListener("keydown", escCloseOnce);
   document.getElementById(isEdit ? "pBezeichnung" : "pMenge").focus();
+  document.querySelectorAll(".asme-bauteil").forEach(btn => btn.addEventListener("click", () => {
+    const ta = document.getElementById("pBezeichnung");
+    ta.value = btn.dataset.v + (ta.value.trim() ? " " + ta.value.trim() : " ");
+    ta.focus();
+  }));
   const body = () => {
     const val = id => document.getElementById(id).value.trim();
     return {

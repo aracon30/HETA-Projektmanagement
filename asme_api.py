@@ -74,6 +74,16 @@ def asme_config():
 
 
 # ---------- Hilfsfunktionen ----------
+class Ankreuzliste(dict):
+    """{{ std['B16.5'] }} -> ☒/☐; auch für Standards, die nur in der Vorlage stehen."""
+    def __init__(self, gewaehlt, alle):
+        super().__init__({s: ("☒" if s in gewaehlt else "☐") for s in alle})
+        self.gewaehlt = set(gewaehlt)
+
+    def __missing__(self, key):
+        return "☒" if key in self.gewaehlt else "☐"
+
+
 def parse_date(value):
     if not value:
         return None
@@ -121,6 +131,7 @@ BESTELLUNG_FELDER = {
     "versand": ("versand", str),
     "asmeEdition": ("asme_edition", str),
     "codedMarking": ("coded_marking", str),
+    "materialArt": ("material_art", str),
     "zahlungsbedingungen": ("zahlungsbedingungen", str),
     "mwstSatz": ("mwst_satz", parse_float),
 }
@@ -279,9 +290,10 @@ def baue_kontext(bestellung, revision, formular):
         "versand": bestellung.versand or "",
         "asme_edition": bestellung.asme_edition or "",
         "coded_marking": bestellung.coded_marking or "",
+        "material_art": bestellung.material_art or "",
         "spezifikationen": ", ".join(dict.fromkeys(p["spezifikation"] for p in positionen if p["spezifikation"])),
         "werkstoffe": ", ".join(dict.fromkeys(p["werkstoff"] for p in positionen if p["werkstoff"])),
-        "std": {s: ("☒" if s in standards else "☐") for s in auswahl_standards},
+        "std": Ankreuzliste(standards, auswahl_standards),
         "zahlungsbedingungen": bestellung.zahlungsbedingungen or "",
         "positionen": positionen,
         "summe_netto": fmt_zahl(summe),

@@ -1,12 +1,17 @@
 # ASME-Formularvorlagen
 
-Je Ausgabe des QC-Handbuchs ein Ordner (z. B. `Entwurf/`, später `Rev_05/`) mit
+Je Ausgabe des QC-Handbuchs ein Ordner (aktuell `Original/`, später z. B. `Rev_06/`) mit
 den Word-Vorlagen und einer `formulare.json`. Das Tool füllt die Platzhalter
 aus den Daten der Lieferantenbestellung (Reiter Aufträge → „Lieferantenbestellungen
 & ASME-Dokumente“ → „Dokumente erzeugen“).
 
-`Entwurf/` ist nach Screenshots nachgebaut und **vorläufig**. Sobald die
-Word-Originale vorliegen, daraus einen echten Revisionsordner machen.
+`Original/` ist aus den Word-Originalen `DE_Bestellung_ASME.docx` und
+`Sample_Form_3_Wareneingangskontrolle.docx` umgebaut (Skript
+`_umbau_originale.py`, als Vorlage für künftige Umbauten). Layout, Kopf-/Fußzeilen
+und Festtexte sind unverändert; ersetzt wurden nur die Eingabefelder.
+Bei der Bestellung stehen „Zahlungsbedingungen“ jetzt direkt unter der
+Positionstabelle (statt fest positioniert) und Seite 2 beginnt mit einem echten
+Seitenumbruch – so bricht eine lange Positionsliste sauber auf Folgeseiten um.
 
 ## Neue Handbuch-Ausgabe einspielen
 
@@ -36,6 +41,7 @@ erzeugt, stören nicht.
 | `{{ lieferdatum }}`, `{{ versand }}`, `{{ zahlungsbedingungen }}` | |
 | `{{ asme_edition }}` | z. B. Sec. VIII Div. 1 Ed. 2025 |
 | `{{ coded_marking }}` | |
+| `{{ material_art }}` | „Material nach Sec. II Part A“ (Edelstahl, Kohlenstoffstahl …) |
 | `{{ spezifikationen }}`, `{{ werkstoffe }}` | alle Werte der Positionen, kommagetrennt |
 | `{{ std['B16.5'] }}` | ☒ oder ☐ je Standard aus `auswahl.weitere_standards` |
 | `{{ summe_netto }}`, `{{ mwst_satz }}`, `{{ mwst }}`, `{{ summe_brutto }}` | deutsch formatiert, ohne € |
@@ -58,6 +64,7 @@ Schleifen:
 ## Auswahllisten
 
 `auswahl` in `formulare.json`: `weitere_standards` (Ankreuzliste der Bestellung),
-`werkstoff`, `spezifikation`, `coded_marking` (Vorschlagslisten in den
-Eingabemasken). Die Einträge aus den Dropdowns der Original-Bestellvorlage
-gehören hierher.
+`spezifikation`, `material_art`, `coded_marking`, `versand`,
+`zahlungsbedingungen` (Vorschlagslisten in den Eingabemasken, übernommen aus den
+Dropdowns der Original-Bestellvorlage) und `bauteil` (Schnellwahl-Knöpfe für die
+Positionsbezeichnung: Flansch, Blech, Rohr …).

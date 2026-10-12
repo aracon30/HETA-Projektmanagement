@@ -152,9 +152,12 @@ Festgelegt: Werkstoff/Spezifikation hängen an der **Position** (WE-Schein ist j
 Position); Prüfdaten des WE-Kontrollscheins werden **von Hand** ausgefüllt –
 das Tool füllt nur den Kopf (Bestell-Nr./Kommission, Pos., Stücklisten-Pos.,
 Bezeichnung, Werkstoff, Menge). Laut Philipp gehören zum ASME-Paket nur diese
-zwei Formulare. Offen: `Entwurf/` ist nach Screenshots nachgebaut – durch die
-Word-Originale ersetzen, Dropdown-Einträge der Original-Bestellvorlage in
-`auswahl` übernehmen, Form-Nr. der Bestellung eintragen.
+zwei Formulare. Vorlagen in `vorlagen/asme/Original/` sind aus Philipps
+Word-Originalen umgebaut (Dropdown-Listen in `auswahl` übernommen; Kopffeld
+„Material nach Sec. II Part A“ = `material_art` am Bestellkopf, Spezifikation
+und Werkstoff je Position). Offen: Handbuch-Revision und Form-Nr. der
+Bestellung in `formulare.json` eintragen; englische Bestellvorlage (Titel-Dropdown
+„Bestellung/Order“ deutet darauf hin) ggf. als eigenes Formular ergänzen.
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 

@@ -479,6 +479,7 @@ class LieferantenBestellung(db.Model):
     versand = db.Column(db.String(120), nullable=True)  # Incoterm, z.B. DAP Lich
     asme_edition = db.Column(db.String(120), nullable=True)  # z.B. Sec. VIII Div. 1 Ed. 2025
     coded_marking = db.Column(db.String(200), nullable=True)
+    material_art = db.Column(db.String(120), nullable=True)  # „Material nach Sec. II Part A“, z.B. Edelstahl
     weitere_standards = db.Column(db.Text, nullable=True)  # kommagetrennt, z.B. "B16.5,SA-20"
     zahlungsbedingungen = db.Column(db.String(200), nullable=True)
     mwst_satz = db.Column(db.Float, default=19.0)
@@ -509,6 +510,7 @@ class LieferantenBestellung(db.Model):
             "versand": self.versand,
             "asmeEdition": self.asme_edition,
             "codedMarking": self.coded_marking,
+            "materialArt": self.material_art,
             "weitereStandards": self.standards_liste(),
             "zahlungsbedingungen": self.zahlungsbedingungen,
             "mwstSatz": self.mwst_satz,
