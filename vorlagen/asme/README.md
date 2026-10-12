@@ -15,7 +15,7 @@ Seitenumbruch – so bricht eine lange Positionsliste sauber auf Folgeseiten um.
 
 ## Neue Handbuch-Ausgabe einspielen
 
-1. Ordner kopieren, z. B. `Entwurf/` → `Rev_06/`.
+1. Ordner kopieren, z. B. `Original/` → `Rev_06/`.
 2. Word-Originale der neuen Ausgabe hineinlegen und die Platzhalter unten an die
    Stelle der Eingabefelder setzen (Inhaltssteuerelemente/Dropdowns entfernen,
    statt dessen `{{ … }}` schreiben).
