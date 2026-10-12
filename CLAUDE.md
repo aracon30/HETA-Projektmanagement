@@ -136,7 +136,10 @@ Es heißt **Frau Häfer**.
 ## ASME-Auftragsdokumente (Stufe 1 umgesetzt, Branch `claude/asme-dokumente`)
 
 Ziel: Daten einmal erfassen, daraus die Formulare laut QC-Handbuch erzeugen –
-ohne Abtippen. In der Auftrags-Detailansicht Abschnitt „Lieferantenbestellungen
+ohne Abtippen. Freigeschaltet nur bei Aufträgen mit Haken „ASME-Auftrag“
+(Spalte `items.asme`, Feld in der zweiten Meta-Zeile); ohne Haken ist der
+Abschnitt ausgeblendet, vorhandene Bestellungen bleiben erhalten, die API
+lehnt neue Bestellungen/Dokumenterzeugung ab. In der Auftrags-Detailansicht Abschnitt „Lieferantenbestellungen
 & ASME-Dokumente“: Bestellung (Kopf) + Positionen anlegen, „Dokumente erzeugen“
 liefert ZIP mit `Bestellung_<Nr>.docx` und `WE-Kontrollscheine_<Nr>.docx`
 (eine Seite je Bestellposition). Code: `asme_api.py` (Blueprint, docxtpl),

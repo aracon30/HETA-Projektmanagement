@@ -160,6 +160,8 @@ def get_bestellungen(item_id):
 @bp.route("/items/<int:item_id>/bestellungen", methods=["POST"])
 def add_bestellung(item_id):
     item = Item.query.get_or_404(item_id)
+    if not item.asme:
+        return jsonify({"error": "Erst beim Auftrag „ASME-Auftrag“ anhaken."}), 400
     data = request.get_json(force=True)
     if not (data.get("bestellNr") or "").strip():
         return jsonify({"error": "Bestell-Nr. ist ein Pflichtfeld."}), 400
@@ -314,6 +316,8 @@ def erzeuge_dokumente(bestellung_id):
     revision = finde_revision(request.args.get("rev"))
     if not revision:
         return jsonify({"error": "Keine Vorlagen-Revision gefunden."}), 404
+    if not bestellung.item.asme:
+        return jsonify({"error": "Der Auftrag ist nicht als ASME-Auftrag gekennzeichnet."}), 400
     if not bestellung.positionen:
         return jsonify({"error": "Die Bestellung hat noch keine Positionen."}), 400
 

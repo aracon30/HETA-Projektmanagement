@@ -141,6 +141,8 @@ def update_item(item_id):
         item.t = data.get("t")
     if "projektleiter" in data and item.type == "auftrag":
         item.projektleiter = data.get("projektleiter")
+    if "asme" in data and item.type == "auftrag":
+        item.asme = bool(data.get("asme"))
     if "archiviert" in data and item.type == "auftrag":
         item.archiviert = bool(data.get("archiviert"))
     if "wert" in data and item.type == "angebot":

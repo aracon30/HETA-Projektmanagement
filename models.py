@@ -47,6 +47,7 @@ class Item(db.Model):
     t = db.Column(db.String(10), nullable=True)  # Spalte "T" aus dem ERP-Dashboard: F (Fertigung) | H (Handelsware)
     projektleiter = db.Column(db.String(120), nullable=True)  # verantwortliche/r Projektleiter/in (Nutzername)
     archiviert = db.Column(db.Boolean, default=False)  # manuell gesetzt, blendet den Auftrag aus der Liste aus
+    asme = db.Column(db.Boolean, default=False)  # ASME-Auftrag: schaltet Lieferantenbestellungen/ASME-Dokumente frei
 
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
@@ -102,6 +103,7 @@ class Item(db.Model):
                 "projektleiter": self.projektleiter,
                 "positionen": [p.to_dict() for p in self.positionen],
                 "archiviert": bool(self.archiviert),
+                "asme": bool(self.asme),
             })
         elif self.type == "angebot":
             base.update({

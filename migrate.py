@@ -244,6 +244,12 @@ def main():
     else:
         print("Nutzer 'Häfer, Gabriele' existiert bereits.")
 
+    if not column_exists(cur, "items", "asme"):
+        cur.execute("ALTER TABLE items ADD COLUMN asme BOOLEAN DEFAULT 0")
+        print("Spalte items.asme ergänzt (Kennzeichen ASME-Auftrag).")
+    else:
+        print("Spalte items.asme existiert bereits.")
+
     if not table_exists(cur, "lieferanten_bestellungen"):
         cur.execute("""
             CREATE TABLE lieferanten_bestellungen (

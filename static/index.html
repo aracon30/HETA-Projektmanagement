@@ -863,6 +863,7 @@ const KIND_CONFIG = {
       <div class="field"><label>Zul. geliefert</label><div class="val"><button class="val clickable-text" id="zulGeliefertBtn" title="Zul. geliefert ändern">${item.zulGeliefert || '—'}</button></div></div>
       <div class="field"><label>Business Unit (BU)</label><div class="val"><button class="val clickable-text" id="buBtn" title="Business Unit ändern">${item.bu || '—'}</button></div></div>
       <div class="field"><label>Typ (T)</label><div class="val"><button class="val clickable-text" id="tBtn" title="Typ ändern">${item.t || '—'}</button></div></div>
+      <div class="field"><label for="asmeCheck">ASME-Auftrag</label><div class="val"><input type="checkbox" id="asmeCheck" ${item.asme ? "checked" : ""} title="Schaltet Lieferantenbestellungen und ASME-Dokumente frei" style="margin:0; cursor:pointer;"></div></div>
     `,
     stats: (list) => {
       const offen = list.filter(o => o.status !== "erledigt").length;
@@ -2241,7 +2242,7 @@ function renderMain(){
     ${cfg.metaSecondary ? `<div class="order-meta-secondary">${cfg.metaSecondary(item)}</div>` : ""}
     ${currentTab === "auftrag" ? renderLtHistorySection(item) : ""}
     ${renderLieferumfangSection(item)}
-    ${currentTab === "auftrag" ? renderAsmeSectionHtml() : ""}
+    ${currentTab === "auftrag" && item.asme ? renderAsmeSectionHtml() : ""}
     ${currentTab === "auftrag" ? `
     <div class="timeline-head">
       <h3>Zeitplan</h3>
@@ -2265,8 +2266,25 @@ function renderMain(){
 
   if(currentTab === "auftrag"){
     renderOrderTimeline(item);
-    renderAsmeBestellungen(item);
-    document.getElementById("newBestellungBtn").addEventListener("click", () => openBestellungModal(item, null));
+    if(item.asme){
+      renderAsmeBestellungen(item);
+      document.getElementById("newBestellungBtn").addEventListener("click", () => openBestellungModal(item, null));
+    }
+    document.getElementById("asmeCheck").addEventListener("change", async (ev) => {
+      const box = ev.currentTarget;
+      const neu = box.checked;
+      box.disabled = true;
+      try{
+        await apiPatch(`/items/${item.id}`, { asme: neu });
+        await loadItems(currentTab);
+        renderMain();
+        showToast(neu ? "ASME-Auftrag – Bestellungen und ASME-Dokumente freigeschaltet." : "Kein ASME-Auftrag – Abschnitt ausgeblendet, erfasste Bestellungen bleiben erhalten.");
+      }catch(err){
+        showToast("Konnte nicht aktualisiert werden.", true);
+        box.checked = !neu;
+        box.disabled = false;
+      }
+    });
     document.getElementById("newPhaseBtn").addEventListener("click", () => openPhaseModal(item, null));
     document.getElementById("prioTagBtn").addEventListener("click", () => openPrioModal(item));
     document.getElementById("statusBadgeBtn").addEventListener("click", () => openAuftragStatusModal(item));
