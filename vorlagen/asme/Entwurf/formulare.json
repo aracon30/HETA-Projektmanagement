@@ -1,0 +1,34 @@
+{
+  "revision": "Entwurf",
+  "beschreibung": "Vorläufige Vorlagen, nachgebaut nach Screenshots – durch die Word-Originale aus dem QC-Handbuch ersetzen.",
+  "aktuell": true,
+  "vorlaeufig": true,
+  "formulare": [
+    {
+      "key": "bestellung",
+      "titel": "Bestellung",
+      "datei": "Bestellung.docx",
+      "form_nr": "",
+      "dateiname": "Bestellung_{bestell_nr}.docx"
+    },
+    {
+      "key": "we_kontrollschein",
+      "titel": "WE-Kontrollschein (je Position eine Seite)",
+      "datei": "WE-Kontrollschein.docx",
+      "form_nr": "Sample Form 3",
+      "dateiname": "WE-Kontrollscheine_{bestell_nr}.docx"
+    }
+  ],
+  "auswahl": {
+    "weitere_standards": ["B16.9", "B16.5", "B16.47-A", "B16.47-B", "SA-480", "SA-999", "SA-960", "SA-961", "SA-962", "SA-20", "SA-530"],
+    "spezifikation": [],
+    "werkstoff": [],
+    "coded_marking": []
+  },
+  "vorgaben": {
+    "versand": "DAP Lich",
+    "asme_edition": "Sec. VIII Div. 1 Ed. 2025",
+    "zahlungsbedingungen": "30 Tage netto",
+    "mwst_satz": 19
+  }
+}

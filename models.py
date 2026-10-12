@@ -457,3 +457,96 @@ class Dokument(db.Model):
             "auswertungsstatus": self.auswertungsstatus,
             "notiz": self.notiz,
         }
+
+
+# ---------- ASME-Auftragsdokumente (Lieferantenbestellung + WE-Kontrollschein) ----------
+class LieferantenBestellung(db.Model):
+    """Bestellung von HETA an einen Lieferanten im Rahmen eines (ASME-)Auftrags.
+    Aus diesen Daten werden die Formulare laut QC-Handbuch erzeugt (Bestellung,
+    WE-Kontrollschein je Position) – Layout kommt aus vorlagen/asme/<Revision>/."""
+    __tablename__ = "lieferanten_bestellungen"
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False)
+    bestell_nr = db.Column(db.String(60), nullable=False)  # z.B. V-xxxxx/xxxx/xx
+    datum = db.Column(db.Date, nullable=True)
+    lieferant = db.Column(db.Text, nullable=True)  # Name + Anschrift, mehrzeilig
+    ihr_angebot = db.Column(db.String(120), nullable=True)
+    ihr_sachbearbeiter = db.Column(db.String(120), nullable=True)
+    unser_zeichen = db.Column(db.String(120), nullable=True)
+    lieferdatum = db.Column(db.Date, nullable=True)
+    versand = db.Column(db.String(120), nullable=True)  # Incoterm, z.B. DAP Lich
+    asme_edition = db.Column(db.String(120), nullable=True)  # z.B. Sec. VIII Div. 1 Ed. 2025
+    coded_marking = db.Column(db.String(200), nullable=True)
+    weitere_standards = db.Column(db.Text, nullable=True)  # kommagetrennt, z.B. "B16.5,SA-20"
+    zahlungsbedingungen = db.Column(db.String(200), nullable=True)
+    mwst_satz = db.Column(db.Float, default=19.0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    item = db.relationship("Item", backref=db.backref(
+        "lieferanten_bestellungen", cascade="all, delete-orphan",
+        order_by="LieferantenBestellung.created_at"))
+    positionen = db.relationship(
+        "BestellPosition", backref="bestellung", cascade="all, delete-orphan",
+        order_by="BestellPosition.reihenfolge"
+    )
+
+    def standards_liste(self):
+        return [s.strip() for s in (self.weitere_standards or "").split(",") if s.strip()]
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "itemId": self.item_id,
+            "bestellNr": self.bestell_nr,
+            "datum": self.datum.isoformat() if self.datum else None,
+            "lieferant": self.lieferant,
+            "ihrAngebot": self.ihr_angebot,
+            "ihrSachbearbeiter": self.ihr_sachbearbeiter,
+            "unserZeichen": self.unser_zeichen,
+            "lieferdatum": self.lieferdatum.isoformat() if self.lieferdatum else None,
+            "versand": self.versand,
+            "asmeEdition": self.asme_edition,
+            "codedMarking": self.coded_marking,
+            "weitereStandards": self.standards_liste(),
+            "zahlungsbedingungen": self.zahlungsbedingungen,
+            "mwstSatz": self.mwst_satz,
+            "positionen": [p.to_dict() for p in self.positionen],
+        }
+
+
+class BestellPosition(db.Model):
+    """Eine Position der Lieferantenbestellung. Werkstoff/Spezifikation hängen
+    bewusst an der Position (nicht am Bestellkopf), weil der WE-Kontrollschein
+    je Position ausgefüllt wird."""
+    __tablename__ = "bestell_positionen"
+    id = db.Column(db.Integer, primary_key=True)
+    bestellung_id = db.Column(db.Integer, db.ForeignKey("lieferanten_bestellungen.id"), nullable=False)
+    pos = db.Column(db.String(20), nullable=True)  # Bestell-Pos., z.B. 10
+    menge = db.Column(db.Float, nullable=True)
+    einheit = db.Column(db.String(20), nullable=True)  # Stk, m, kg …
+    bezeichnung = db.Column(db.Text, nullable=False)  # Lieferumfang / Abmessungen
+    werkstoff = db.Column(db.String(120), nullable=True)  # Sec. II Part A, z.B. SA-516 Gr.70
+    spezifikation = db.Column(db.String(200), nullable=True)
+    stueckliste_pos = db.Column(db.String(40), nullable=True)  # Position Stückliste
+    preis = db.Column(db.Float, nullable=True)  # Preis je Einheit, netto €
+    reihenfolge = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def gesamt(self):
+        if self.menge is None or self.preis is None:
+            return None
+        return round(self.menge * self.preis, 2)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "pos": self.pos,
+            "menge": self.menge,
+            "einheit": self.einheit,
+            "bezeichnung": self.bezeichnung,
+            "werkstoff": self.werkstoff,
+            "spezifikation": self.spezifikation,
+            "stuecklistePos": self.stueckliste_pos,
+            "preis": self.preis,
+            "gesamt": self.gesamt(),
+        }

@@ -31,6 +31,8 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
 | `migrate.py` | Additive Migration (neue Spalten ergänzen, ohne Daten zu löschen) |
 | `graph_client.py` | Microsoft-Graph-Anbindung (To Do), no-op ohne Env-Vars |
 | `static/index.html` | Komplettes Frontend (Aufträge/Angebote/Gantt-Tabs) |
+| `asme_api.py` | ASME-Dokumente: Lieferantenbestellungen + Formularerzeugung aus Word-Vorlagen |
+| `vorlagen/asme/` | Word-Vorlagen je QC-Handbuch-Revision (siehe README dort) |
 | `requirements.txt` | Python-Abhängigkeiten |
 | `deploy/projektbesprechung.service` | systemd-Unit-Vorlage |
 | `deploy/nginx-projektbesprechung.conf` | nginx-Reverse-Proxy-Vorlage |
@@ -130,6 +132,26 @@ Oberfläche immer „mögliche Einführung eines ERP-Systems“ — keinen
 Produktnamen (ERPNext) verwenden, keine Entscheidung vorwegnehmen.
 Struktur spiegelt die Excel-Vorlage `HETA_Prozessaufnahme.xlsx`.
 Es heißt **Frau Häfer**.
+
+## ASME-Auftragsdokumente (Stufe 1 umgesetzt, Branch `claude/asme-dokumente`)
+
+Ziel: Daten einmal erfassen, daraus die Formulare laut QC-Handbuch erzeugen –
+ohne Abtippen. In der Auftrags-Detailansicht Abschnitt „Lieferantenbestellungen
+& ASME-Dokumente“: Bestellung (Kopf) + Positionen anlegen, „Dokumente erzeugen“
+liefert ZIP mit `Bestellung_<Nr>.docx` und `WE-Kontrollscheine_<Nr>.docx`
+(eine Seite je Bestellposition). Code: `asme_api.py` (Blueprint, docxtpl),
+Modelle `LieferantenBestellung`/`BestellPosition` in `models.py`, Frontend-Block
+„ASME-Dokumente“ in `static/index.html` (`renderAsmeBestellungen`).
+Vorlagen je Handbuch-Revision in `vorlagen/asme/<Ordner>/` mit `formulare.json`,
+Anleitung und Platzhalterliste in `vorlagen/asme/README.md`. Layout-Änderung =
+nur Vorlage tauschen, kein Code.
+Festgelegt: Werkstoff/Spezifikation hängen an der **Position** (WE-Schein ist je
+Position); Prüfdaten des WE-Kontrollscheins werden **von Hand** ausgefüllt –
+das Tool füllt nur den Kopf (Bestell-Nr./Kommission, Pos., Stücklisten-Pos.,
+Bezeichnung, Werkstoff, Menge). Laut Philipp gehören zum ASME-Paket nur diese
+zwei Formulare. Offen: `Entwurf/` ist nach Screenshots nachgebaut – durch die
+Word-Originale ersetzen, Dropdown-Einträge der Original-Bestellvorlage in
+`auswahl` übernehmen, Form-Nr. der Bestellung eintragen.
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 
