@@ -198,7 +198,9 @@
   .entry-update .upd-meta b{ color:var(--ink); font-weight:600; }
   .entry-update .upd-time{ font-family:'IBM Plex Mono', monospace; font-size:0.66rem; color:var(--slate-light); margin-left:6px; }
   .entry-update .upd-text{ font-size:0.82rem; color:var(--ink); margin:2px 0 0; line-height:1.45; white-space:pre-wrap; }
-  .upd-delete{ flex-shrink:0; border:none; background:none; color:var(--slate-light); cursor:pointer; padding:2px 4px; border-radius:3px; font-size:0.68rem; font-family:inherit; font-weight:600; }
+  .upd-actions{ display:flex; gap:2px; flex-shrink:0; }
+  .upd-edit, .upd-delete{ flex-shrink:0; border:none; background:none; color:var(--slate-light); cursor:pointer; padding:2px 4px; border-radius:3px; font-size:0.68rem; font-family:inherit; font-weight:600; }
+  .upd-edit:hover{ color:var(--steel); background:var(--steel-soft); }
   .upd-delete:hover{ color:var(--red); background:var(--red-soft); }
   .entry-updates-add{ margin-top:10px; }
   .entry-updates-add > .btn.text{ font-size:0.74rem; padding:2px 0; }
@@ -1946,6 +1948,8 @@ function renderMain(){
     const addUpdateBtn = document.getElementById(`addUpdateBtn-${e.id}`);
     if(addUpdateBtn) addUpdateBtn.addEventListener("click", () => renderUpdateForm(item, e));
     (e.updates || []).forEach(u => {
+      const editUpdateBtn = document.getElementById(`editUpdateBtn-${u.id}`);
+      if(editUpdateBtn) editUpdateBtn.addEventListener("click", () => renderUpdateEditForm(u));
       const delUpdateBtn = document.getElementById(`deleteUpdateBtn-${u.id}`);
       if(delUpdateBtn) delUpdateBtn.addEventListener("click", async () => {
         delUpdateBtn.disabled = true;
@@ -2847,15 +2851,58 @@ function renderUpdateEntry(u){
   return `
     <div class="entry-update" data-update-id="${u.id}">
       <div class="upd-rail"><div class="upd-dot"></div><div class="upd-line"></div></div>
-      <div class="upd-body">
+      <div class="upd-body" id="updateBody-${u.id}">
         <div class="upd-main">
           <div class="upd-meta"><b>${u.erstelltVon || 'Unbekannt'}</b><span class="upd-time">${fmtDateTime(u.erstelltAm)}</span></div>
           <p class="upd-text">${u.text}</p>
         </div>
-        <button class="upd-delete" id="deleteUpdateBtn-${u.id}" title="Update löschen">✕</button>
+        <div class="upd-actions">
+          <button class="upd-edit" id="editUpdateBtn-${u.id}" title="Update bearbeiten">✎</button>
+          <button class="upd-delete" id="deleteUpdateBtn-${u.id}" title="Update löschen">✕</button>
+        </div>
       </div>
     </div>
   `;
+}
+
+function renderUpdateEditForm(u){
+  const body = document.getElementById(`updateBody-${u.id}`);
+  body.innerHTML = `
+    <div class="update-form" style="flex:1;">
+      <textarea id="editUpdateText-${u.id}" rows="2">${u.text}</textarea>
+      <div class="update-form-row">
+        <select id="editUpdateCreatedBy-${u.id}">
+          <option value="">— wer trägt das ein? —</option>
+          ${nutzer.map(n => `<option value="${n.name}" ${n.name === u.erstelltVon ? 'selected' : ''}>${n.name}</option>`).join("")}
+        </select>
+        <div class="update-form-actions">
+          <button class="btn text" id="cancelEditUpdateBtn-${u.id}">Abbrechen</button>
+          <button class="btn" id="saveEditUpdateBtn-${u.id}">Speichern</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const textEl = document.getElementById(`editUpdateText-${u.id}`);
+  textEl.focus();
+  textEl.setSelectionRange(textEl.value.length, textEl.value.length);
+  document.getElementById(`cancelEditUpdateBtn-${u.id}`).addEventListener("click", () => { renderMain(); });
+  document.getElementById(`saveEditUpdateBtn-${u.id}`).addEventListener("click", async () => {
+    const text = textEl.value.trim();
+    if(!text){ textEl.focus(); return; }
+    const erstelltVon = document.getElementById(`editUpdateCreatedBy-${u.id}`).value || null;
+    const saveBtn = document.getElementById(`saveEditUpdateBtn-${u.id}`);
+    saveBtn.disabled = true;
+    try{
+      await apiPatch(`/verlauf/updates/${u.id}`, { text, erstelltVon });
+      await loadItems(currentTab);
+      renderList();
+      renderMain();
+      showToast("Update aktualisiert.");
+    }catch(err){
+      showToast("Update konnte nicht aktualisiert werden.", true);
+      saveBtn.disabled = false;
+    }
+  });
 }
 
 function renderEntry(e, item){

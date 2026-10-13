@@ -390,6 +390,21 @@ def add_verlauf_update(eintrag_id):
     return jsonify(update.to_dict()), 201
 
 
+@app.route("/api/verlauf/updates/<int:update_id>", methods=["PATCH"])
+def update_verlauf_update(update_id):
+    update = VerlaufUpdate.query.get_or_404(update_id)
+    data = request.get_json(force=True)
+    if "text" in data:
+        text = (data.get("text") or "").strip()
+        if not text:
+            return jsonify({"error": "Text darf nicht leer sein."}), 400
+        update.text = text
+    if "erstelltVon" in data:
+        update.erstellt_von = data.get("erstelltVon")
+    db.session.commit()
+    return jsonify(update.to_dict())
+
+
 @app.route("/api/verlauf/updates/<int:update_id>", methods=["DELETE"])
 def delete_verlauf_update(update_id):
     update = VerlaufUpdate.query.get_or_404(update_id)
