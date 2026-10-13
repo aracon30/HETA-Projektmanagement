@@ -61,7 +61,7 @@ class Item(db.Model):
 
     verlauf = db.relationship(
         "VerlaufEintrag", backref="item", cascade="all, delete-orphan",
-        order_by="VerlaufEintrag.created_at"
+        order_by="VerlaufEintrag.created_at.desc()"
     )
     phasen = db.relationship(
         "Phase", backref="item", cascade="all, delete-orphan",
