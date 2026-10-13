@@ -1,0 +1,50 @@
+{
+  "revision": "QC-Handbuch (Revision eintragen)",
+  "beschreibung": "Aus den Word-Originalen DE_Bestellung_ASME.docx und Sample_Form_3_Wareneingangskontrolle.docx umgebaut (12.10.2026).",
+  "aktuell": true,
+  "vorlaeufig": false,
+  "formulare": [
+    {
+      "key": "bestellung",
+      "titel": "Bestellung",
+      "datei": "Bestellung.docx",
+      "form_nr": "",
+      "dateiname": "Bestellung_{bestell_nr}.docx"
+    },
+    {
+      "key": "we_kontrollschein",
+      "titel": "WE-Kontrollschein (je Position eine Seite)",
+      "datei": "WE-Kontrollschein.docx",
+      "form_nr": "Sample Form 3",
+      "dateiname": "WE-Kontrollscheine_{bestell_nr}.docx"
+    }
+  ],
+  "auswahl": {
+    "weitere_standards": ["B16.9", "B16.5", "B16.47-A", "B16.47-B", "SA-480", "SA-999", "SA-960", "SA-961", "SA-962", "SA-20", "SA-530"],
+    "spezifikation": [
+      "ASTM A182/A182M-23 / ASME SA-182 Ed. 2025",
+      "ASTM A105/A105M-21 / ASME SA-105 Ed. 2025",
+      "ASTM A240 / A240M-17 / ASME SA-240 Ed. 2025",
+      "ASTM A516 / A516M-17 / ASME SA-516 Ed. 2025",
+      "ASTM A312 / A312M-24 / ASME SA-312 Ed. 2025",
+      "ASTM A106 / A106M-19a / ASME SA-106 Ed. 2025",
+      "ASTM A333 / A333M-16 / ASME SA-333 Ed. 2025",
+      "ASTM A403 / A403M-19a / ASME SA-403 Ed. 2025",
+      "ASTM A234 / A234M-23a / ASME SA-234 Ed. 2025",
+      "ASTM A193 / A193M-20 / ASME SA-193 Ed. 2025",
+      "ASTM A194 / A194M-20 / ASME SA-194 Ed. 2025"
+    ],
+    "material_art": ["Edelstahl", "Kohlenstoffstahl", "Stainless steel", "Carbon steel"],
+    "werkstoff": [],
+    "coded_marking": ["Hartstempelung", "Softstempelung", "Permanent Marker", "hard stamp", "soft stamp"],
+    "versand": ["DAP Lich", "FCA"],
+    "zahlungsbedingungen": ["30 Tage netto", "Vorkasse"],
+    "bauteil": ["Flansch", "Blech", "Rohr", "Reduzierung", "Rohrbogen", "Elliptischer Boden", "Schraubenbolzen", "Skt. Mutter"]
+  },
+  "vorgaben": {
+    "versand": "DAP Lich",
+    "asme_edition": "Sec. VIII Div. 1 Ed. 2025",
+    "zahlungsbedingungen": "30 Tage netto",
+    "mwst_satz": 19
+  }
+}
