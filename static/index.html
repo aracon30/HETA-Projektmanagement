@@ -745,6 +745,7 @@ let sortOrder = { anfrage: "erstellt_neu", auftrag: "erstellt_neu", angebot: "er
 let ganttSortOrder = "liefertermin_auf";
 let wartendVerantwortlichFilter = "alle";
 let wartendStatusFilter = "alle";
+let wartendAuftragSuche = "";
 
 const BU_OPTIONS = [
   { value:"he", label:"he – HETA Ersatzteil" },
@@ -1501,16 +1502,21 @@ function renderWaitingBoard(){
     wartendVerantwortlichFilter = "alle";
   }
   const vorhandeneStatus = ALLE_TASK_STATUSES.filter(s => allRows.some(r => r.e.status === s));
+  const suche = wartendAuftragSuche.trim().toLowerCase();
   const rows = allRows.filter(r => {
     const matchesPerson = wartendVerantwortlichFilter === "alle" ? true
       : wartendVerantwortlichFilter === "ohne" ? !r.e.verantwortlich
       : r.e.verantwortlich === wartendVerantwortlichFilter;
     const matchesStatus = wartendStatusFilter === "alle" || r.e.status === wartendStatusFilter;
-    return matchesPerson && matchesStatus;
+    const matchesSuche = !suche
+      || (r.item.kommission || "").toLowerCase().includes(suche)
+      || (r.item.kunde || "").toLowerCase().includes(suche);
+    return matchesPerson && matchesStatus && matchesSuche;
   });
 
   const toolbarHtml = `
     <div class="waiting-toolbar">
+      <input type="text" class="search" id="wartendAuftragSearch" placeholder="Auftrag suchen (Kommission/Kunde)…" value="${wartendAuftragSuche.replace(/"/g, "&quot;")}" style="max-width:260px;">
       <label for="wartendStatusSelect">Status</label>
       <select id="wartendStatusSelect">
         <option value="alle" ${wartendStatusFilter === "alle" ? "selected" : ""}>Alle</option>
@@ -1546,6 +1552,14 @@ function renderWaitingBoard(){
 
   board.innerHTML = toolbarHtml + rowsHtml;
 
+  document.getElementById("wartendAuftragSearch").addEventListener("input", (ev) => {
+    const cursorPos = ev.target.selectionStart;
+    wartendAuftragSuche = ev.target.value;
+    renderWaitingBoard();
+    const newInput = document.getElementById("wartendAuftragSearch");
+    newInput.focus();
+    newInput.setSelectionRange(cursorPos, cursorPos);
+  });
   document.getElementById("wartendStatusSelect").addEventListener("change", (ev) => {
     wartendStatusFilter = ev.target.value;
     renderWaitingBoard();
