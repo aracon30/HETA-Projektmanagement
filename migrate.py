@@ -244,6 +244,63 @@ def main():
     else:
         print("Nutzer 'Häfer, Gabriele' existiert bereits.")
 
+    if not column_exists(cur, "items", "asme"):
+        cur.execute("ALTER TABLE items ADD COLUMN asme BOOLEAN DEFAULT 0")
+        print("Spalte items.asme ergänzt (Kennzeichen ASME-Auftrag).")
+    else:
+        print("Spalte items.asme existiert bereits.")
+
+    if not table_exists(cur, "lieferanten_bestellungen"):
+        cur.execute("""
+            CREATE TABLE lieferanten_bestellungen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL REFERENCES items(id),
+                bestell_nr VARCHAR(60) NOT NULL,
+                datum DATE,
+                lieferant TEXT,
+                ihr_angebot VARCHAR(120),
+                ihr_sachbearbeiter VARCHAR(120),
+                unser_zeichen VARCHAR(120),
+                lieferdatum DATE,
+                versand VARCHAR(120),
+                asme_edition VARCHAR(120),
+                coded_marking VARCHAR(200),
+                material_art VARCHAR(120),
+                weitere_standards TEXT,
+                zahlungsbedingungen VARCHAR(200),
+                mwst_satz FLOAT DEFAULT 19.0,
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle lieferanten_bestellungen angelegt (ASME-Dokumente).")
+    else:
+        print("Tabelle lieferanten_bestellungen existiert bereits.")
+
+    if not column_exists(cur, "lieferanten_bestellungen", "material_art"):
+        cur.execute("ALTER TABLE lieferanten_bestellungen ADD COLUMN material_art VARCHAR(120)")
+        print("Spalte lieferanten_bestellungen.material_art ergänzt.")
+
+    if not table_exists(cur, "bestell_positionen"):
+        cur.execute("""
+            CREATE TABLE bestell_positionen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                bestellung_id INTEGER NOT NULL REFERENCES lieferanten_bestellungen(id),
+                pos VARCHAR(20),
+                menge FLOAT,
+                einheit VARCHAR(20),
+                bezeichnung TEXT NOT NULL,
+                werkstoff VARCHAR(120),
+                spezifikation VARCHAR(200),
+                stueckliste_pos VARCHAR(40),
+                preis FLOAT,
+                reihenfolge INTEGER DEFAULT 0,
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle bestell_positionen angelegt (ASME-Dokumente).")
+    else:
+        print("Tabelle bestell_positionen existiert bereits.")
+
     # Bekannte Nutzer mit E-Mail-Adresse befüllen (nur wenn noch leer)
     cur.execute("SELECT id, name, email FROM users")
     updated = 0

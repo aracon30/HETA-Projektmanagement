@@ -31,6 +31,8 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
 | `migrate.py` | Additive Migration (neue Spalten ergänzen, ohne Daten zu löschen) |
 | `graph_client.py` | Microsoft-Graph-Anbindung (To Do), no-op ohne Env-Vars |
 | `static/index.html` | Komplettes Frontend (Aufträge/Angebote/Gantt-Tabs) |
+| `asme_api.py` | ASME-Dokumente: Lieferantenbestellungen + Formularerzeugung aus Word-Vorlagen |
+| `vorlagen/asme/` | Word-Vorlagen je QC-Handbuch-Revision (siehe README dort) |
 | `requirements.txt` | Python-Abhängigkeiten |
 | `deploy/projektbesprechung.service` | systemd-Unit-Vorlage |
 | `deploy/nginx-projektbesprechung.conf` | nginx-Reverse-Proxy-Vorlage |
@@ -130,6 +132,32 @@ Oberfläche immer „mögliche Einführung eines ERP-Systems“ — keinen
 Produktnamen (ERPNext) verwenden, keine Entscheidung vorwegnehmen.
 Struktur spiegelt die Excel-Vorlage `HETA_Prozessaufnahme.xlsx`.
 Es heißt **Frau Häfer**.
+
+## ASME-Auftragsdokumente (Stufe 1 umgesetzt, Branch `claude/asme-dokumente`)
+
+Ziel: Daten einmal erfassen, daraus die Formulare laut QC-Handbuch erzeugen –
+ohne Abtippen. Freigeschaltet nur bei Aufträgen mit Haken „ASME-Auftrag“
+(Spalte `items.asme`, Feld in der zweiten Meta-Zeile); ohne Haken ist der
+Abschnitt ausgeblendet, vorhandene Bestellungen bleiben erhalten, die API
+lehnt neue Bestellungen/Dokumenterzeugung ab. In der Auftrags-Detailansicht Abschnitt „Lieferantenbestellungen
+& ASME-Dokumente“: Bestellung (Kopf) + Positionen anlegen, „Dokumente erzeugen“
+liefert ZIP mit `Bestellung_<Nr>.docx` und `WE-Kontrollscheine_<Nr>.docx`
+(eine Seite je Bestellposition). Code: `asme_api.py` (Blueprint, docxtpl),
+Modelle `LieferantenBestellung`/`BestellPosition` in `models.py`, Frontend-Block
+„ASME-Dokumente“ in `static/index.html` (`renderAsmeBestellungen`).
+Vorlagen je Handbuch-Revision in `vorlagen/asme/<Ordner>/` mit `formulare.json`,
+Anleitung und Platzhalterliste in `vorlagen/asme/README.md`. Layout-Änderung =
+nur Vorlage tauschen, kein Code.
+Festgelegt: Werkstoff/Spezifikation hängen an der **Position** (WE-Schein ist je
+Position); Prüfdaten des WE-Kontrollscheins werden **von Hand** ausgefüllt –
+das Tool füllt nur den Kopf (Bestell-Nr./Kommission, Pos., Stücklisten-Pos.,
+Bezeichnung, Werkstoff, Menge). Laut Philipp gehören zum ASME-Paket nur diese
+zwei Formulare. Vorlagen in `vorlagen/asme/Original/` sind aus Philipps
+Word-Originalen umgebaut (Dropdown-Listen in `auswahl` übernommen; Kopffeld
+„Material nach Sec. II Part A“ = `material_art` am Bestellkopf, Spezifikation
+und Werkstoff je Position). Offen: Handbuch-Revision und Form-Nr. der
+Bestellung in `formulare.json` eintragen; englische Bestellvorlage (Titel-Dropdown
+„Bestellung/Order“ deutet darauf hin) ggf. als eigenes Formular ergänzen.
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 

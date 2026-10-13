@@ -660,6 +660,29 @@
   .pz-matrix-leer{ background:#F2F3EF; }
   .pz-matrix-punkt{ display:inline-block; width:10px; height:10px; border-radius:50%; margin:1px; }
   .pz-matrix-punkt.hakt{ box-shadow:0 0 0 2px #B0432E; }
+
+  /* ---------- ASME-Dokumente (Lieferantenbestellungen) ---------- */
+  .asme-list{ display:flex; flex-direction:column; gap:12px; margin-bottom:22px; }
+  .asme-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:13px 15px; }
+  .asme-card-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+  .asme-card-title{ font-weight:600; font-size:0.95rem; }
+  .asme-card-sub{ font-size:0.78rem; color:var(--slate); margin-top:2px; white-space:pre-line; }
+  .asme-card-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .asme-table-wrap{ overflow-x:auto; margin-top:10px; }
+  .asme-table{ width:100%; border-collapse:collapse; font-size:0.82rem; }
+  .asme-table th{ text-align:left; font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.03em; color:var(--slate); border-bottom:1px solid var(--line); padding:6px 8px; white-space:nowrap; }
+  .asme-table td{ border-bottom:1px solid var(--line); padding:7px 8px; vertical-align:top; }
+  .asme-table td.num, .asme-table th.num{ text-align:right; white-space:nowrap; }
+  .asme-table td.bez{ white-space:pre-line; min-width:180px; }
+  .asme-table tfoot td{ border-bottom:none; font-weight:600; }
+  .asme-hint{ font-size:0.75rem; color:var(--slate); margin-top:8px; }
+  .asme-hint.warn{ color:#9A5B00; }
+  .modal .asme-form input, .modal .asme-form textarea, .modal .asme-form select{ width:100%; font-family:inherit; font-size:0.85rem; padding:7px 9px; border:1px solid var(--line); border-radius:var(--radius); background:var(--paper); color:var(--ink); box-sizing:border-box; }
+  .asme-form .form-grid .form-row{ margin-bottom:4px; }
+  .asme-std{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:0.82rem; }
+  .asme-std label{ text-transform:none; letter-spacing:0; color:var(--ink); font-size:0.82rem; display:flex; gap:5px; align-items:center; }
+  .asme-std input{ width:auto !important; }
+  .asme-modal-body{ max-height:68vh; overflow-y:auto; padding-right:4px; }
 </style>
 </head>
 <body>
@@ -840,6 +863,7 @@ const KIND_CONFIG = {
       <div class="field"><label>Zul. geliefert</label><div class="val"><button class="val clickable-text" id="zulGeliefertBtn" title="Zul. geliefert ändern">${item.zulGeliefert || '—'}</button></div></div>
       <div class="field"><label>Business Unit (BU)</label><div class="val"><button class="val clickable-text" id="buBtn" title="Business Unit ändern">${item.bu || '—'}</button></div></div>
       <div class="field"><label>Typ (T)</label><div class="val"><button class="val clickable-text" id="tBtn" title="Typ ändern">${item.t || '—'}</button></div></div>
+      <div class="field"><label for="asmeCheck">ASME-Auftrag</label><div class="val"><input type="checkbox" id="asmeCheck" ${item.asme ? "checked" : ""} title="Schaltet Lieferantenbestellungen und ASME-Dokumente frei" style="margin:0; cursor:pointer;"></div></div>
     `,
     stats: (list) => {
       const offen = list.filter(o => o.status !== "erledigt").length;
@@ -1791,6 +1815,360 @@ async function splitLieferumfangInPositionen(item){
   }
 }
 
+/* ===================== ASME-Dokumente (Lieferantenbestellungen) ===================== */
+// Daten werden einmal je Bestellung/Position erfasst; daraus erzeugt der Server
+// die Formulare laut QC-Handbuch (Vorlagen je Handbuch-Revision in vorlagen/asme/).
+let asmeConfig = null;
+
+function asmeEsc(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function asmeZahl(v, nachkomma = 2){
+  if(v === null || v === undefined || v === "") return "";
+  return Number(v).toLocaleString("de-DE", { minimumFractionDigits: nachkomma, maximumFractionDigits: nachkomma });
+}
+function asmeMenge(v){
+  if(v === null || v === undefined || v === "") return "";
+  return Number(v).toLocaleString("de-DE", { maximumFractionDigits: 3 });
+}
+async function loadAsmeConfig(){
+  if(asmeConfig) return asmeConfig;
+  try{ asmeConfig = await apiGet("/asme/config"); }catch(err){ asmeConfig = []; }
+  return asmeConfig;
+}
+function asmeAktuelleRevision(){
+  return (asmeConfig || []).find(r => r.aktuell) || (asmeConfig || [])[0] || null;
+}
+
+function renderAsmeSectionHtml(){
+  return `
+    <div class="timeline-head">
+      <h3>Lieferantenbestellungen &amp; ASME-Dokumente</h3>
+      <button class="btn" id="newBestellungBtn">+ Bestellung</button>
+    </div>
+    <div id="asmeBestellungenSlot"><div class="no-selection" style="padding:6px 0 20px; text-align:left;">Wird geladen …</div></div>
+  `;
+}
+
+async function renderAsmeBestellungen(item){
+  const slot = document.getElementById("asmeBestellungenSlot");
+  if(!slot) return;
+  let bestellungen;
+  try{
+    await loadAsmeConfig();
+    bestellungen = await apiGet(`/items/${item.id}/bestellungen`);
+  }catch(err){
+    slot.innerHTML = `<div class="asme-hint warn">Bestellungen konnten nicht geladen werden.</div>`;
+    return;
+  }
+  // Auftrag inzwischen gewechselt? Dann nichts überschreiben.
+  if(document.getElementById("asmeBestellungenSlot") !== slot) return;
+
+  const rev = asmeAktuelleRevision();
+  const pencil = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const trash = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const revOptions = (asmeConfig || []).map(r => `<option value="${asmeEsc(r.ordner)}" ${r === rev ? "selected" : ""}>${asmeEsc(r.revision || r.ordner)}${r.aktuell ? " (aktuell)" : ""}</option>`).join("");
+
+  if(!bestellungen.length){
+    slot.innerHTML = `<div class="no-selection" style="padding:6px 0 20px; text-align:left;">Noch keine Lieferantenbestellung. Mit „+ Bestellung" anlegen – Bestellung und WE-Kontrollscheine werden daraus erzeugt.</div>`;
+    return;
+  }
+
+  slot.innerHTML = `<div class="asme-list">${bestellungen.map(b => {
+    const summe = b.positionen.reduce((s, p) => s + (p.gesamt || 0), 0);
+    const lieferantKurz = (b.lieferant || "").split("\n")[0];
+    return `
+      <div class="asme-card">
+        <div class="asme-card-head">
+          <div>
+            <div class="asme-card-title mono">${asmeEsc(b.bestellNr)}</div>
+            <div class="asme-card-sub">${asmeEsc(lieferantKurz || "Lieferant fehlt")}${b.datum ? " · " + fmtDate(b.datum) : ""}${b.lieferdatum ? " · Lieferung " + fmtDate(b.lieferdatum) : ""}</div>
+          </div>
+          <div class="asme-card-actions">
+            ${(asmeConfig || []).length > 1 ? `<select id="asmeRev-${b.id}" title="Handbuch-Revision" style="font-family:inherit; font-size:0.78rem; padding:5px 7px; border:1px solid var(--line); border-radius:var(--radius); background:var(--paper);">${revOptions}</select>` : ""}
+            <button class="btn" id="asmeDocsBtn-${b.id}" ${b.positionen.length ? "" : "disabled title='Erst Positionen anlegen'"}>Dokumente erzeugen</button>
+            <button class="btn ghost" id="asmeNewPosBtn-${b.id}">+ Position</button>
+            <button class="icon-edit-btn" id="asmeEditBtn-${b.id}" title="Bestellung bearbeiten" aria-label="Bestellung bearbeiten">${pencil}</button>
+            <button class="icon-edit-btn" id="asmeDeleteBtn-${b.id}" title="Bestellung löschen" aria-label="Bestellung löschen">${trash}</button>
+          </div>
+        </div>
+        ${b.positionen.length ? `
+        <div class="asme-table-wrap">
+          <table class="asme-table">
+            <thead><tr><th>Pos.</th><th class="num">Menge</th><th>Bezeichnung / Abmessungen</th><th>Werkstoff</th><th>Stückl.</th><th class="num">Preis</th><th class="num">Gesamt</th><th></th></tr></thead>
+            <tbody>${b.positionen.map(p => `
+              <tr>
+                <td class="mono">${asmeEsc(p.pos)}</td>
+                <td class="num">${asmeEsc(asmeMenge(p.menge))} ${asmeEsc(p.einheit || "")}</td>
+                <td class="bez">${asmeEsc(p.bezeichnung)}${p.spezifikation ? `<div class="asme-card-sub">Spez.: ${asmeEsc(p.spezifikation)}</div>` : ""}</td>
+                <td>${asmeEsc(p.werkstoff || "—")}</td>
+                <td>${asmeEsc(p.stuecklistePos || "")}</td>
+                <td class="num">${p.preis !== null ? asmeZahl(p.preis) + " €" : ""}</td>
+                <td class="num">${p.gesamt !== null ? asmeZahl(p.gesamt) + " €" : ""}</td>
+                <td class="num">
+                  <button class="icon-edit-btn" id="asmePosEditBtn-${p.id}" title="Position bearbeiten" aria-label="Position bearbeiten">${pencil}</button>
+                  <button class="icon-edit-btn" id="asmePosDeleteBtn-${p.id}" title="Position löschen" aria-label="Position löschen">${trash}</button>
+                </td>
+              </tr>`).join("")}
+            </tbody>
+            <tfoot><tr><td colspan="6" class="num">Summe netto</td><td class="num">${asmeZahl(summe)} €</td><td></td></tr></tfoot>
+          </table>
+        </div>` : `<div class="asme-hint">Noch keine Positionen – je Position wird ein WE-Kontrollschein erzeugt.</div>`}
+      </div>`;
+  }).join("")}</div>
+  ${rev && rev.vorlaeufig ? `<div class="asme-hint warn" style="margin:-12px 0 22px;">Vorlagen-Revision „${asmeEsc(rev.revision || rev.ordner)}“ ist vorläufig (nachgebaut) – vor dem Versand durch die Word-Originale aus dem QC-Handbuch ersetzen.</div>` : ""}`;
+
+  bestellungen.forEach(b => {
+    document.getElementById(`asmeEditBtn-${b.id}`).addEventListener("click", () => openBestellungModal(item, b));
+    document.getElementById(`asmeNewPosBtn-${b.id}`).addEventListener("click", () => openBestellPositionModal(item, b, null));
+    document.getElementById(`asmeDocsBtn-${b.id}`).addEventListener("click", (ev) => asmeDokumenteLaden(b, ev.currentTarget));
+    document.getElementById(`asmeDeleteBtn-${b.id}`).addEventListener("click", () => openAsmeDeleteConfirm(
+      "Bestellung löschen?", `${b.bestellNr} mit ${b.positionen.length} Position(en). Das kann nicht rückgängig gemacht werden.`,
+      async () => { await apiDelete(`/bestellungen/${b.id}`); }, item, "Bestellung gelöscht."));
+    b.positionen.forEach(p => {
+      document.getElementById(`asmePosEditBtn-${p.id}`).addEventListener("click", () => openBestellPositionModal(item, b, p));
+      document.getElementById(`asmePosDeleteBtn-${p.id}`).addEventListener("click", () => openAsmeDeleteConfirm(
+        "Position löschen?", `Pos. ${p.pos}: ${p.bezeichnung}`,
+        async () => { await apiDelete(`/bestellpositionen/${p.id}`); }, item, "Position gelöscht."));
+    });
+  });
+}
+
+async function asmeDokumenteLaden(b, btn){
+  const revSel = document.getElementById(`asmeRev-${b.id}`);
+  const rev = revSel ? revSel.value : "";
+  btn.disabled = true;
+  try{
+    const res = await fetch(`${API}/bestellungen/${b.id}/dokumente${rev ? "?rev=" + encodeURIComponent(rev) : ""}`);
+    if(!res.ok){
+      let msg = "Dokumente konnten nicht erzeugt werden.";
+      try{ msg = (await res.json()).error || msg; }catch(e){}
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    const cd = res.headers.get("Content-Disposition") || "";
+    const m = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cd);
+    const name = m ? decodeURIComponent(m[1]) : "ASME-Dokumente.zip";
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast("Dokumente erzeugt: " + name);
+  }catch(err){
+    showToast(err.message, true);
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+function asmeInput(id, labelText, value, o = {}){
+  const list = o.list && o.list.length ? `<datalist id="${id}-list">${o.list.map(v => `<option value="${asmeEsc(v)}">`).join("")}</datalist>` : "";
+  if(o.textarea){
+    return `<div class="form-row"><label for="${id}">${labelText}</label><textarea id="${id}" rows="${o.rows || 3}" placeholder="${asmeEsc(o.placeholder || "")}">${asmeEsc(value)}</textarea></div>`;
+  }
+  return `<div class="form-row"><label for="${id}">${labelText}</label><input type="${o.type || "text"}" id="${id}" value="${asmeEsc(value)}" placeholder="${asmeEsc(o.placeholder || "")}" ${list ? `list="${id}-list"` : ""}>${list}</div>`;
+}
+
+async function asmeSpeichern(btn, fn, item, toast){
+  btn.disabled = true;
+  try{
+    await fn();
+    closeModal();
+    await renderAsmeBestellungen(item);
+    showToast(toast);
+  }catch(err){
+    showToast(err.message || "Speichern fehlgeschlagen.", true);
+    btn.disabled = false;
+  }
+}
+
+async function asmeSend(method, path, body){
+  const res = await fetch(API + path, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if(!res.ok){
+    let msg = "Speichern fehlgeschlagen.";
+    try{ msg = (await res.json()).error || msg; }catch(e){}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+async function openBestellungModal(item, b){
+  await loadAsmeConfig();
+  const isEdit = !!b;
+  const rev = asmeAktuelleRevision() || { auswahl: {}, vorgaben: {} };
+  const vorgaben = rev.vorgaben || {};
+  const auswahl = rev.auswahl || {};
+  const v = (key, fallback = "") => isEdit ? (b[key] ?? "") : fallback;
+  const gewaehlt = new Set(isEdit ? b.weitereStandards : []);
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="bestellungModalTitle">
+        <h3 id="bestellungModalTitle">${isEdit ? "Bestellung bearbeiten" : "Lieferantenbestellung anlegen"}</h3>
+        <div class="sub">${asmeEsc(item.kommission)} — ${asmeEsc(item.kunde)}</div>
+        <div class="asme-modal-body asme-form">
+          <div class="form-grid">
+            ${asmeInput("bBestellNr", "Bestell-Nr. *", v("bestellNr"), { placeholder: "V-xxxxx/xxxx/xx" })}
+            ${asmeInput("bDatum", "Datum", v("datum", new Date().toISOString().slice(0, 10)), { type: "date" })}
+          </div>
+          ${asmeInput("bLieferant", "Lieferant (Name und Anschrift)", v("lieferant"), { textarea: true, rows: 4 })}
+          <div class="form-grid">
+            ${asmeInput("bIhrAngebot", "Ihr Angebot", v("ihrAngebot"))}
+            ${asmeInput("bIhrSachbearbeiter", "Ihr Sachbearbeiter", v("ihrSachbearbeiter"))}
+            ${asmeInput("bUnserZeichen", "Unser Zeichen", v("unserZeichen"))}
+            ${asmeInput("bLieferdatum", "Lieferdatum", v("lieferdatum"), { type: "date" })}
+            ${asmeInput("bVersand", "Versand / Incoterm", v("versand", vorgaben.versand || ""), { list: auswahl.versand })}
+            ${asmeInput("bAsmeEdition", "ASME (Section / Edition)", v("asmeEdition", vorgaben.asme_edition || ""))}
+            ${asmeInput("bMaterialArt", "Material nach Sec. II Part A", v("materialArt"), { list: auswahl.material_art, placeholder: "leer = Werkstoffe der Positionen" })}
+            ${asmeInput("bCodedMarking", "Coded marking", v("codedMarking"), { list: auswahl.coded_marking })}
+            ${asmeInput("bZahlung", "Zahlungsbedingungen", v("zahlungsbedingungen", vorgaben.zahlungsbedingungen || ""), { list: auswahl.zahlungsbedingungen })}
+            ${asmeInput("bMwst", "MwSt. %", v("mwstSatz", vorgaben.mwst_satz ?? 19), { type: "number" })}
+          </div>
+          <div class="form-row">
+            <label>Weitere Standards</label>
+            <div class="asme-std">${(auswahl.weitere_standards || []).map(s => `<label><input type="checkbox" class="bStd" value="${asmeEsc(s)}" ${gewaehlt.has(s) ? "checked" : ""}> ${asmeEsc(s)}</label>`).join("")}</div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="bCancel">Abbrechen</button>
+          <button class="btn" id="bSave">${isEdit ? "Speichern" : "Anlegen"}</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("bCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.addEventListener("keydown", escCloseOnce);
+  document.getElementById("bBestellNr").focus();
+  document.getElementById("bSave").addEventListener("click", (ev) => {
+    const val = id => document.getElementById(id).value.trim();
+    if(!val("bBestellNr")){ showToast("Bestell-Nr. ist ein Pflichtfeld.", true); return; }
+    const body = {
+      bestellNr: val("bBestellNr"), datum: val("bDatum") || null, lieferant: document.getElementById("bLieferant").value.trim(),
+      ihrAngebot: val("bIhrAngebot"), ihrSachbearbeiter: val("bIhrSachbearbeiter"), unserZeichen: val("bUnserZeichen"),
+      lieferdatum: val("bLieferdatum") || null, versand: val("bVersand"), asmeEdition: val("bAsmeEdition"),
+      codedMarking: val("bCodedMarking"), materialArt: val("bMaterialArt"), zahlungsbedingungen: val("bZahlung"), mwstSatz: val("bMwst"),
+      weitereStandards: [...document.querySelectorAll(".bStd:checked")].map(c => c.value),
+    };
+    asmeSpeichern(ev.currentTarget, async () => {
+      if(isEdit) await asmeSend("PATCH", `/bestellungen/${b.id}`, body);
+      else await asmeSend("POST", `/items/${item.id}/bestellungen`, body);
+    }, item, isEdit ? "Bestellung aktualisiert." : "Bestellung angelegt.");
+  });
+}
+
+async function openBestellPositionModal(item, b, p){
+  await loadAsmeConfig();
+  const isEdit = !!p;
+  const auswahl = (asmeAktuelleRevision() || {}).auswahl || {};
+  const naechstePos = String((b.positionen.length + 1) * 10);
+  const v = (key, fallback = "") => isEdit ? (p[key] ?? "") : fallback;
+  const preisText = isEdit && p.preis !== null ? asmeZahl(p.preis) : "";
+  const mengeText = isEdit && p.menge !== null ? asmeMenge(p.menge) : "";
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="bposModalTitle">
+        <h3 id="bposModalTitle">${isEdit ? "Position bearbeiten" : "Position hinzufügen"}</h3>
+        <div class="sub">${asmeEsc(b.bestellNr)} — ${asmeEsc((b.lieferant || "").split("\n")[0])}</div>
+        <div class="asme-modal-body asme-form">
+          <div class="form-grid">
+            ${asmeInput("pPos", "Bestell-Pos.", v("pos", naechstePos))}
+            ${asmeInput("pStueckliste", "Position Stückliste", v("stuecklistePos"))}
+            ${asmeInput("pMenge", "Menge", mengeText, { placeholder: "z.B. 4" })}
+            ${asmeInput("pEinheit", "Einheit", v("einheit", "Stk"), { list: ["Stk", "m", "kg", "m²", "Satz"] })}
+          </div>
+          ${asmeInput("pBezeichnung", "Bezeichnung / Abmessungen *", v("bezeichnung"), { textarea: true, rows: 3, placeholder: "z.B. Blech 20 x 2000 x 6000 mm" })}
+          ${(auswahl.bauteil || []).length ? `<div class="asme-std" style="margin:-6px 0 12px;">${auswahl.bauteil.map(b => `<button type="button" class="chip asme-bauteil" data-v="${asmeEsc(b)}">${asmeEsc(b)}</button>`).join("")}</div>` : ""}
+          <div class="form-grid">
+            ${asmeInput("pWerkstoff", "Werkstoff (Sec. II Part A)", v("werkstoff"), { placeholder: "z.B. SA-516 Gr.70", list: auswahl.werkstoff })}
+            ${asmeInput("pSpezifikation", "Spezifikation", v("spezifikation"), { list: auswahl.spezifikation })}
+            ${asmeInput("pPreis", "Preis je Einheit (€ netto)", preisText, { placeholder: "z.B. 1.250,50" })}
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="pCancel">Abbrechen</button>
+          ${!isEdit ? `<button class="btn ghost" id="pSaveNext">Speichern &amp; nächste</button>` : ""}
+          <button class="btn" id="pSave">${isEdit ? "Speichern" : "Hinzufügen"}</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("pCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.addEventListener("keydown", escCloseOnce);
+  document.getElementById(isEdit ? "pBezeichnung" : "pMenge").focus();
+  document.querySelectorAll(".asme-bauteil").forEach(btn => btn.addEventListener("click", () => {
+    const ta = document.getElementById("pBezeichnung");
+    ta.value = btn.dataset.v + (ta.value.trim() ? " " + ta.value.trim() : " ");
+    ta.focus();
+  }));
+  const body = () => {
+    const val = id => document.getElementById(id).value.trim();
+    return {
+      pos: val("pPos"), stuecklistePos: val("pStueckliste"), menge: val("pMenge"), einheit: val("pEinheit"),
+      bezeichnung: document.getElementById("pBezeichnung").value.trim(), werkstoff: val("pWerkstoff"),
+      spezifikation: val("pSpezifikation"), preis: val("pPreis"),
+    };
+  };
+  const pruefen = (d) => {
+    if(!d.bezeichnung){ showToast("Bezeichnung ist ein Pflichtfeld.", true); return false; }
+    if(d.menge && isNaN(Number(d.menge.replace(/\./g, "").replace(",", ".")))){ showToast("Menge bitte als Zahl angeben.", true); return false; }
+    if(d.preis && isNaN(Number(d.preis.replace(/\./g, "").replace(",", ".")))){ showToast("Preis bitte als Zahl angeben, z.B. 1.250,50.", true); return false; }
+    return true;
+  };
+  // Zahlen aus deutscher Schreibweise normalisieren, bevor sie an den Server gehen
+  const normal = (s) => s ? String(Number(s.replace(/\./g, "").replace(",", "."))) : "";
+  document.getElementById("pSave").addEventListener("click", (ev) => {
+    const d = body();
+    if(!pruefen(d)) return;
+    d.menge = normal(d.menge); d.preis = normal(d.preis);
+    asmeSpeichern(ev.currentTarget, async () => {
+      if(isEdit) await asmeSend("PATCH", `/bestellpositionen/${p.id}`, d);
+      else await asmeSend("POST", `/bestellungen/${b.id}/positionen`, d);
+    }, item, isEdit ? "Position aktualisiert." : "Position hinzugefügt.");
+  });
+  document.getElementById("pSaveNext")?.addEventListener("click", async (ev) => {
+    const d = body();
+    if(!pruefen(d)) return;
+    d.menge = normal(d.menge); d.preis = normal(d.preis);
+    const btn = ev.currentTarget;
+    btn.disabled = true;
+    try{
+      await asmeSend("POST", `/bestellungen/${b.id}/positionen`, d);
+      const bestellungen = await apiGet(`/items/${item.id}/bestellungen`);
+      const aktuell = bestellungen.find(x => x.id === b.id) || b;
+      await renderAsmeBestellungen(item);
+      showToast(`Pos. ${d.pos} gespeichert.`);
+      openBestellPositionModal(item, aktuell, null);
+    }catch(err){
+      showToast(err.message || "Speichern fehlgeschlagen.", true);
+      btn.disabled = false;
+    }
+  });
+}
+
+function openAsmeDeleteConfirm(titel, text, fn, item, toast){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="asmeDelTitle">
+        <h3 id="asmeDelTitle">${asmeEsc(titel)}</h3>
+        <div class="sub">${asmeEsc(text)}</div>
+        <div class="modal-actions">
+          <button class="btn text" id="asmeDelCancel">Abbrechen</button>
+          <button class="btn" id="asmeDelConfirm" style="background:var(--red); border-color:var(--red);">Endgültig löschen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("asmeDelCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.addEventListener("keydown", escCloseOnce);
+  document.getElementById("asmeDelConfirm").addEventListener("click", (ev) => asmeSpeichern(ev.currentTarget, fn, item, toast));
+}
+
 /* ===================== List rendering ===================== */
 function renderList(){
   const cfg = KIND_CONFIG[currentTab];
@@ -1871,6 +2249,7 @@ function renderMain(){
     ${cfg.metaSecondary ? `<div class="order-meta-secondary">${cfg.metaSecondary(item)}</div>` : ""}
     ${currentTab === "auftrag" ? renderLtHistorySection(item) : ""}
     ${renderLieferumfangSection(item)}
+    ${currentTab === "auftrag" && item.asme ? renderAsmeSectionHtml() : ""}
     ${currentTab === "auftrag" ? `
     <div class="timeline-head">
       <h3>Zeitplan</h3>
@@ -1894,6 +2273,25 @@ function renderMain(){
 
   if(currentTab === "auftrag"){
     renderOrderTimeline(item);
+    if(item.asme){
+      renderAsmeBestellungen(item);
+      document.getElementById("newBestellungBtn").addEventListener("click", () => openBestellungModal(item, null));
+    }
+    document.getElementById("asmeCheck").addEventListener("change", async (ev) => {
+      const box = ev.currentTarget;
+      const neu = box.checked;
+      box.disabled = true;
+      try{
+        await apiPatch(`/items/${item.id}`, { asme: neu });
+        await loadItems(currentTab);
+        renderMain();
+        showToast(neu ? "ASME-Auftrag – Bestellungen und ASME-Dokumente freigeschaltet." : "Kein ASME-Auftrag – Abschnitt ausgeblendet, erfasste Bestellungen bleiben erhalten.");
+      }catch(err){
+        showToast("Konnte nicht aktualisiert werden.", true);
+        box.checked = !neu;
+        box.disabled = false;
+      }
+    });
     document.getElementById("newPhaseBtn").addEventListener("click", () => openPhaseModal(item, null));
     document.getElementById("prioTagBtn").addEventListener("click", () => openPrioModal(item));
     document.getElementById("statusBadgeBtn").addEventListener("click", () => openAuftragStatusModal(item));
