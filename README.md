@@ -49,8 +49,18 @@ sudo systemctl status projektbesprechung
 Prüfen, ob `User=www-data` in der `.service`-Datei zum Server passt
 (ggf. anpassen, z.B. auf einen eigenen Dienst-Nutzer).
 
-### 4. nginx als Reverse-Proxy davorschalten
+### 4. nginx als Reverse-Proxy davorschalten (mit HTTPS)
 
+Die Vorlage erwartet ein Zertifikat der internen Zertifizierungsstelle für
+`projektbesprechung.paco.local`. Zertifikat + Schlüssel vorher ablegen:
+```bash
+sudo mkdir -p /etc/nginx/ssl
+sudo cp projektbesprechung.paco.local.crt /etc/nginx/ssl/
+sudo cp projektbesprechung.paco.local.key /etc/nginx/ssl/
+sudo chmod 600 /etc/nginx/ssl/projektbesprechung.paco.local.key
+```
+
+Dann:
 ```bash
 sudo apt install nginx -y
 sudo cp deploy/nginx-projektbesprechung.conf /etc/nginx/sites-available/projektbesprechung
@@ -59,8 +69,8 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-`server_name` in der nginx-Config auf den internen Hostnamen oder die
-Server-IP anpassen.
+`server_name` ist bereits auf `projektbesprechung.paco.local` gesetzt — bei
+abweichendem Hostnamen anpassen. Port 80 leitet automatisch auf HTTPS um.
 
 ### 5. Aufrufen
 
