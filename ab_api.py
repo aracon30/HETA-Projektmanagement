@@ -26,6 +26,21 @@ VORLAGE_PFAD = os.path.join(
 )
 
 
+def ab_nummer_suffix(kommission):
+    """Teil nach "AB-" für die Auftragsbestätigung: die Kommissionsnummer
+    bildet sich ihrerseits aus der AB-Nummer (K-01234/26 aus AB 1234/Jahr 26,
+    siehe erp_import.py) — das kehrt das nur wieder um, K-01234/26 wird zu
+    AB-1234/26. Funktioniert unabhängig vom ERP-Import, da jeder Auftrag eine
+    Kommission hat (nicht jeder eine erp_ab_nummer)."""
+    if not kommission:
+        return ""
+    if kommission.startswith("K-0"):
+        return kommission[len("K-0"):]
+    if kommission.startswith("K-"):
+        return kommission[len("K-"):]
+    return kommission
+
+
 def baue_kontext(item):
     positionen = []
     summe = 0.0
@@ -51,7 +66,7 @@ def baue_kontext(item):
     )
 
     return {
-        "ab_nummer": item.erp_ab_nummer or "",
+        "ab_nummer": ab_nummer_suffix(item.kommission),
         "datum": fmt_datum(date.today()),
         "auftrags_nr": item.kommission or "",
         "unser_zeichen": item.unser_zeichen or "",
@@ -81,7 +96,8 @@ def erzeuge_auftragsbestaetigung(item_id):
     doc.save(puffer)
     puffer.seek(0)
 
-    dateiname = f"Auftragsbestaetigung_{sicherer_dateiname(item.erp_ab_nummer or item.kommission)}.docx"
+    suffix = ab_nummer_suffix(item.kommission)
+    dateiname = f"Auftragsbestaetigung_{sicherer_dateiname('AB-' + suffix if suffix else item.kommission)}.docx"
     return send_file(
         puffer,
         mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",

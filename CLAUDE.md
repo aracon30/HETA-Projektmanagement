@@ -202,8 +202,9 @@ Bestellung in `formulare.json` eintragen; englische Bestellvorlage (Titel-Dropdo
 Ziel: aus den ohnehin im Auftrag erfassten Daten per Klick die Auftragsbestätigung
 als Word-Datei erzeugen, die an den Kunden geschickt wird – ohne Abtippen. Abschnitt
 „Auftragsbestätigung“ in der Auftrags-Detailansicht (nur für Aufträge, nicht
-Angebote/Anfragen): AB-Nummer (read-only, kommt aus dem ERP-Import, Spalte
-`items.erp_ab_nummer` – bei manuell angelegten Aufträgen leer), Unser Zeichen,
+Angebote/Anfragen): AB-Nummer (read-only, wird aus der Kommission abgeleitet,
+siehe unten – nicht aus `items.erp_ab_nummer`, der nur für den ERP-Import-
+Abgleich gebraucht wird), Unser Zeichen,
 Ihr Zeichen (Kunde), Bestell-Nr. Kunde, Zahlungsbedingungen, Versandanschrift
 (Kunde) frei editierbar; Lieferbedingungen und Liefertermin kommen aus den
 ohnehin vorhandenen Auftragsfeldern. „Auftragsbestätigung erzeugen“ lädt
@@ -223,9 +224,15 @@ Layout-Änderung = nur Vorlage tauschen, kein Code – Platzhalter dabei nicht
 verändern. Die Vorlage hatte kein Feld für die Kundenadresse; genutzt wird
 dafür das in der Vorlage ohnehin vorhandene (bis dahin leere) Feld
 „Versandanschrift/Shipping Address“, auf gleicher Zeile wie die
-Lieferbedingungen. Offen: Handbuch/Vorlage ggf. noch mit Philipp gegen den
-echten Ausdruck abgleichen (dieses Setup konnte die Vorlage nicht als PDF
-rendern, nur die erzeugte .docx inhaltlich/strukturell prüfen).
+Lieferbedingungen. AB-Nummer bildet sich aus der Kommission: Kommission
+entsteht beim ERP-Import aus der AB-Nummer (`K-{AB:05d}/{Jahr zweistellig}`,
+siehe `erp_import.py`) – `ab_nummer_suffix()` in `ab_api.py` kehrt das nur
+wieder um (`K-01234/26` → Rest nach „AB-“ = `1234/26`, in der Vorlage zu
+„AB-1234/26“ zusammengesetzt), funktioniert dadurch für jeden Auftrag mit
+Kommission, nicht nur ERP-importierte. Offen: Handbuch/Vorlage ggf. noch mit
+Philipp gegen den echten Ausdruck abgleichen (dieses Setup konnte die
+Vorlage nicht als PDF rendern, nur die erzeugte .docx inhaltlich/strukturell
+prüfen).
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 
