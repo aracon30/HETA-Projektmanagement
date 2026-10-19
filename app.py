@@ -7,6 +7,7 @@ import mail_client
 from erp_import import parse_positionsansicht_auftrag, hat_offene_position
 from prozesse_api import bp as prozesse_bp
 from asme_api import bp as asme_bp
+from ab_api import bp as ab_bp
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -16,12 +17,21 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 app.register_blueprint(prozesse_bp)
 app.register_blueprint(asme_bp)
+app.register_blueprint(ab_bp)
 
 
 def parse_date(value):
     if not value:
         return None
     return datetime.strptime(value, "%Y-%m-%d").date()
+
+
+def parse_float(value):
+    if value in (None, ""):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    return float(str(value).replace(".", "").replace(",", ".")) if "," in str(value) else float(value)
 
 
 # ---------- Statische Auslieferung des Frontends ----------
@@ -143,6 +153,16 @@ def update_item(item_id):
         item.projektleiter = data.get("projektleiter")
     if "asme" in data and item.type == "auftrag":
         item.asme = bool(data.get("asme"))
+    if "unserZeichen" in data and item.type == "auftrag":
+        item.unser_zeichen = data.get("unserZeichen")
+    if "kundenZeichen" in data and item.type == "auftrag":
+        item.kunden_zeichen = data.get("kundenZeichen")
+    if "kundenBestellnr" in data and item.type == "auftrag":
+        item.kunden_bestellnr = data.get("kundenBestellnr")
+    if "kundenAdresse" in data and item.type == "auftrag":
+        item.kunden_adresse = data.get("kundenAdresse")
+    if "zahlungsbedingungen" in data and item.type == "auftrag":
+        item.zahlungsbedingungen = data.get("zahlungsbedingungen")
     if "archiviert" in data and item.type == "auftrag":
         item.archiviert = bool(data.get("archiviert"))
     if "wert" in data and item.type == "angebot":
@@ -472,6 +492,9 @@ def add_position(item_id):
         beschreibung=beschreibung,
         liefertermin=parse_date(data.get("liefertermin")),
         reihenfolge=len(item.positionen),
+        menge=parse_float(data.get("menge")),
+        einheit=data.get("einheit"),
+        preis_je_einheit=parse_float(data.get("preisJeEinheit")),
     )
     db.session.add(position)
     db.session.commit()
@@ -486,6 +509,12 @@ def update_position(position_id):
         position.position = data.get("position")
     if "beschreibung" in data:
         position.beschreibung = data["beschreibung"]
+    if "menge" in data:
+        position.menge = parse_float(data.get("menge"))
+    if "einheit" in data:
+        position.einheit = data.get("einheit")
+    if "preisJeEinheit" in data:
+        position.preis_je_einheit = parse_float(data.get("preisJeEinheit"))
     if "liefertermin" in data:
         neuer_termin = parse_date(data.get("liefertermin"))
         if neuer_termin != position.liefertermin:

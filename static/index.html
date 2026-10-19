@@ -1775,6 +1775,9 @@ function renderPositionRow(item, p){
       </div>
       <div class="position-meta">
         <button class="val mono clickable-text" id="positionTerminBtn-${p.id}" title="Liefertermin dieser Position ändern">${p.liefertermin ? fmtDate(p.liefertermin) : 'Kein Termin'}</button>
+        ${p.menge != null && p.preisJeEinheit != null
+          ? `<span class="val mono" style="color:var(--slate);">${asmeMenge(p.menge)}${p.einheit ? ' ' + p.einheit : ''} × ${asmeZahl(p.preisJeEinheit)} € = ${asmeZahl(p.gesamt)} €</span>`
+          : ""}
         ${p.historie && p.historie.length ? `<div class="lt-history-list">${renderLtHistoryRows(p.historie)}</div>` : ""}
       </div>
     </div>
@@ -1855,6 +1858,49 @@ async function loadAsmeConfig(){
 }
 function asmeAktuelleRevision(){
   return (asmeConfig || []).find(r => r.aktuell) || (asmeConfig || [])[0] || null;
+}
+
+function renderAbSectionHtml(item){
+  return `
+    <div class="timeline-head">
+      <h3>Auftragsbestätigung</h3>
+      <button class="btn" id="abErzeugenBtn">Auftragsbestätigung erzeugen</button>
+    </div>
+    <div class="order-meta-grid" style="margin-bottom:20px;">
+      <div class="field"><label>AB-Nummer</label><div class="val mono">${item.erpAbNummer ? 'AB-' + item.erpAbNummer : '— (aus ERP-Import)'}</div></div>
+      <div class="field"><label>Unser Zeichen</label><div class="val"><button class="val clickable-text" id="unserZeichenBtn" title="Unser Zeichen ändern">${item.unserZeichen || '—'}</button></div></div>
+      <div class="field"><label>Ihr Zeichen (Kunde)</label><div class="val"><button class="val clickable-text" id="kundenZeichenBtn" title="Ihr Zeichen (Kunde) ändern">${item.kundenZeichen || '—'}</button></div></div>
+      <div class="field"><label>Bestell-Nr. Kunde</label><div class="val"><button class="val clickable-text" id="kundenBestellnrBtn" title="Bestell-Nr. des Kunden ändern">${item.kundenBestellnr || '—'}</button></div></div>
+      <div class="field"><label>Zahlungsbedingungen</label><div class="val"><button class="val clickable-text" id="zahlungsbedingungenBtn" title="Zahlungsbedingungen ändern">${item.zahlungsbedingungen || '—'}</button></div></div>
+      <div class="field" style="grid-column:1 / -1;"><label>Versandanschrift (Kunde)</label><div class="val"><button class="val clickable-text" id="kundenAdresseBtn" title="Versandanschrift ändern" style="white-space:pre-line; text-align:left;">${item.kundenAdresse || '—'}</button></div></div>
+    </div>
+  `;
+}
+
+async function auftragsbestaetigungLaden(item, btn){
+  btn.disabled = true;
+  try{
+    const res = await fetch(`${API}/items/${item.id}/auftragsbestaetigung`);
+    if(!res.ok){
+      let msg = "Auftragsbestätigung konnte nicht erzeugt werden.";
+      try{ msg = (await res.json()).error || msg; }catch(e){}
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    const cd = res.headers.get("Content-Disposition") || "";
+    const m = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cd);
+    const name = m ? decodeURIComponent(m[1]) : "Auftragsbestaetigung.docx";
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast("Auftragsbestätigung erzeugt: " + name);
+  }catch(err){
+    showToast(err.message, true);
+  }finally{
+    btn.disabled = false;
+  }
 }
 
 function renderAsmeSectionHtml(){
@@ -2267,6 +2313,7 @@ function renderMain(){
     ${currentTab === "auftrag" ? renderLtHistorySection(item) : ""}
     ${renderLieferumfangSection(item)}
     ${currentTab === "auftrag" && item.asme ? renderAsmeSectionHtml() : ""}
+    ${currentTab === "auftrag" ? renderAbSectionHtml(item) : ""}
     ${currentTab === "auftrag" ? `
     <div class="timeline-head">
       <h3>Zeitplan</h3>
@@ -2329,6 +2376,12 @@ function renderMain(){
     document.getElementById("projektleiterBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"projektleiter", label:"Projektleiter", inputType:"select", options: nutzer.map(n => n.name) }, ev.currentTarget));
     document.getElementById("ordnerBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }, ev.currentTarget));
     document.getElementById("bestelleingangBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"bestelleingang", label:"Bestelleingang", inputType:"date" }, ev.currentTarget));
+    document.getElementById("unserZeichenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"unserZeichen", label:"Unser Zeichen", inputType:"text" }, ev.currentTarget));
+    document.getElementById("kundenZeichenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenZeichen", label:"Ihr Zeichen (Kunde)", inputType:"text" }, ev.currentTarget));
+    document.getElementById("kundenBestellnrBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenBestellnr", label:"Bestell-Nr. Kunde", inputType:"text" }, ev.currentTarget));
+    document.getElementById("zahlungsbedingungenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"zahlungsbedingungen", label:"Zahlungsbedingungen", inputType:"text", placeholder:"z.B. 30 Tage netto" }, ev.currentTarget));
+    document.getElementById("kundenAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenAdresse", label:"Versandanschrift", inputType:"textarea", rows:3, placeholder:"Straße\nPLZ Ort" }, ev.currentTarget));
+    document.getElementById("abErzeugenBtn").addEventListener("click", (ev) => auftragsbestaetigungLaden(item, ev.currentTarget));
     document.getElementById("lieferbedingungenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"lieferbedingungen", label:"Lieferbedingungen", inputType:"text", placeholder:"z.B. FCA Werk Idar-Oberstein" }, ev.currentTarget));
     document.getElementById("ursprungsauftragBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"ursprungsauftrag", label:"Ursprungsauftrag", inputType:"text" }, ev.currentTarget));
     document.getElementById("zulGeliefertBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"zulGeliefert", label:"Zul. geliefert", inputType:"text" }, ev.currentTarget));
@@ -3134,6 +3187,20 @@ function openPositionModal(item, position){
           <label for="positionBeschrInput">Beschreibung</label>
           <textarea id="positionBeschrInput" rows="3" placeholder="z.B. 20 ST Filterbeutel Ø150, PTFE Nadelfilz">${isEdit ? position.beschreibung : ''}</textarea>
         </div>
+        <div class="form-row" style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label for="positionMengeInput">Menge (für Auftragsbestätigung)</label>
+            <input type="text" id="positionMengeInput" placeholder="z.B. 3" value="${isEdit && position.menge != null ? String(position.menge).replace('.', ',') : ''}">
+          </div>
+          <div style="flex:1;">
+            <label for="positionEinheitInput">Einheit</label>
+            <input type="text" id="positionEinheitInput" placeholder="z.B. Stk" value="${isEdit && position.einheit ? position.einheit : ''}">
+          </div>
+          <div style="flex:1;">
+            <label for="positionPreisInput">Preis je Einheit (netto €)</label>
+            <input type="text" id="positionPreisInput" placeholder="z.B. 245,50" value="${isEdit && position.preisJeEinheit != null ? String(position.preisJeEinheit).replace('.', ',') : ''}">
+          </div>
+        </div>
         ${!isEdit ? `
         <div class="form-row">
           <label for="positionTerminInput">Liefertermin (optional)</label>
@@ -3164,12 +3231,15 @@ function openPositionModal(item, position){
     const saveBtn = document.getElementById("positionSave");
     saveBtn.disabled = true;
     const positionNr = document.getElementById("positionNrInput").value.trim() || null;
+    const menge = document.getElementById("positionMengeInput").value.trim() || null;
+    const einheit = document.getElementById("positionEinheitInput").value.trim() || null;
+    const preisJeEinheit = document.getElementById("positionPreisInput").value.trim() || null;
     try{
       if(isEdit){
-        await apiPatch(`/positionen/${position.id}`, { position: positionNr, beschreibung });
+        await apiPatch(`/positionen/${position.id}`, { position: positionNr, beschreibung, menge, einheit, preisJeEinheit });
       } else {
         const terminInput = document.getElementById("positionTerminInput");
-        await apiPost(`/items/${item.id}/positionen`, { position: positionNr, beschreibung, liefertermin: terminInput.value || null });
+        await apiPost(`/items/${item.id}/positionen`, { position: positionNr, beschreibung, liefertermin: terminInput.value || null, menge, einheit, preisJeEinheit });
       }
       await loadItems(currentTab);
       closeModal();

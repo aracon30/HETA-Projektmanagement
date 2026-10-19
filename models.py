@@ -49,6 +49,13 @@ class Item(db.Model):
     archiviert = db.Column(db.Boolean, default=False)  # manuell gesetzt, blendet den Auftrag aus der Liste aus
     asme = db.Column(db.Boolean, default=False)  # ASME-Auftrag: schaltet Lieferantenbestellungen/ASME-Dokumente frei
 
+    # Auftragsbestätigung (Word-Dokument für den Kunden, siehe ab_api.py)
+    unser_zeichen = db.Column(db.String(120), nullable=True)
+    kunden_zeichen = db.Column(db.String(120), nullable=True)  # "Ihr Zeichen" des Kunden
+    kunden_bestellnr = db.Column(db.String(60), nullable=True)  # Bestellung-Nr. des Kunden
+    kunden_adresse = db.Column(db.Text, nullable=True)  # Straße/PLZ-Ort, mehrzeilig (Firma steht in "kunde")
+    zahlungsbedingungen = db.Column(db.String(120), nullable=True)
+
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
     wert = db.Column(db.String(40), nullable=True)
@@ -104,6 +111,12 @@ class Item(db.Model):
                 "positionen": [p.to_dict() for p in self.positionen],
                 "archiviert": bool(self.archiviert),
                 "asme": bool(self.asme),
+                "erpAbNummer": self.erp_ab_nummer,
+                "unserZeichen": self.unser_zeichen,
+                "kundenZeichen": self.kunden_zeichen,
+                "kundenBestellnr": self.kunden_bestellnr,
+                "kundenAdresse": self.kunden_adresse,
+                "zahlungsbedingungen": self.zahlungsbedingungen,
             })
         elif self.type == "angebot":
             base.update({
@@ -178,10 +191,21 @@ class AuftragPosition(db.Model):
     reihenfolge = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Für die Auftragsbestätigung (siehe ab_api.py) — optional, nur falls Preise
+    # je Position gebraucht werden
+    menge = db.Column(db.Float, nullable=True)
+    einheit = db.Column(db.String(20), nullable=True)  # Stk, m, kg …
+    preis_je_einheit = db.Column(db.Float, nullable=True)
+
     historie = db.relationship(
         "LieferterminHistorie", backref="position", cascade="all, delete-orphan",
         order_by="LieferterminHistorie.created_at"
     )
+
+    def gesamt(self):
+        if self.menge is None or self.preis_je_einheit is None:
+            return None
+        return round(self.menge * self.preis_je_einheit, 2)
 
     def to_dict(self):
         return {
@@ -190,6 +214,10 @@ class AuftragPosition(db.Model):
             "beschreibung": self.beschreibung,
             "liefertermin": self.liefertermin.isoformat() if self.liefertermin else None,
             "historie": [h.to_dict() for h in self.historie],
+            "menge": self.menge,
+            "einheit": self.einheit,
+            "preisJeEinheit": self.preis_je_einheit,
+            "gesamt": self.gesamt(),
         }
 
 

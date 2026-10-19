@@ -301,6 +301,54 @@ def main():
     else:
         print("Tabelle bestell_positionen existiert bereits.")
 
+    if not column_exists(cur, "items", "unser_zeichen"):
+        cur.execute("ALTER TABLE items ADD COLUMN unser_zeichen VARCHAR(120)")
+        print("Spalte items.unser_zeichen ergänzt (Auftragsbestätigung).")
+    else:
+        print("Spalte items.unser_zeichen existiert bereits.")
+
+    if not column_exists(cur, "items", "kunden_zeichen"):
+        cur.execute("ALTER TABLE items ADD COLUMN kunden_zeichen VARCHAR(120)")
+        print("Spalte items.kunden_zeichen ergänzt (Auftragsbestätigung).")
+    else:
+        print("Spalte items.kunden_zeichen existiert bereits.")
+
+    if not column_exists(cur, "items", "kunden_bestellnr"):
+        cur.execute("ALTER TABLE items ADD COLUMN kunden_bestellnr VARCHAR(60)")
+        print("Spalte items.kunden_bestellnr ergänzt (Auftragsbestätigung).")
+    else:
+        print("Spalte items.kunden_bestellnr existiert bereits.")
+
+    if not column_exists(cur, "items", "kunden_adresse"):
+        cur.execute("ALTER TABLE items ADD COLUMN kunden_adresse TEXT")
+        print("Spalte items.kunden_adresse ergänzt (Auftragsbestätigung).")
+    else:
+        print("Spalte items.kunden_adresse existiert bereits.")
+
+    if not column_exists(cur, "items", "zahlungsbedingungen"):
+        cur.execute("ALTER TABLE items ADD COLUMN zahlungsbedingungen VARCHAR(120)")
+        print("Spalte items.zahlungsbedingungen ergänzt (Auftragsbestätigung).")
+    else:
+        print("Spalte items.zahlungsbedingungen existiert bereits.")
+
+    if not column_exists(cur, "auftrag_positionen", "menge"):
+        cur.execute("ALTER TABLE auftrag_positionen ADD COLUMN menge FLOAT")
+        print("Spalte auftrag_positionen.menge ergänzt (Auftragsbestätigung).")
+    else:
+        print("Spalte auftrag_positionen.menge existiert bereits.")
+
+    if not column_exists(cur, "auftrag_positionen", "einheit"):
+        cur.execute("ALTER TABLE auftrag_positionen ADD COLUMN einheit VARCHAR(20)")
+        print("Spalte auftrag_positionen.einheit ergänzt (Auftragsbestätigung).")
+    else:
+        print("Spalte auftrag_positionen.einheit existiert bereits.")
+
+    if not column_exists(cur, "auftrag_positionen", "preis_je_einheit"):
+        cur.execute("ALTER TABLE auftrag_positionen ADD COLUMN preis_je_einheit FLOAT")
+        print("Spalte auftrag_positionen.preis_je_einheit ergänzt (Auftragsbestätigung).")
+    else:
+        print("Spalte auftrag_positionen.preis_je_einheit existiert bereits.")
+
     # Bekannte Nutzer mit E-Mail-Adresse befüllen (nur wenn noch leer)
     cur.execute("SELECT id, name, email FROM users")
     updated = 0
