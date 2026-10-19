@@ -43,6 +43,8 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
 | `static/index.html` | Komplettes Frontend (Aufträge/Angebote/Gantt-Tabs) |
 | `asme_api.py` | ASME-Dokumente: Lieferantenbestellungen + Formularerzeugung aus Word-Vorlagen |
 | `vorlagen/asme/` | Word-Vorlagen je QC-Handbuch-Revision (siehe README dort) |
+| `ab_api.py` | Auftragsbestätigung: Formularerzeugung aus Word-Vorlage (docxtpl) |
+| `vorlagen/auftragsbestaetigung/` | Word-Vorlage der Auftragsbestätigung (Jinja-Platzhalter) |
 | `requirements.txt` | Python-Abhängigkeiten |
 | `deploy/projektbesprechung.service` | systemd-Unit-Vorlage |
 | `deploy/nginx-projektbesprechung.conf` | nginx-Reverse-Proxy-Vorlage |
@@ -185,6 +187,36 @@ Word-Originalen umgebaut (Dropdown-Listen in `auswahl` übernommen; Kopffeld
 und Werkstoff je Position). Offen: Handbuch-Revision und Form-Nr. der
 Bestellung in `formulare.json` eintragen; englische Bestellvorlage (Titel-Dropdown
 „Bestellung/Order“ deutet darauf hin) ggf. als eigenes Formular ergänzen.
+
+## Auftragsbestätigung (Stufe 1 umgesetzt)
+
+Ziel: aus den ohnehin im Auftrag erfassten Daten per Klick die Auftragsbestätigung
+als Word-Datei erzeugen, die an den Kunden geschickt wird – ohne Abtippen. Abschnitt
+„Auftragsbestätigung“ in der Auftrags-Detailansicht (nur für Aufträge, nicht
+Angebote/Anfragen): AB-Nummer (read-only, kommt aus dem ERP-Import, Spalte
+`items.erp_ab_nummer` – bei manuell angelegten Aufträgen leer), Unser Zeichen,
+Ihr Zeichen (Kunde), Bestell-Nr. Kunde, Zahlungsbedingungen, Versandanschrift
+(Kunde) frei editierbar; Lieferbedingungen und Liefertermin kommen aus den
+ohnehin vorhandenen Auftragsfeldern. „Auftragsbestätigung erzeugen“ lädt
+`Auftragsbestaetigung_<AB-Nr-oder-Kommission>.docx`. Code: `ab_api.py`
+(Blueprint, docxtpl, reicht die Formatierungs-Helfer aus `asme_api.py` weiter),
+Felder an `Item` (`unser_zeichen`/`kunden_zeichen`/`kunden_bestellnr`/
+`kunden_adresse`/`zahlungsbedingungen`) und `AuftragPosition`
+(`menge`/`einheit`/`preis_je_einheit`, optional – nur gebraucht, wenn die
+Position auch in der Auftragsbestätigung einen Preis haben soll; ohne Preis
+bleiben Menge/Preis/Gesamtbetrag in der Tabelle leer). Vorlage
+`vorlagen/auftragsbestaetigung/Auftragsbestaetigung.docx` ist Philipps
+Original-Formular (Dropdown-Kopf „Auftragsbestätigung/Lieferschein/
+Rechnung/…“ unverändert gelassen, nur für „Auftragsbestätigung“ ausgefüllt),
+Platzhalter direkt in den Wert-Zeilen ergänzt, Positionstabelle auf eine
+Jinja-Schleifenzeile (`{%tr for %}`/`{%tr endfor %}`, docxtpl-Syntax) reduziert.
+Layout-Änderung = nur Vorlage tauschen, kein Code – Platzhalter dabei nicht
+verändern. Die Vorlage hatte kein Feld für die Kundenadresse; genutzt wird
+dafür das in der Vorlage ohnehin vorhandene (bis dahin leere) Feld
+„Versandanschrift/Shipping Address“, auf gleicher Zeile wie die
+Lieferbedingungen. Offen: Handbuch/Vorlage ggf. noch mit Philipp gegen den
+echten Ausdruck abgleichen (dieses Setup konnte die Vorlage nicht als PDF
+rendern, nur die erzeugte .docx inhaltlich/strukturell prüfen).
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 
