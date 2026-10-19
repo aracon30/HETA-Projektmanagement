@@ -61,9 +61,12 @@ def baue_kontext(item):
     kundenreferenz_zeile = " / ".join(x for x in (
         item.kunden_zeichen, item.kunden_bestellnr, fmt_datum(item.bestelleingang)
     ) if x)
-    versandanschrift = ", ".join(
-        x.strip() for x in ((item.kunde or ""), (item.kunden_adresse or "").replace("\n", ", ")) if x.strip()
-    )
+    # Kunden-Adresse (Firma + die frei eingetragenen Zeilen Straße/PLZ-Ort) —
+    # füllt sowohl das Anschriftfeld oben links als auch die Versandanschrift
+    # (Vorlage hat kein eigenes Feld für eine Kontaktperson dort).
+    adresse_zeilen = [x.strip() for x in (
+        [item.kunde or ""] + (item.kunden_adresse or "").split("\n")
+    ) if x.strip()]
 
     return {
         "ab_nummer": ab_nummer_suffix(item.kommission),
@@ -72,7 +75,9 @@ def baue_kontext(item):
         "unser_zeichen": item.unser_zeichen or "",
         "kundenreferenz_zeile": kundenreferenz_zeile,
         "lieferbedingungen": item.lieferbedingungen or "",
-        "versandanschrift": versandanschrift,
+        "adresse_zeilen": adresse_zeilen,
+        "versand_erste_zeile": adresse_zeilen[0] if adresse_zeilen else "",
+        "versand_weitere_zeilen": adresse_zeilen[1:],
         "liefertermin": fmt_datum(item.liefertermin),
         "zahlungsbedingungen": item.zahlungsbedingungen or "30 Tage netto",
         "positionen": positionen,

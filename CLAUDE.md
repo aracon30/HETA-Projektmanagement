@@ -221,18 +221,38 @@ Rechnung/…“ unverändert gelassen, nur für „Auftragsbestätigung“ ausge
 Platzhalter direkt in den Wert-Zeilen ergänzt, Positionstabelle auf eine
 Jinja-Schleifenzeile (`{%tr for %}`/`{%tr endfor %}`, docxtpl-Syntax) reduziert.
 Layout-Änderung = nur Vorlage tauschen, kein Code – Platzhalter dabei nicht
-verändern. Die Vorlage hatte kein Feld für die Kundenadresse; genutzt wird
-dafür das in der Vorlage ohnehin vorhandene (bis dahin leere) Feld
-„Versandanschrift/Shipping Address“, auf gleicher Zeile wie die
-Lieferbedingungen. AB-Nummer bildet sich aus der Kommission: Kommission
-entsteht beim ERP-Import aus der AB-Nummer (`K-{AB:05d}/{Jahr zweistellig}`,
-siehe `erp_import.py`) – `ab_nummer_suffix()` in `ab_api.py` kehrt das nur
-wieder um (`K-01234/26` → Rest nach „AB-“ = `1234/26`, in der Vorlage zu
+verändern. AB-Nummer bildet sich aus der Kommission: Kommission entsteht
+beim ERP-Import aus der AB-Nummer (`K-{AB:05d}/{Jahr zweistellig}`, siehe
+`erp_import.py`) – `ab_nummer_suffix()` in `ab_api.py` kehrt das nur wieder
+um (`K-01234/26` → Rest nach „AB-“ = `1234/26`, in der Vorlage zu
 „AB-1234/26“ zusammengesetzt), funktioniert dadurch für jeden Auftrag mit
-Kommission, nicht nur ERP-importierte. Offen: Handbuch/Vorlage ggf. noch mit
-Philipp gegen den echten Ausdruck abgleichen (dieses Setup konnte die
-Vorlage nicht als PDF rendern, nur die erzeugte .docx inhaltlich/strukturell
-prüfen).
+Kommission, nicht nur ERP-importierte.
+
+**Kundenadresse (korrigiert nach Vergleich mit einer echten Auftragsbestätigung
+von Philipp):** Die Vorlage hat sehr wohl ein Anschriftfeld oben links –
+es ist nur ein leeres, seitenfest verankertes Textfeld (floating
+`wps:txbx`/`v:textbox`-Paar, kein normaler Absatz), das beim ersten
+Durchgehen der Vorlage übersehen wurde. Gefüllt wird es über einen
+docxtpl-Absatzschleife (`{%p for line in adresse_zeilen %}`/`{%p endfor %}`,
+je Zeile ein eigener `<w:p>` innerhalb des Textfelds). Dieselben Zeilen
+füllen auch die „Versandanschrift/Shipping Address“ (erste Zeile auf
+gleicher Höhe wie „FCA Lich“, weitere Zeilen darunter über eine zweite
+Absatzschleife `versand_weitere_zeilen`) – eine eigene Kontaktperson wie im
+Beispiel von Philipp („Frau Helima Nougal“) gibt es dafür nicht, da kein
+entsprechendes Feld erfasst wird. `adresse_zeilen` in `ab_api.py` = `kunde`
++ die freien Zeilen aus `kunden_adresse`.
+
+**PDF-Vorschau in diesem Dev-Setup:** `soffice`/LibreOffice ist nur mit
+`libreoffice-core`/`-common` vorinstalliert, **`libreoffice-writer` fehlt**
+(`Error: source file could not be loaded` bei jedem `--convert-to pdf`,
+auch bei trivialen Dateien – nicht an der jeweiligen Datei liegend). Abhilfe:
+`apt-get install -y libreoffice-writer poppler-utils`, danach funktioniert
+`soffice --headless --convert-to pdf` und `pdftoppm` zum Rendern als Bild
+normal. Vorher ließen sich Vorlagenänderungen nur strukturell/inhaltlich
+prüfen (python-docx/Tabellenwerte), nicht visuell – das hat zu der oben
+beschriebenen übersehenen Kundenadresse geführt. Bei künftigen
+Vorlagen-Änderungen: immer als PDF rendern und mit einem echten Beispiel
+vergleichen, bevor man sich auf die reine XML-Analyse verlässt.
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 
