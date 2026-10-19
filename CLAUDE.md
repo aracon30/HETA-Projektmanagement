@@ -18,8 +18,18 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
   wird von Flask direkt ausgeliefert
 - **Deployment:** Gunicorn als systemd-Dienst (`projektbesprechung.service`),
   nginx als Reverse-Proxy davor
-- **Server:** Ubuntu-Testserver, erreichbar unter `192.168.80.65` (bis 09/2026: .69 — Adresse hat sich geändert, SSH-Host-Key ebenfalls; interner
-  Testserver, Nutzer `heta`, Projektpfad `/opt/projektbesprechung`)
+- **Server (seit 19.10.2026, Produktiv-VM in der HETA/PACO-Struktur):**
+  `https://projektbesprechung.paco.local/` (IP `192.168.80.35/24`, VM-Name
+  "Projektbesprechung" auf ESXi-Host `192.168.80.227`, 4 vCPU/4 GB RAM/60 GB),
+  eingerichtet von IT (Herr Spano). Login per SSH als `admin-heta` (sudo),
+  Dienst läuft unter eigenem Nutzer `heta`, Projektpfad `/opt/projektbesprechung`.
+  Echtes HTTPS-Zertifikat der internen PACO-CA (CN/SAN `projektbesprechung.paco.local`,
+  gültig bis 15.10.2033), liegt als PEM-Dateien unter `/etc/nginx/ssl/` (aus der
+  von IT gelieferten `.pfx` per OpenSSL umgewandelt, siehe README). Über VPN auch
+  aus dem Homeoffice erreichbar (Routing + interne DNS-Auflösung getestet, beides
+  funktioniert). Alter Testserver (`192.168.80.56`, davor `.65`/`.69` — die VM hatte
+  wiederholt wechselnde DHCP-Adressen, daher der Umzug auf eine feste IP) ist
+  gestoppt, dient vorerst nur noch als Fallback/Backup-Quelle.
 
 ## Dateien im Repo
 
@@ -94,6 +104,15 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
    Azure-AD-App-Registrierung mit Anwendungsberechtigung `Tasks.ReadWrite`.
    Werte werden als `Environment=` in der systemd-Unit gesetzt (siehe
    auskommentierte Platzhalter in `deploy/projektbesprechung.service`).
+   **Übergangslösung bereits aktiv in Produktion:** Der Power-Automate-
+   Webhook-Weg ist bei HETA durch eine DLP-Richtlinie der PACO-Gruppe
+   gesperrt (Request-/HTTP-Trigger nicht verfügbar) und daher faktisch
+   ungenutzt; stattdessen läuft seit dem Serverumzug die E-Mail-
+   Benachrichtigung per SMTP (`mail_client.py`, `SMTP_HOST=192.168.80.30`
+   `hetamsx01.paco.local`, Port 25, kein Login nötig — anonymer interner
+   Relay). "Aufgabe erstellen" nutzt automatisch Graph → E-Mail → Webhook →
+   nur lokale Markierung, je nachdem was konfiguriert ist; `aufgabe_kanal`
+   am `VerlaufEintrag` hält fest, welcher Kanal tatsächlich gegriffen hat.
 2. **Login/Rechteverwaltung** — aktuell offen für jeden mit Netzwerkzugriff.
 3. **Echter Excel/ERP-Import** statt manuellem Anlegen (`POST /api/items`).
 4. **Verknüpfung Angebot→Auftrag** beim Gewinnen eines Angebots (aktuell
@@ -161,13 +180,17 @@ Bestellung in `formulare.json` eintragen; englische Bestellvorlage (Titel-Dropdo
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 
-- **Deployment per Git (seit 28.09.2026):** `/opt/projektbesprechung` ist ein
-  Git-Checkout (Deploy-Key `~/.ssh/github_deploy`, read-only). Update:
+- **Deployment per Git:** `/opt/projektbesprechung` ist ein Git-Checkout
+  (eigener Deploy-Key `~/.ssh/github_deploy` im Home von `admin-heta`,
+  read-only, neu erzeugt beim Serverumzug). Update:
   `bash /opt/projektbesprechung/deploy/update.sh` (sichert DB, `git pull`,
-  `migrate.py`, `seed_prozesse.py`, Neustart). Der Server folgt aktuell dem
-  Branch `claude/erpnext-prozess-dokumentation-ino6q8`; nach Merge auf `main`
-  umstellen (`git checkout main && bash deploy/update.sh`). Nur auf dem Server
-  vorhanden (nicht im Repo): `import_orders.py`.
+  `migrate.py`, `seed_prozesse.py`, Neustart). Der Server folgt dem Branch
+  `main` (feature branches wie `claude/asme-dokumente` werden nach dem Merge
+  auf GitHub gelöscht — falls `git pull`/`git fetch` mit "couldn't find
+  remote ref" fehlschlägt, folgt die lokale Remote-Konfiguration noch einem
+  gelöschten Branch: `git remote set-branches origin '*' && git fetch origin`
+  behebt das dauerhaft, danach `git checkout -B main origin/main`). Nur auf
+  dem Server vorhanden (nicht im Repo): `import_orders.py`.
 - **Nie `seed.py` auf dem Server ausführen** — setzt die Datenbank zurück.
 
 - **Nach jedem `sudo cp ... /opt/projektbesprechung/...` sofort**
@@ -190,8 +213,12 @@ Bestellung in `formulare.json` eintragen; englische Bestellvorlage (Titel-Dropdo
   als einen zusammenhängenden Befehl interpretiert. Im Zweifel Befehle
   einzeln und mit ausdrücklichem Hinweis "einzeln ausführen" liefern.
 
-## Kontaktperson für Azure/IT-Themen
+## Kontaktpersonen für Azure/IT-Themen
 
-Heiko Hensel (Geschäftsführer). E-Mail-Entwurf für die App-Registrierungs-
-Anfrage wurde bereits einmal erstellt und (vermutlich) verschickt — Status
-beim Fortsetzen erfragen.
+- **Heiko Hensel** (Geschäftsführer) — für die Azure-AD-App-Registrierung
+  (Microsoft-To-Do-Anbindung). E-Mail-Entwurf wurde bereits einmal erstellt
+  und (vermutlich) verschickt — Status beim Fortsetzen erfragen.
+- **Herr Spano** (IT, PACO-Gruppe, Helpdesk-Tickets unter
+  `svrosticket.paco.local`) — zuständig für Server-/Netzwerk-Infrastruktur
+  (VM-Bereitstellung, DNS, interne Zertifizierungsstelle, SMTP-Relay,
+  VPN/Routing). Hat den Serverumzug am 19.10.2026 abgewickelt.
