@@ -331,6 +331,12 @@ def main():
     else:
         print("Spalte items.zahlungsbedingungen existiert bereits.")
 
+    if not column_exists(cur, "items", "versand_adresse"):
+        cur.execute("ALTER TABLE items ADD COLUMN versand_adresse TEXT")
+        print("Spalte items.versand_adresse ergänzt (Auftragsbestätigung, nur falls abweichend).")
+    else:
+        print("Spalte items.versand_adresse existiert bereits.")
+
     if not column_exists(cur, "auftrag_positionen", "menge"):
         cur.execute("ALTER TABLE auftrag_positionen ADD COLUMN menge FLOAT")
         print("Spalte auftrag_positionen.menge ergänzt (Auftragsbestätigung).")

@@ -62,11 +62,14 @@ def baue_kontext(item):
         item.kunden_zeichen, item.kunden_bestellnr, fmt_datum(item.bestelleingang)
     ) if x)
     # Kunden-Adresse (Firma + die frei eingetragenen Zeilen Straße/PLZ-Ort) —
-    # füllt sowohl das Anschriftfeld oben links als auch die Versandanschrift
-    # (Vorlage hat kein eigenes Feld für eine Kontaktperson dort).
+    # füllt das Anschriftfeld oben links.
     adresse_zeilen = [x.strip() for x in (
         [item.kunde or ""] + (item.kunden_adresse or "").split("\n")
     ) if x.strip()]
+    # Versandanschrift: eigenes Feld, da sie von der Kundenadresse abweichen
+    # kann (andere Lieferadresse, Ansprechpartner vor Ort o.ä.) — ohne eigene
+    # Eintragung wird die Kundenadresse übernommen.
+    versand_zeilen = [x.strip() for x in (item.versand_adresse or "").split("\n") if x.strip()] or adresse_zeilen
 
     return {
         "ab_nummer": ab_nummer_suffix(item.kommission),
@@ -76,8 +79,8 @@ def baue_kontext(item):
         "kundenreferenz_zeile": kundenreferenz_zeile,
         "lieferbedingungen": item.lieferbedingungen or "",
         "adresse_zeilen": adresse_zeilen,
-        "versand_erste_zeile": adresse_zeilen[0] if adresse_zeilen else "",
-        "versand_weitere_zeilen": adresse_zeilen[1:],
+        "versand_erste_zeile": versand_zeilen[0] if versand_zeilen else "",
+        "versand_weitere_zeilen": versand_zeilen[1:],
         "liefertermin": fmt_datum(item.liefertermin),
         "zahlungsbedingungen": item.zahlungsbedingungen or "30 Tage netto",
         "positionen": positionen,
