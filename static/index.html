@@ -1881,7 +1881,8 @@ function renderAbSectionHtml(item){
       <div class="field"><label>Ihr Zeichen (Kunde)</label><div class="val"><button class="val clickable-text" id="kundenZeichenBtn" title="Ihr Zeichen (Kunde) ändern">${item.kundenZeichen || '—'}</button></div></div>
       <div class="field"><label>Bestell-Nr. Kunde</label><div class="val"><button class="val clickable-text" id="kundenBestellnrBtn" title="Bestell-Nr. des Kunden ändern">${item.kundenBestellnr || '—'}</button></div></div>
       <div class="field"><label>Zahlungsbedingungen</label><div class="val"><button class="val clickable-text" id="zahlungsbedingungenBtn" title="Zahlungsbedingungen ändern">${item.zahlungsbedingungen || '—'}</button></div></div>
-      <div class="field" style="grid-column:1 / -1;"><label>Versandanschrift (Kunde)</label><div class="val"><button class="val clickable-text" id="kundenAdresseBtn" title="Versandanschrift ändern" style="white-space:pre-line; text-align:left;">${item.kundenAdresse || '—'}</button></div></div>
+      <div class="field" style="grid-column:1 / -1;"><label>Kundenadresse (Straße/PLZ-Ort)</label><div class="val"><button class="val clickable-text" id="kundenAdresseBtn" title="Kundenadresse ändern" style="white-space:pre-line; text-align:left;">${item.kundenAdresse || '—'}</button></div></div>
+      <div class="field" style="grid-column:1 / -1;"><label>Versandanschrift (nur falls abweichend von der Kundenadresse)</label><div class="val"><button class="val clickable-text" id="versandAdresseBtn" title="Versandanschrift ändern" style="white-space:pre-line; text-align:left;">${item.versandAdresse || '— (wie Kundenadresse)'}</button></div></div>
     </div>
   `;
 }
@@ -2389,7 +2390,8 @@ function renderMain(){
     document.getElementById("kundenZeichenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenZeichen", label:"Ihr Zeichen (Kunde)", inputType:"text" }, ev.currentTarget));
     document.getElementById("kundenBestellnrBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenBestellnr", label:"Bestell-Nr. Kunde", inputType:"text" }, ev.currentTarget));
     document.getElementById("zahlungsbedingungenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"zahlungsbedingungen", label:"Zahlungsbedingungen", inputType:"text", placeholder:"z.B. 30 Tage netto" }, ev.currentTarget));
-    document.getElementById("kundenAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenAdresse", label:"Versandanschrift", inputType:"textarea", rows:3, placeholder:"Straße\nPLZ Ort" }, ev.currentTarget));
+    document.getElementById("kundenAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenAdresse", label:"Kundenadresse", inputType:"textarea", rows:3, placeholder:"Straße\nPLZ Ort" }, ev.currentTarget));
+    document.getElementById("versandAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"versandAdresse", label:"Versandanschrift", inputType:"textarea", rows:3, placeholder:"Firma\nAnsprechpartner\nStraße\nPLZ Ort" }, ev.currentTarget));
     document.getElementById("abErzeugenBtn").addEventListener("click", (ev) => auftragsbestaetigungLaden(item, ev.currentTarget));
     document.getElementById("lieferbedingungenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"lieferbedingungen", label:"Lieferbedingungen", inputType:"text", placeholder:"z.B. FCA Werk Idar-Oberstein" }, ev.currentTarget));
     document.getElementById("ursprungsauftragBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"ursprungsauftrag", label:"Ursprungsauftrag", inputType:"text" }, ev.currentTarget));

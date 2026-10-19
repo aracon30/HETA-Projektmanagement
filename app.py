@@ -163,6 +163,8 @@ def update_item(item_id):
         item.kunden_adresse = data.get("kundenAdresse")
     if "zahlungsbedingungen" in data and item.type == "auftrag":
         item.zahlungsbedingungen = data.get("zahlungsbedingungen")
+    if "versandAdresse" in data and item.type == "auftrag":
+        item.versand_adresse = data.get("versandAdresse")
     if "archiviert" in data and item.type == "auftrag":
         item.archiviert = bool(data.get("archiviert"))
     if "wert" in data and item.type == "angebot":

@@ -205,13 +205,14 @@ als Word-Datei erzeugen, die an den Kunden geschickt wird – ohne Abtippen. Abs
 Angebote/Anfragen): AB-Nummer (read-only, wird aus der Kommission abgeleitet,
 siehe unten – nicht aus `items.erp_ab_nummer`, der nur für den ERP-Import-
 Abgleich gebraucht wird), Unser Zeichen,
-Ihr Zeichen (Kunde), Bestell-Nr. Kunde, Zahlungsbedingungen, Versandanschrift
-(Kunde) frei editierbar; Lieferbedingungen und Liefertermin kommen aus den
-ohnehin vorhandenen Auftragsfeldern. „Auftragsbestätigung erzeugen“ lädt
+Ihr Zeichen (Kunde), Bestell-Nr. Kunde, Zahlungsbedingungen, Kundenadresse
+und Versandanschrift (eigenes Feld, s.u.) frei editierbar; Lieferbedingungen
+und Liefertermin kommen aus den ohnehin vorhandenen Auftragsfeldern.
+„Auftragsbestätigung erzeugen“ lädt
 `Auftragsbestaetigung_<AB-Nr-oder-Kommission>.docx`. Code: `ab_api.py`
 (Blueprint, docxtpl, reicht die Formatierungs-Helfer aus `asme_api.py` weiter),
 Felder an `Item` (`unser_zeichen`/`kunden_zeichen`/`kunden_bestellnr`/
-`kunden_adresse`/`zahlungsbedingungen`) und `AuftragPosition`
+`kunden_adresse`/`versand_adresse`/`zahlungsbedingungen`) und `AuftragPosition`
 (`menge`/`einheit`/`preis_je_einheit`, optional – nur gebraucht, wenn die
 Position auch in der Auftragsbestätigung einen Preis haben soll; ohne Preis
 bleiben Menge/Preis/Gesamtbetrag in der Tabelle leer). Vorlage
@@ -234,13 +235,17 @@ es ist nur ein leeres, seitenfest verankertes Textfeld (floating
 `wps:txbx`/`v:textbox`-Paar, kein normaler Absatz), das beim ersten
 Durchgehen der Vorlage übersehen wurde. Gefüllt wird es über einen
 docxtpl-Absatzschleife (`{%p for line in adresse_zeilen %}`/`{%p endfor %}`,
-je Zeile ein eigener `<w:p>` innerhalb des Textfelds). Dieselben Zeilen
-füllen auch die „Versandanschrift/Shipping Address“ (erste Zeile auf
-gleicher Höhe wie „FCA Lich“, weitere Zeilen darunter über eine zweite
-Absatzschleife `versand_weitere_zeilen`) – eine eigene Kontaktperson wie im
-Beispiel von Philipp („Frau Helima Nougal“) gibt es dafür nicht, da kein
-entsprechendes Feld erfasst wird. `adresse_zeilen` in `ab_api.py` = `kunde`
-+ die freien Zeilen aus `kunden_adresse`.
+je Zeile ein eigener `<w:p>` innerhalb des Textfelds). `adresse_zeilen` in
+`ab_api.py` = `kunde` + die freien Zeilen aus `kunden_adresse`.
+
+**Versandanschrift ist ein eigenes Feld** (`items.versand_adresse`,
+mehrzeilig frei, z.B. mit abweichendem Ansprechpartner wie im Beispiel von
+Philipp „Frau Helima Nougal“) – kann bewusst von der Kundenadresse oben
+abweichen (andere Lieferadresse, Ansprechpartner vor Ort). Ohne eigene
+Eintragung übernimmt `ab_api.py` die Kundenadresse als Fallback. Füllt die
+„Versandanschrift/Shipping Address“ (erste Zeile auf gleicher Höhe wie
+„FCA Lich“, weitere Zeilen darunter über eine zweite Absatzschleife
+`versand_weitere_zeilen`).
 
 **PDF-Vorschau in diesem Dev-Setup:** `soffice`/LibreOffice ist nur mit
 `libreoffice-core`/`-common` vorinstalliert, **`libreoffice-writer` fehlt**

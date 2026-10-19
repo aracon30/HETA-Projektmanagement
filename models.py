@@ -55,6 +55,7 @@ class Item(db.Model):
     kunden_bestellnr = db.Column(db.String(60), nullable=True)  # Bestellung-Nr. des Kunden
     kunden_adresse = db.Column(db.Text, nullable=True)  # Straße/PLZ-Ort, mehrzeilig (Firma steht in "kunde")
     zahlungsbedingungen = db.Column(db.String(120), nullable=True)
+    versand_adresse = db.Column(db.Text, nullable=True)  # nur falls abweichend von kunde/kunden_adresse, mehrzeilig (frei, inkl. Firma/Ansprechpartner)
 
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
@@ -116,6 +117,7 @@ class Item(db.Model):
                 "kundenZeichen": self.kunden_zeichen,
                 "kundenBestellnr": self.kunden_bestellnr,
                 "kundenAdresse": self.kunden_adresse,
+                "versandAdresse": self.versand_adresse,
                 "zahlungsbedingungen": self.zahlungsbedingungen,
             })
         elif self.type == "angebot":
