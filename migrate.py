@@ -23,6 +23,8 @@ EMAIL_MAP = {
     "Markus Lindt": "lindt@heta.de",
     "Nina Osei": "osei@heta.de",
     "Philipp Schreiber": "p.schreiber@heta.de",
+    "Jessica Weiz": "weiz@heta.de",
+    "Weiz, Jessica": "weiz@heta.de",
 }
 
 
@@ -243,6 +245,16 @@ def main():
             print("Nutzer 'Häfer, Gabriele' ergänzt.")
     else:
         print("Nutzer 'Häfer, Gabriele' existiert bereits.")
+
+    cur.execute("SELECT id FROM users WHERE name = ?", ("Weiz, Jessica",))
+    if cur.fetchone() is None:
+        cur.execute(
+            "INSERT INTO users (name, abteilung, email) VALUES (?, ?, ?)",
+            ("Weiz, Jessica", None, "weiz@heta.de"),
+        )
+        print("Nutzer 'Weiz, Jessica' ergänzt.")
+    else:
+        print("Nutzer 'Weiz, Jessica' existiert bereits.")
 
     if not column_exists(cur, "items", "asme"):
         cur.execute("ALTER TABLE items ADD COLUMN asme BOOLEAN DEFAULT 0")
