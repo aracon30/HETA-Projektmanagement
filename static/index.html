@@ -749,6 +749,7 @@ let ganttSortOrder = "liefertermin_auf";
 let wartendVerantwortlichFilter = "alle";
 let wartendStatusFilter = "alle";
 let wartendAuftragSuche = "";
+let abSectionExpanded = false;
 
 const BU_OPTIONS = [
   { value:"he", label:"he – HETA Ersatzteil" },
@@ -1872,11 +1873,16 @@ function abNummerAusKommission(kommission){
 }
 
 function renderAbSectionHtml(item){
+  const expanded = abSectionExpanded;
   return `
     <div class="timeline-head">
-      <h3>Auftragsbestätigung</h3>
-      <button class="btn" id="abErzeugenBtn">Auftragsbestätigung erzeugen</button>
+      <h3 id="abToggleBtn" style="cursor:pointer; user-select:none;" title="${expanded ? 'Einklappen' : 'Aufklappen'}">
+        <span style="display:inline-block; transition:transform .15s; transform:rotate(${expanded ? 90 : 0}deg);">▸</span>
+        Auftragsbestätigung
+      </h3>
+      ${expanded ? `<button class="btn" id="abErzeugenBtn">Auftragsbestätigung erzeugen</button>` : ""}
     </div>
+    ${expanded ? `
     <div class="order-meta-grid" style="margin-bottom:20px;">
       <div class="field"><label>AB-Nummer</label><div class="val mono">${abNummerAusKommission(item.kommission) || '—'}</div></div>
       <div class="field"><label>Unser Zeichen</label><div class="val"><button class="val clickable-text" id="unserZeichenBtn" title="Unser Zeichen ändern">${item.unserZeichen || '—'}</button></div></div>
@@ -1887,6 +1893,7 @@ function renderAbSectionHtml(item){
       <div class="field" style="grid-column:1 / -1;"><label>Kundenadresse (Straße/PLZ-Ort)</label><div class="val"><button class="val clickable-text" id="kundenAdresseBtn" title="Kundenadresse ändern" style="white-space:pre-line; text-align:left;">${item.kundenAdresse || '—'}</button></div></div>
       <div class="field" style="grid-column:1 / -1;"><label>Versandanschrift (nur falls abweichend von der Kundenadresse)</label><div class="val"><button class="val clickable-text" id="versandAdresseBtn" title="Versandanschrift ändern" style="white-space:pre-line; text-align:left;">${item.versandAdresse || '— (wie Kundenadresse)'}</button></div></div>
     </div>
+    ` : ""}
   `;
 }
 
@@ -2389,14 +2396,15 @@ function renderMain(){
     document.getElementById("projektleiterBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"projektleiter", label:"Projektleiter", inputType:"select", options: nutzer.map(n => n.name) }, ev.currentTarget));
     document.getElementById("ordnerBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"ordnerPfad", label:"Ordnerpfad", inputType:"text", placeholder:"K:\\01 HETA\\..." }, ev.currentTarget));
     document.getElementById("bestelleingangBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"bestelleingang", label:"Bestelleingang", inputType:"date" }, ev.currentTarget));
-    document.getElementById("unserZeichenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"unserZeichen", label:"Unser Zeichen", inputType:"text" }, ev.currentTarget));
-    document.getElementById("kundenZeichenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenZeichen", label:"Ihr Zeichen (Kunde)", inputType:"text" }, ev.currentTarget));
-    document.getElementById("kundenBestellnrBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenBestellnr", label:"Bestell-Nr. Kunde", inputType:"text" }, ev.currentTarget));
-    document.getElementById("zahlungsbedingungenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"zahlungsbedingungen", label:"Zahlungsbedingungen", inputType:"select", emptyLabel:"— keine Angabe —", options:["30 Tage netto", "30 days net", "Vorkasse", "Prepayment", "Akkreditiv", "Letter of Credit"] }, ev.currentTarget));
-    document.getElementById("kundenAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenAdresse", label:"Kundenadresse", inputType:"textarea", rows:3, placeholder:"Straße\nPLZ Ort" }, ev.currentTarget));
-    document.getElementById("versandAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"versandAdresse", label:"Versandanschrift", inputType:"textarea", rows:3, placeholder:"Firma\nAnsprechpartner\nStraße\nPLZ Ort" }, ev.currentTarget));
-    document.getElementById("abErzeugenBtn").addEventListener("click", (ev) => auftragsbestaetigungLaden(item, ev.currentTarget));
-    document.getElementById("mwstCheck").addEventListener("change", async (ev) => {
+    document.getElementById("abToggleBtn").addEventListener("click", () => { abSectionExpanded = !abSectionExpanded; renderMain(); });
+    document.getElementById("unserZeichenBtn")?.addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"unserZeichen", label:"Unser Zeichen", inputType:"text" }, ev.currentTarget));
+    document.getElementById("kundenZeichenBtn")?.addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenZeichen", label:"Ihr Zeichen (Kunde)", inputType:"text" }, ev.currentTarget));
+    document.getElementById("kundenBestellnrBtn")?.addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenBestellnr", label:"Bestell-Nr. Kunde", inputType:"text" }, ev.currentTarget));
+    document.getElementById("zahlungsbedingungenBtn")?.addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"zahlungsbedingungen", label:"Zahlungsbedingungen", inputType:"select", emptyLabel:"— keine Angabe —", options:["30 Tage netto", "30 days net", "Vorkasse", "Prepayment", "Akkreditiv", "Letter of Credit"] }, ev.currentTarget));
+    document.getElementById("kundenAdresseBtn")?.addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenAdresse", label:"Kundenadresse", inputType:"textarea", rows:3, placeholder:"Straße\nPLZ Ort" }, ev.currentTarget));
+    document.getElementById("versandAdresseBtn")?.addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"versandAdresse", label:"Versandanschrift", inputType:"textarea", rows:3, placeholder:"Firma\nAnsprechpartner\nStraße\nPLZ Ort" }, ev.currentTarget));
+    document.getElementById("abErzeugenBtn")?.addEventListener("click", (ev) => auftragsbestaetigungLaden(item, ev.currentTarget));
+    document.getElementById("mwstCheck")?.addEventListener("change", async (ev) => {
       const box = ev.currentTarget;
       const neu = box.checked;
       box.disabled = true;
