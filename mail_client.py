@@ -34,11 +34,16 @@ def is_configured():
     return bool(SMTP_HOST)
 
 
-def send_task_mail(to_email, title, body_text=None, due_date_iso=None):
+def send_task_mail(to_email, title, body_text=None, due_date_iso=None, link=None):
     """
     Schickt eine einfache Text-E-Mail mit der Aufgabe an die zuständige Person.
     Gibt None zurück, wenn die Integration nicht konfiguriert ist. Wirft eine
     Exception bei einem echten SMTP-Fehler (der Aufruf in app.py fängt das ab).
+
+    `link` ist optional ein Deep-Link direkt zur Aufgabe (siehe app.py), der
+    Link öffnet das Tool mit bereits ausgewähltem Auftrag/Angebot und
+    markiert den passenden Verlaufseintrag. Ohne `link` (z.B. APP_BASE_URL
+    nicht gesetzt) verweist die Mail nur allgemein auf das Tool.
     """
     if not is_configured():
         return None
@@ -48,7 +53,9 @@ def send_task_mail(to_email, title, body_text=None, due_date_iso=None):
         lines += ["", body_text]
     if due_date_iso:
         lines += ["", f"Fällig: {due_date_iso}"]
-    if APP_BASE_URL:
+    if link:
+        lines += ["", f"Direkt zur Aufgabe: {link}"]
+    elif APP_BASE_URL:
         lines += ["", f"Zum Tool: {APP_BASE_URL}"]
 
     msg = MIMEText("\n".join(lines), _charset="utf-8")

@@ -174,7 +174,8 @@
   .entry.wartet_extern .node, .entry.wartet_kunde .node{border-color:var(--red); background:var(--red-soft);}
   .entry.wartet_lieferant .node{border-color:var(--lieferant); background:var(--lieferant-soft);}
   .entry.erledigt .node{border-color:var(--green); background:var(--green-soft);}
-  .entry-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:13px 15px; }
+  .entry-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:13px 15px; transition:background 1.8s ease, box-shadow 1.8s ease; }
+  .entry.entry-highlight .entry-card{ background:var(--steel-soft); box-shadow:0 0 0 2px var(--steel); }
   .entry-top{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:6px; }
   .entry-meta{ font-size:0.72rem; color:var(--slate); } .entry-meta b{color:var(--ink); font-weight:600;}
   .entry-timestamps{ font-size:0.68rem; color:var(--slate-light); margin-top:2px; }
@@ -3322,7 +3323,7 @@ function renderEntry(e, item){
   const ueberfaellig = item && item.liefertermin && e.faelligkeit && e.faelligkeit > item.liefertermin;
   const updates = e.updates || [];
   return `
-    <div class="${classes.join(' ')}">
+    <div class="${classes.join(' ')}" id="entry-${e.id}">
       <div class="node" aria-hidden="true"></div>
       <div class="entry-card">
         <div class="entry-top">
@@ -5181,6 +5182,32 @@ async function init(){
   renderList();
   renderMain();
   updateStats();
+  applyDeepLinkFromUrl();
+}
+
+function applyDeepLinkFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get("tab");
+  const itemId = parseInt(params.get("item"), 10);
+  const eintragId = params.get("eintrag") ? parseInt(params.get("eintrag"), 10) : null;
+  if(!tab || !itemsCache[tab] || !Number.isFinite(itemId)) return;
+  const item = itemsCache[tab].find(o => o.id === itemId);
+  if(!item) return;
+
+  activateTab(tab);
+  selectedId[tab] = itemId;
+  renderList();
+  renderMain();
+
+  if(eintragId){
+    setTimeout(() => {
+      const el = document.getElementById(`entry-${eintragId}`);
+      if(!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("entry-highlight");
+      setTimeout(() => el.classList.remove("entry-highlight"), 2500);
+    }, 50);
+  }
 }
 init();
 </script>

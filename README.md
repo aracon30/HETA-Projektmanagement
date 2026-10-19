@@ -180,6 +180,12 @@ eine E-Mail mit Aufgabentext und Fälligkeit (sofern sie eine E-Mail-Adresse
 in der Datenbank hinterlegt hat) — vorausgesetzt, die Graph-Anbindung ist
 (noch) nicht konfiguriert, die hat weiterhin Vorrang.
 
+Ist `APP_BASE_URL` gesetzt (z.B. `https://projektbesprechung.paco.local`),
+enthält die Mail zusätzlich einen Direktlink zur Aufgabe — er öffnet das Tool
+mit bereits ausgewähltem Auftrag/Angebot und markiert kurz den passenden
+Verlaufseintrag. Ohne `APP_BASE_URL` verweist die Mail nur allgemein auf das
+Tool, ohne Link zur konkreten Aufgabe.
+
 ## Übergangslösung, nur falls Power Automate im eigenen Tenant nicht gesperrt ist: persönliche To-Do-Webhooks
 
 **Bei HETA aktuell nicht nutzbar:** Der "Request"/HTTP-Trigger ist in der

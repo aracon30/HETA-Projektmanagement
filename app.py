@@ -287,6 +287,9 @@ def create_aufgabe(eintrag_id):
         item = eintrag.item
         title = f"{item.kommission} — {item.kunde}"
         due_iso = eintrag.faelligkeit.isoformat() if eintrag.faelligkeit else None
+        link = None
+        if mail_client.APP_BASE_URL:
+            link = f"{mail_client.APP_BASE_URL.rstrip('/')}/?tab={item.type}&item={item.id}&eintrag={eintrag.id}"
         if graph_client.is_configured() and user.email:
             try:
                 result = graph_client.create_task(user.email, title, eintrag.text, due_iso)
@@ -298,7 +301,7 @@ def create_aufgabe(eintrag_id):
         elif mail_client.is_configured() and user.email:
             # Übergangslösung bis zur Azure-Freigabe: E-Mail per SMTP, kein Admin-Consent nötig
             try:
-                mail_client.send_task_mail(user.email, title, eintrag.text, due_iso)
+                mail_client.send_task_mail(user.email, title, eintrag.text, due_iso, link=link)
                 eintrag.aufgabe_kanal = "mail"
             except Exception as exc:
                 return jsonify({"error": "E-Mail-Fehler: " + str(exc)}), 502
