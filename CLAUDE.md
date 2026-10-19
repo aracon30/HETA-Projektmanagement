@@ -27,9 +27,18 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
   gültig bis 15.10.2033), liegt als PEM-Dateien unter `/etc/nginx/ssl/` (aus der
   von IT gelieferten `.pfx` per OpenSSL umgewandelt, siehe README). Über VPN auch
   aus dem Homeoffice erreichbar (Routing + interne DNS-Auflösung getestet, beides
-  funktioniert). Alter Testserver (`192.168.80.56`, davor `.65`/`.69` — die VM hatte
-  wiederholt wechselnde DHCP-Adressen, daher der Umzug auf eine feste IP) ist
-  gestoppt, dient vorerst nur noch als Fallback/Backup-Quelle.
+  funktioniert).
+- **Testsystem:** `192.168.80.56` (davor `.65`/`.69` — die VM hatte wiederholt
+  wechselnde DHCP-Adressen; das war der ursprüngliche Server vor dem Umzug auf
+  die feste Produktiv-IP, läuft aber weiter und wird jetzt aktiv als Testsystem
+  genutzt, um Änderungen vor dem Produktiv-Server auszuprobieren). Gleicher
+  Aufbau wie der Produktiv-Server (Git-Checkout unter `/opt/projektbesprechung`,
+  Dienst `projektbesprechung`, interner Linux-Hostname ebenfalls
+  „projektbesprechung“ — nicht mit dem Produktiv-Server verwechseln, IP prüfen).
+  Login per SSH direkt als `heta` mit Passwort (kein separater `admin-heta`-Account
+  hier). Update genauso wie auf dem Produktiv-Server: `bash
+  /opt/projektbesprechung/deploy/update.sh` — ob `heta` hier sudo-Rechte für den
+  Dienst-Neustart hat, war Stand 19.10.2026 noch nicht abschließend geklärt.
 
 ## Dateien im Repo
 
