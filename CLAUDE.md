@@ -98,28 +98,36 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
 
 ## Offene Ausbaustufen (in Priorität, wie zuletzt besprochen)
 
-1. **Microsoft-To-Do-Anbindung aktivieren**: Code ist fertig
-   (`graph_client.py`), wartet auf drei Werte von IT/Heiko
-   (`GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`) aus einer
-   Azure-AD-App-Registrierung mit Anwendungsberechtigung `Tasks.ReadWrite`.
-   Werte werden als `Environment=` in der systemd-Unit gesetzt (siehe
-   auskommentierte Platzhalter in `deploy/projektbesprechung.service`).
-   **Übergangslösung bereits aktiv in Produktion:** Der Power-Automate-
-   Webhook-Weg ist bei HETA durch eine DLP-Richtlinie der PACO-Gruppe
-   gesperrt (Request-/HTTP-Trigger nicht verfügbar) und daher faktisch
-   ungenutzt; stattdessen läuft seit dem Serverumzug die E-Mail-
-   Benachrichtigung per SMTP (`mail_client.py`, `SMTP_HOST=192.168.80.30`
-   `hetamsx01.paco.local`, Port 25, kein Login nötig — anonymer interner
-   Relay). "Aufgabe erstellen" nutzt automatisch Graph → E-Mail → Webhook →
-   nur lokale Markierung, je nachdem was konfiguriert ist; `aufgabe_kanal`
-   am `VerlaufEintrag` hält fest, welcher Kanal tatsächlich gegriffen hat.
-2. **Login/Rechteverwaltung** — aktuell offen für jeden mit Netzwerkzugriff.
-3. **Echter Excel/ERP-Import** statt manuellem Anlegen (`POST /api/items`).
-4. **Verknüpfung Angebot→Auftrag** beim Gewinnen eines Angebots (aktuell
+1. **Login/Rechteverwaltung** — aktuell offen für jeden mit Netzwerkzugriff.
+2. **Echter Excel/ERP-Import** statt manuellem Anlegen (`POST /api/items`).
+3. **Verknüpfung Angebot→Auftrag** beim Gewinnen eines Angebots (aktuell
    zwei unabhängige Listen).
-5. Optional später: Shared-Mailbox-Aufgabenlisten statt nur persönlicher
-   Liste (aktuell bewusst nicht umgesetzt, siehe `graph_client.py`
-   Docstring).
+
+**Microsoft-To-Do-Anbindung — bewusst nicht weiterverfolgt (Entscheidung
+21.10.2026):** Code für die echte Graph-Anbindung ist fertig und bleibt im
+Repo (`graph_client.py`, `GRAPH_TENANT_ID`/`GRAPH_CLIENT_ID`/
+`GRAPH_CLIENT_SECRET`, Platzhalter in `deploy/projektbesprechung.service`),
+die Azure-AD-App-Registrierung bei IT (Herr Spano) wurde aber auf
+ausdrücklichen Wunsch von Philipp **geschlossen** — die E-Mail-
+Benachrichtigung (siehe unten) deckt den Bedarf ausreichend ab, der
+Zusatzaufwand für die Graph-App lohnt sich nicht mehr. Falls doch wieder
+gewünscht (z.B. für automatischen Erledigt-Abgleich oder native
+To-Do-Einträge ohne manuelles Flaggen der Mail): neue Anfrage an Heiko
+Hensel bzw. IT nötig, Code ist startbereit.
+
+**Aufgaben-Benachrichtigung (dauerhaft aktiv):** "Aufgabe erstellen" nutzt
+der Reihe nach Microsoft Graph (nicht konfiguriert, s.o.) → **E-Mail per
+SMTP** (`mail_client.py`, `SMTP_HOST=192.168.80.30` `hetamsx01.paco.local`,
+Port 25, anonymer interner Relay, kein Login nötig — das ist die aktive
+Dauerlösung, kein Übergang mehr) → persönlicher Power-Automate-Webhook
+(bei HETA durch eine DLP-Richtlinie der PACO-Gruppe gesperrt, Code bleibt
+für andere Tenants/falls sich das ändert) → nur lokale Markierung.
+`aufgabe_kanal` am `VerlaufEintrag` hält fest, welcher Kanal tatsächlich
+gegriffen hat.
+
+Optional später: Shared-Mailbox-Aufgabenlisten statt nur persönlicher
+Liste (aktuell bewusst nicht umgesetzt, siehe `graph_client.py` Docstring —
+nur relevant, falls die Graph-Anbindung doch nochmal aktiviert wird).
 
 ## Prozessaufnahme / Reiter „Prozesse“ (Stufe 1 umgesetzt)
 
@@ -215,10 +223,11 @@ Bestellung in `formulare.json` eintragen; englische Bestellvorlage (Titel-Dropdo
 
 ## Kontaktpersonen für Azure/IT-Themen
 
-- **Heiko Hensel** (Geschäftsführer) — für die Azure-AD-App-Registrierung
-  (Microsoft-To-Do-Anbindung). E-Mail-Entwurf wurde bereits einmal erstellt
-  und (vermutlich) verschickt — Status beim Fortsetzen erfragen.
-- **Herr Spano** (IT, PACO-Gruppe, Helpdesk-Tickets unter
+- **Heiko Hensel** (Geschäftsführer) — ursprünglich für die Azure-AD-App-
+  Registrierung (Microsoft-To-Do-Anbindung) vorgesehen; das zugehörige
+  IT-Ticket wurde am 21.10.2026 auf Philipps Wunsch geschlossen (siehe
+  "Offene Ausbaustufen" oben), nur bei künftigem erneuten Bedarf relevant.
+- **Herr Spano** (IT-Abteilungsleiter, PACO-Gruppe, Helpdesk-Tickets unter
   `svrosticket.paco.local`) — zuständig für Server-/Netzwerk-Infrastruktur
   (VM-Bereitstellung, DNS, interne Zertifizierungsstelle, SMTP-Relay,
   VPN/Routing). Hat den Serverumzug am 19.10.2026 abgewickelt.
