@@ -25,7 +25,9 @@ Environment="PATH=/opt/projektbesprechung/venv/bin"
 # Environment="SMTP_USER=..."
 # Environment="SMTP_PASSWORD=..."
 # Environment="MAIL_FROM=auftragspipeline@heta.de"
-# Environment="APP_BASE_URL=http://192.168.80.65"
+# APP_BASE_URL wird für den Link in der Aufgaben-Mail gebraucht — ohne diese
+# Variable verweist die Mail nur allgemein auf das Tool statt direkt zur Aufgabe.
+# Environment="APP_BASE_URL=https://projektbesprechung.paco.local"
 
 ExecStart=/opt/projektbesprechung/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 app:app
 Restart=on-failure
