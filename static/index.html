@@ -243,6 +243,8 @@
   .import-row .lieferumfang{ font-size:0.78rem; color:var(--slate); margin-top:4px; white-space:pre-line; max-height:60px; overflow-y:auto; }
   .modal h3{margin:0 0 4px; font-size:1.05rem;} .modal .sub{font-size:0.8rem; color:var(--slate); margin-bottom:18px;}
   .modal .form-row label{display:block; margin-bottom:4px;} .modal .form-row{margin-bottom:14px;}
+  .modal .form-row input, .modal .form-row textarea, .modal .form-row select{ width:100%; font-family:inherit; font-size:0.85rem; padding:7px 9px; border:1px solid var(--line); border-radius:var(--radius); background:var(--paper); color:var(--ink); box-sizing:border-box; }
+  .modal .form-row > div{ min-width:0; }
   .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:20px;}
 
   .lt-inline-history{ margin:18px 0; }
@@ -3200,7 +3202,7 @@ function openPositionModal(item, position){
         </div>
         <div class="form-row" style="display:flex; gap:10px;">
           <div style="flex:1;">
-            <label for="positionMengeInput">Menge (für Auftragsbestätigung)</label>
+            <label for="positionMengeInput">Menge</label>
             <input type="text" id="positionMengeInput" placeholder="z.B. 3" value="${isEdit && position.menge != null ? String(position.menge).replace('.', ',') : ''}">
           </div>
           <div style="flex:1;">
@@ -3208,7 +3210,7 @@ function openPositionModal(item, position){
             <input type="text" id="positionEinheitInput" placeholder="z.B. Stk" value="${isEdit && position.einheit ? position.einheit : ''}">
           </div>
           <div style="flex:1;">
-            <label for="positionPreisInput">Preis je Einheit (netto €)</label>
+            <label for="positionPreisInput">Preis/Einheit (€)</label>
             <input type="text" id="positionPreisInput" placeholder="z.B. 245,50" value="${isEdit && position.preisJeEinheit != null ? String(position.preisJeEinheit).replace('.', ',') : ''}">
           </div>
         </div>
