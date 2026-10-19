@@ -171,6 +171,32 @@ Produktnamen (ERPNext) verwenden, keine Entscheidung vorwegnehmen.
 Struktur spiegelt die Excel-Vorlage `HETA_Prozessaufnahme.xlsx`.
 Es heißt **Frau Häfer**.
 
+## Layout der Auftrags-Detailansicht: 3 Spalten
+
+Bewusste Entscheidung (19.10.2026), weil das Tool sonst durch immer mehr
+Zusatzfunktionen (ASME, Auftragsbestätigung, künftige Module) in der
+Benutzerfreundlichkeit leidet: **Kernelement ist und bleibt der Verlauf**
+(Aufgaben), das Tool ist primär zur Projektverfolgung da, kein ERP. Deshalb
+in `renderMain()` für Aufträge (nicht Angebote/Anfragen) ein `.order-detail`
+Flex-Container mit zwei Kindern:
+- `.order-detail-core` (links/Mitte, mit der Auftragsliste zusammen wirkt
+  das wie 3 Spalten): Kopf, Metadaten, Lieferumfang/Positionen, Zeitplan,
+  **Verlauf** — bleibt immer gleich lang, unabhängig davon, wie viele Module
+  aktiv sind.
+- `.order-detail-modules` (rechts, schmale Spalte ~340px): optionale,
+  auftragsspezifische Module — aktuell ASME (nur wenn Haken gesetzt) und
+  Auftragsbestätigung (immer vorhanden, aber eingeklappt, siehe unten).
+  Existiert die Spalte nicht (Angebote/Anfragen, keine Module), nimmt
+  `.order-detail-core` die volle Breite ein.
+
+**Für neue Module:** in `renderMain()` zur `modulesHtml`-Zusammensetzung
+hinzufügen (Muster: `item.xyz ? renderXyzSectionHtml() : ""`), nicht in
+`.order-detail-core` einhängen — sonst wächst wieder die Kernansicht.
+Jedes Modul sollte wie die Auftragsbestätigung **standardmäßig eingeklappt**
+sein (nur Überschrift + Pfeil-Symbol `▸`/`▾`, Zustand in einer einfachen
+`let xyzSectionExpanded` Variable, Toggle löst `renderMain()` neu aus), außer
+es wird – wie ASME – über einen expliziten Haken erst freigeschaltet.
+
 ## ASME-Auftragsdokumente (Stufe 1 umgesetzt, Branch `claude/asme-dokumente`)
 
 Ziel: Daten einmal erfassen, daraus die Formulare laut QC-Handbuch erzeugen –
