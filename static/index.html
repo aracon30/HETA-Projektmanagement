@@ -3231,7 +3231,8 @@ function openPositionModal(item, position){
           </div>
           <div style="flex:1;">
             <label for="positionEinheitInput">Einheit</label>
-            <input type="text" id="positionEinheitInput" placeholder="z.B. Stk" value="${isEdit && position.einheit ? position.einheit : ''}">
+            <input type="text" id="positionEinheitInput" list="positionEinheitList" placeholder="z.B. Stk." value="${isEdit && position.einheit ? position.einheit : ''}">
+            <datalist id="positionEinheitList"><option value="Stk."><option value="Pos."><option value="ea"></datalist>
           </div>
           <div style="flex:1;">
             <label for="positionPreisInput">Preis/Einheit (€)</label>
