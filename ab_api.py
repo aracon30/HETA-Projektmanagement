@@ -61,8 +61,9 @@ def baue_kontext(item):
             "preis": fmt_euro(p.preis_je_einheit),
             "gesamt": fmt_euro(gesamt),
         })
+    mwst_anwenden = item.mwst_anwenden if item.mwst_anwenden is not None else True
     mwst_satz = 19.0
-    mwst = round(summe * mwst_satz / 100, 2)
+    mwst = round(summe * mwst_satz / 100, 2) if mwst_anwenden else 0.0
 
     kundenreferenz_zeile = " / ".join(x for x in (
         item.kunden_zeichen, item.kunden_bestellnr, fmt_datum(item.bestelleingang)
@@ -91,6 +92,7 @@ def baue_kontext(item):
         "zahlungsbedingungen": item.zahlungsbedingungen or "30 Tage netto",
         "positionen": positionen,
         "summe_netto": fmt_euro(summe),
+        "mwst_anwenden": mwst_anwenden,
         "mwst": fmt_euro(mwst),
         "summe_brutto": fmt_euro(summe + mwst),
     }

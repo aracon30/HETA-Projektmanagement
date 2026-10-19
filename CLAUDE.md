@@ -205,14 +205,16 @@ als Word-Datei erzeugen, die an den Kunden geschickt wird – ohne Abtippen. Abs
 Angebote/Anfragen): AB-Nummer (read-only, wird aus der Kommission abgeleitet,
 siehe unten – nicht aus `items.erp_ab_nummer`, der nur für den ERP-Import-
 Abgleich gebraucht wird), Unser Zeichen,
-Ihr Zeichen (Kunde), Bestell-Nr. Kunde, Zahlungsbedingungen, Kundenadresse
-und Versandanschrift (eigenes Feld, s.u.) frei editierbar; Lieferbedingungen
-und Liefertermin kommen aus den ohnehin vorhandenen Auftragsfeldern.
-„Auftragsbestätigung erzeugen“ lädt
-`Auftragsbestaetigung_<AB-Nr-oder-Kommission>.docx`. Code: `ab_api.py`
+Ihr Zeichen (Kunde), Bestell-Nr. Kunde, Zahlungsbedingungen (Dropdown mit
+den Werten aus der Vorlage), Kundenadresse, Versandanschrift (eigenes Feld,
+s.u.) und ob 19% MwSt angewendet wird (Haken, s.u.) frei editierbar;
+Lieferbedingungen und Liefertermin kommen aus den ohnehin vorhandenen
+Auftragsfeldern. „Auftragsbestätigung erzeugen“ lädt `AB-<Nummer>.<Jahr>.docx`
+(z.B. `AB-4887.26.docx`, aus `ab_nummer_suffix()`). Code: `ab_api.py`
 (Blueprint, docxtpl, reicht die Formatierungs-Helfer aus `asme_api.py` weiter),
 Felder an `Item` (`unser_zeichen`/`kunden_zeichen`/`kunden_bestellnr`/
-`kunden_adresse`/`versand_adresse`/`zahlungsbedingungen`) und `AuftragPosition`
+`kunden_adresse`/`versand_adresse`/`zahlungsbedingungen`/`mwst_anwenden`)
+und `AuftragPosition`
 (`menge`/`einheit`/`preis_je_einheit`, optional – nur gebraucht, wenn die
 Position auch in der Auftragsbestätigung einen Preis haben soll; ohne Preis
 bleiben Menge/Preis/Gesamtbetrag in der Tabelle leer). Vorlage
@@ -246,6 +248,14 @@ Eintragung übernimmt `ab_api.py` die Kundenadresse als Fallback. Füllt die
 „Versandanschrift/Shipping Address“ (erste Zeile auf gleicher Höhe wie
 „FCA Lich“, weitere Zeilen darunter über eine zweite Absatzschleife
 `versand_weitere_zeilen`).
+
+**19% MwSt optional** (`items.mwst_anwenden`, Standard: an) – Haken neben
+Zahlungsbedingungen. Ohne Haken erscheint die „+ 19% MwSt“-Zeile in der
+Tabelle gar nicht (nicht nur „€ 0,00“): Zeile ist in der Vorlage mit
+`{%tr if mwst_anwenden %}`/`{%tr endif %}` (docxtpl-Syntax, gleiches Prinzip
+wie die Positions-Schleife) umschlossen; `ab_api.py` setzt `mwst` dann auf 0
+und `summe_brutto` = `summe_netto`. „Summe“/„Gesamtsumme“ bleiben in beiden
+Fällen stehen (sind dann identisch).
 
 **PDF-Vorschau in diesem Dev-Setup:** `soffice`/LibreOffice ist nur mit
 `libreoffice-core`/`-common` vorinstalliert, **`libreoffice-writer` fehlt**

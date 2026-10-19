@@ -349,6 +349,13 @@ def main():
     else:
         print("Spalte items.versand_adresse existiert bereits.")
 
+    if not column_exists(cur, "items", "mwst_anwenden"):
+        cur.execute("ALTER TABLE items ADD COLUMN mwst_anwenden BOOLEAN DEFAULT 1")
+        cur.execute("UPDATE items SET mwst_anwenden = 1 WHERE mwst_anwenden IS NULL")
+        print("Spalte items.mwst_anwenden ergänzt (Auftragsbestätigung, Standard: 19% MwSt anwenden).")
+    else:
+        print("Spalte items.mwst_anwenden existiert bereits.")
+
     if not column_exists(cur, "auftrag_positionen", "menge"):
         cur.execute("ALTER TABLE auftrag_positionen ADD COLUMN menge FLOAT")
         print("Spalte auftrag_positionen.menge ergänzt (Auftragsbestätigung).")

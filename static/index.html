@@ -1883,6 +1883,7 @@ function renderAbSectionHtml(item){
       <div class="field"><label>Ihr Zeichen (Kunde)</label><div class="val"><button class="val clickable-text" id="kundenZeichenBtn" title="Ihr Zeichen (Kunde) ändern">${item.kundenZeichen || '—'}</button></div></div>
       <div class="field"><label>Bestell-Nr. Kunde</label><div class="val"><button class="val clickable-text" id="kundenBestellnrBtn" title="Bestell-Nr. des Kunden ändern">${item.kundenBestellnr || '—'}</button></div></div>
       <div class="field"><label>Zahlungsbedingungen</label><div class="val"><button class="val clickable-text" id="zahlungsbedingungenBtn" title="Zahlungsbedingungen ändern">${item.zahlungsbedingungen || '—'}</button></div></div>
+      <div class="field"><label for="mwstCheck">19% MwSt anwenden</label><div class="val"><input type="checkbox" id="mwstCheck" ${item.mwstAnwenden !== false ? "checked" : ""} title="Ohne Haken erscheint keine MwSt-Zeile in der Auftragsbestätigung" style="margin:0; cursor:pointer;"></div></div>
       <div class="field" style="grid-column:1 / -1;"><label>Kundenadresse (Straße/PLZ-Ort)</label><div class="val"><button class="val clickable-text" id="kundenAdresseBtn" title="Kundenadresse ändern" style="white-space:pre-line; text-align:left;">${item.kundenAdresse || '—'}</button></div></div>
       <div class="field" style="grid-column:1 / -1;"><label>Versandanschrift (nur falls abweichend von der Kundenadresse)</label><div class="val"><button class="val clickable-text" id="versandAdresseBtn" title="Versandanschrift ändern" style="white-space:pre-line; text-align:left;">${item.versandAdresse || '— (wie Kundenadresse)'}</button></div></div>
     </div>
@@ -2395,6 +2396,21 @@ function renderMain(){
     document.getElementById("kundenAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenAdresse", label:"Kundenadresse", inputType:"textarea", rows:3, placeholder:"Straße\nPLZ Ort" }, ev.currentTarget));
     document.getElementById("versandAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"versandAdresse", label:"Versandanschrift", inputType:"textarea", rows:3, placeholder:"Firma\nAnsprechpartner\nStraße\nPLZ Ort" }, ev.currentTarget));
     document.getElementById("abErzeugenBtn").addEventListener("click", (ev) => auftragsbestaetigungLaden(item, ev.currentTarget));
+    document.getElementById("mwstCheck").addEventListener("change", async (ev) => {
+      const box = ev.currentTarget;
+      const neu = box.checked;
+      box.disabled = true;
+      try{
+        await apiPatch(`/items/${item.id}`, { mwstAnwenden: neu });
+        await loadItems(currentTab);
+        renderMain();
+        showToast(neu ? "19% MwSt wird in der Auftragsbestätigung angezeigt." : "Keine MwSt-Zeile in der Auftragsbestätigung.");
+      }catch(err){
+        showToast("Konnte nicht aktualisiert werden.", true);
+        box.checked = !neu;
+        box.disabled = false;
+      }
+    });
     document.getElementById("lieferbedingungenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"lieferbedingungen", label:"Lieferbedingungen", inputType:"text", placeholder:"z.B. FCA Werk Idar-Oberstein" }, ev.currentTarget));
     document.getElementById("ursprungsauftragBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"ursprungsauftrag", label:"Ursprungsauftrag", inputType:"text" }, ev.currentTarget));
     document.getElementById("zulGeliefertBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"zulGeliefert", label:"Zul. geliefert", inputType:"text" }, ev.currentTarget));

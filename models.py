@@ -56,6 +56,7 @@ class Item(db.Model):
     kunden_adresse = db.Column(db.Text, nullable=True)  # Straße/PLZ-Ort, mehrzeilig (Firma steht in "kunde")
     zahlungsbedingungen = db.Column(db.String(120), nullable=True)
     versand_adresse = db.Column(db.Text, nullable=True)  # nur falls abweichend von kunde/kunden_adresse, mehrzeilig (frei, inkl. Firma/Ansprechpartner)
+    mwst_anwenden = db.Column(db.Boolean, default=True)  # 19% MwSt in der Auftragsbestätigung anzeigen (z.B. nein bei Export/steuerfrei)
 
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
@@ -118,6 +119,7 @@ class Item(db.Model):
                 "kundenBestellnr": self.kunden_bestellnr,
                 "kundenAdresse": self.kunden_adresse,
                 "versandAdresse": self.versand_adresse,
+                "mwstAnwenden": self.mwst_anwenden if self.mwst_anwenden is not None else True,
                 "zahlungsbedingungen": self.zahlungsbedingungen,
             })
         elif self.type == "angebot":
