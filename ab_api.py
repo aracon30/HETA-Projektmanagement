@@ -111,7 +111,8 @@ def erzeuge_auftragsbestaetigung(item_id):
     puffer.seek(0)
 
     suffix = ab_nummer_suffix(item.kommission)
-    dateiname = f"Auftragsbestaetigung_{sicherer_dateiname('AB-' + suffix if suffix else item.kommission)}.docx"
+    ab_name = f"AB-{suffix.replace('/', '.')}" if suffix else (item.kommission or "Auftragsbestaetigung")
+    dateiname = f"{sicherer_dateiname(ab_name)}.docx"
     return send_file(
         puffer,
         mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
