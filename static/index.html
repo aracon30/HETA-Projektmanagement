@@ -1860,6 +1860,15 @@ function asmeAktuelleRevision(){
   return (asmeConfig || []).find(r => r.aktuell) || (asmeConfig || [])[0] || null;
 }
 
+function abNummerAusKommission(kommission){
+  // Kommission bildet sich aus der AB-Nummer (K-01234/26 aus AB 1234/Jahr 26,
+  // siehe erp_import.py) — das kehrt das nur wieder um: K-01234/26 -> AB-1234/26.
+  if(!kommission) return "";
+  if(kommission.startsWith("K-0")) return "AB-" + kommission.slice(3);
+  if(kommission.startsWith("K-")) return "AB-" + kommission.slice(2);
+  return kommission;
+}
+
 function renderAbSectionHtml(item){
   return `
     <div class="timeline-head">
@@ -1867,7 +1876,7 @@ function renderAbSectionHtml(item){
       <button class="btn" id="abErzeugenBtn">Auftragsbestätigung erzeugen</button>
     </div>
     <div class="order-meta-grid" style="margin-bottom:20px;">
-      <div class="field"><label>AB-Nummer</label><div class="val mono">${item.erpAbNummer ? 'AB-' + item.erpAbNummer : '— (aus ERP-Import)'}</div></div>
+      <div class="field"><label>AB-Nummer</label><div class="val mono">${abNummerAusKommission(item.kommission) || '—'}</div></div>
       <div class="field"><label>Unser Zeichen</label><div class="val"><button class="val clickable-text" id="unserZeichenBtn" title="Unser Zeichen ändern">${item.unserZeichen || '—'}</button></div></div>
       <div class="field"><label>Ihr Zeichen (Kunde)</label><div class="val"><button class="val clickable-text" id="kundenZeichenBtn" title="Ihr Zeichen (Kunde) ändern">${item.kundenZeichen || '—'}</button></div></div>
       <div class="field"><label>Bestell-Nr. Kunde</label><div class="val"><button class="val clickable-text" id="kundenBestellnrBtn" title="Bestell-Nr. des Kunden ändern">${item.kundenBestellnr || '—'}</button></div></div>
