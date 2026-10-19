@@ -26,6 +26,12 @@ VORLAGE_PFAD = os.path.join(
 )
 
 
+def fmt_euro(wert):
+    """€-Betrag wie im Original-Formular ("€ 00,00"-Platzhalter) – leer bleibt leer."""
+    formatiert = fmt_zahl(wert)
+    return f"€ {formatiert}" if formatiert else ""
+
+
 def ab_nummer_suffix(kommission):
     """Teil nach "AB-" für die Auftragsbestätigung: die Kommissionsnummer
     bildet sich ihrerseits aus der AB-Nummer (K-01234/26 aus AB 1234/Jahr 26,
@@ -52,8 +58,8 @@ def baue_kontext(item):
             "pos": p.position or "",
             "menge_einheit": " ".join(x for x in (fmt_menge(p.menge), p.einheit or "") if x),
             "bezeichnung": p.beschreibung or "",
-            "preis": fmt_zahl(p.preis_je_einheit) if p.preis_je_einheit is not None else "",
-            "gesamt": fmt_zahl(gesamt) if gesamt is not None else "",
+            "preis": fmt_euro(p.preis_je_einheit),
+            "gesamt": fmt_euro(gesamt),
         })
     mwst_satz = 19.0
     mwst = round(summe * mwst_satz / 100, 2)
@@ -84,9 +90,9 @@ def baue_kontext(item):
         "liefertermin": fmt_datum(item.liefertermin),
         "zahlungsbedingungen": item.zahlungsbedingungen or "30 Tage netto",
         "positionen": positionen,
-        "summe_netto": fmt_zahl(summe),
-        "mwst": fmt_zahl(mwst),
-        "summe_brutto": fmt_zahl(summe + mwst),
+        "summe_netto": fmt_euro(summe),
+        "mwst": fmt_euro(mwst),
+        "summe_brutto": fmt_euro(summe + mwst),
     }
 
 
