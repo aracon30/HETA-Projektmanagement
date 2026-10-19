@@ -14,6 +14,7 @@ NUTZER = [
     ("Markus Lindt", "Einkauf", "lindt@heta.de"),
     ("Nina Osei", "Versand", "osei@heta.de"),
     ("Philipp Schreiber", "Vertrieb", "p.schreiber@heta.de"),
+    ("Jessica Weiz", None, "weiz@heta.de"),
 ]
 
 

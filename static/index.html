@@ -1801,7 +1801,7 @@ function renderLieferumfangSection(item){
     <div class="timeline-head">
       <h3>Lieferumfang</h3>
       <div style="display:flex; gap:10px; align-items:center;">
-        ${hasLegacyText ? `<button class="btn ghost" id="splitLieferumfangBtn">In Positionen aufteilen</button>` : ""}
+        ${hasLegacyText ? `<button class="btn ghost" id="splitLieferumfangBtn">Positionen anlegen</button>` : ""}
         ${!hasPositionen ? `<button class="icon-edit-btn" id="lieferumfangBtn" title="Lieferumfang bearbeiten" aria-label="Lieferumfang bearbeiten">${pencilSvg}</button>` : ""}
         <button class="btn" id="newPositionBtn">+ Position</button>
       </div>
@@ -2391,7 +2391,7 @@ function renderMain(){
     document.getElementById("unserZeichenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"unserZeichen", label:"Unser Zeichen", inputType:"text" }, ev.currentTarget));
     document.getElementById("kundenZeichenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenZeichen", label:"Ihr Zeichen (Kunde)", inputType:"text" }, ev.currentTarget));
     document.getElementById("kundenBestellnrBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenBestellnr", label:"Bestell-Nr. Kunde", inputType:"text" }, ev.currentTarget));
-    document.getElementById("zahlungsbedingungenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"zahlungsbedingungen", label:"Zahlungsbedingungen", inputType:"text", placeholder:"z.B. 30 Tage netto" }, ev.currentTarget));
+    document.getElementById("zahlungsbedingungenBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"zahlungsbedingungen", label:"Zahlungsbedingungen", inputType:"select", emptyLabel:"— keine Angabe —", options:["30 Tage netto", "30 days net", "Vorkasse", "Prepayment", "Akkreditiv", "Letter of Credit"] }, ev.currentTarget));
     document.getElementById("kundenAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kundenAdresse", label:"Kundenadresse", inputType:"textarea", rows:3, placeholder:"Straße\nPLZ Ort" }, ev.currentTarget));
     document.getElementById("versandAdresseBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"versandAdresse", label:"Versandanschrift", inputType:"textarea", rows:3, placeholder:"Firma\nAnsprechpartner\nStraße\nPLZ Ort" }, ev.currentTarget));
     document.getElementById("abErzeugenBtn").addEventListener("click", (ev) => auftragsbestaetigungLaden(item, ev.currentTarget));
