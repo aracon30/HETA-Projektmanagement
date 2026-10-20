@@ -25,6 +25,14 @@ EMAIL_MAP = {
     "Philipp Schreiber": "p.schreiber@heta.de",
     "Jessica Weiz": "weiz@heta.de",
     "Weiz, Jessica": "weiz@heta.de",
+    "Sascha Diehl": "diehl@heta.de",
+    "Diehl, Sascha": "diehl@heta.de",
+    "Steffen Schmidt": "schmidt@heta.de",
+    "Schmidt, Steffen": "schmidt@heta.de",
+    "Michael Hennig": "hennig@heta.de",
+    "Hennig, Michael": "hennig@heta.de",
+    "Shahram Abdani": "abdani@heta.de",
+    "Abdani, Shahram": "abdani@heta.de",
 }
 
 
@@ -246,15 +254,23 @@ def main():
     else:
         print("Nutzer 'Häfer, Gabriele' existiert bereits.")
 
-    cur.execute("SELECT id FROM users WHERE name = ?", ("Weiz, Jessica",))
-    if cur.fetchone() is None:
-        cur.execute(
-            "INSERT INTO users (name, abteilung, email) VALUES (?, ?, ?)",
-            ("Weiz, Jessica", None, "weiz@heta.de"),
-        )
-        print("Nutzer 'Weiz, Jessica' ergänzt.")
-    else:
-        print("Nutzer 'Weiz, Jessica' existiert bereits.")
+    NEUE_NUTZER = [
+        ("Weiz, Jessica", "weiz@heta.de"),
+        ("Diehl, Sascha", "diehl@heta.de"),
+        ("Schmidt, Steffen", "schmidt@heta.de"),
+        ("Hennig, Michael", "hennig@heta.de"),
+        ("Abdani, Shahram", "abdani@heta.de"),
+    ]
+    for name, email in NEUE_NUTZER:
+        cur.execute("SELECT id FROM users WHERE name = ?", (name,))
+        if cur.fetchone() is None:
+            cur.execute(
+                "INSERT INTO users (name, abteilung, email) VALUES (?, ?, ?)",
+                (name, None, email),
+            )
+            print(f"Nutzer '{name}' ergänzt.")
+        else:
+            print(f"Nutzer '{name}' existiert bereits.")
 
     if not column_exists(cur, "items", "asme"):
         cur.execute("ALTER TABLE items ADD COLUMN asme BOOLEAN DEFAULT 0")
