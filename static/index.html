@@ -2486,9 +2486,9 @@ function renderMain(){
         }
       });
     });
-    if(!e.verantwortlich || e.aufgabe) return;
-    const btn = document.getElementById(`taskBtn-${e.id}`);
-    if(btn) btn.addEventListener("click", () => openTaskModal(item, e));
+    if(!e.verantwortlich) return;
+    const btn = document.getElementById(e.aufgabe ? `resendTaskBtn-${e.id}` : `taskBtn-${e.id}`);
+    if(btn) btn.addEventListener("click", () => openTaskModal(item, e, e.aufgabe));
   });
 }
 
@@ -3469,7 +3469,7 @@ function renderEntry(e, item){
         <div class="entry-foot">
           <span class="entry-due ${e.faelligkeit ? '' : 'none'} ${ueberfaellig ? 'warn' : ''}">${e.faelligkeit ? 'Fällig ' + fmtDate(e.faelligkeit) : 'Keine Fälligkeit'}${ueberfaellig ? ' · nach Liefertermin!' : ''}</span>
           ${e.aufgabe
-            ? `<span class="task-badge">${aufgabeKanalLabel(e.aufgabeKanal)}</span>`
+            ? `<span class="task-badge">${aufgabeKanalLabel(e.aufgabeKanal)}</span>${e.verantwortlich ? `<button class="btn text" id="resendTaskBtn-${e.id}" title="Nochmal benachrichtigen, z.B. nach Termin- oder Personenwechsel">Erneut senden</button>` : ''}`
             : (e.verantwortlich ? `<button class="btn ghost small" id="taskBtn-${e.id}">Aufgabe erstellen</button>` : '')}
         </div>
         ${updates.length ? `<div class="entry-updates">${updates.map(renderUpdateEntry).join("")}</div>` : ""}
@@ -3683,13 +3683,13 @@ function renderNewEntryForm(item){
 }
 
 /* ===================== Task modal ===================== */
-function openTaskModal(item, entry){
+function openTaskModal(item, entry, isResend){
   const root = document.getElementById("modalRoot");
   root.innerHTML = `
     <div class="modal-backdrop" id="modalBackdrop">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <h3 id="modalTitle">Aufgabe erstellen</h3>
-        <div class="sub">Benachrichtigt ${entry.verantwortlich} automatisch — über Microsoft To Do, E-Mail oder Webhook, je nachdem, was gerade konfiguriert ist.</div>
+        <h3 id="modalTitle">${isResend ? "Aufgabe erneut senden" : "Aufgabe erstellen"}</h3>
+        <div class="sub">${isResend ? "Z.B. nach Termin- oder Personenwechsel — b" : "B"}enachrichtigt ${entry.verantwortlich} automatisch — über Microsoft To Do, E-Mail oder Webhook, je nachdem, was gerade konfiguriert ist.</div>
         <div class="form-row">
           <label for="modalAssignee">Verantwortliche Person</label>
           <select id="modalAssignee">
@@ -3706,7 +3706,7 @@ function openTaskModal(item, entry){
         </div>
         <div class="modal-actions">
           <button class="btn text" id="modalCancel">Abbrechen</button>
-          <button class="btn" id="modalConfirm">Aufgabe anlegen</button>
+          <button class="btn" id="modalConfirm">${isResend ? "Erneut senden" : "Aufgabe anlegen"}</button>
         </div>
       </div>
     </div>
@@ -3726,9 +3726,9 @@ function openTaskModal(item, entry){
       renderList();
       renderMain();
       updateStats();
-      showToast(`Aufgabe an ${verantwortlich} übergeben.`);
+      showToast(isResend ? `Aufgabe erneut an ${verantwortlich} gesendet.` : `Aufgabe an ${verantwortlich} übergeben.`);
     }catch(err){
-      showToast("Aufgabe konnte nicht angelegt werden.", true);
+      showToast("Aufgabe konnte nicht gesendet werden.", true);
       confirmBtn.disabled = false;
     }
   });
