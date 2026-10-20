@@ -103,9 +103,20 @@
   .status-badge.clickable:focus-visible{ outline:2px solid var(--steel); outline-offset:2px; }
   .empty-list{ padding:30px 16px; color:var(--slate); font-size:0.85rem; text-align:center; }
 
-  .main{ padding:28px clamp(24px, 3vw, 56px) 60px; max-width:min(1100px, 96%); overflow-y:auto; min-height:0; }
+  .main{ padding:28px clamp(24px, 3vw, 56px) 60px; max-width:min(1500px, 98%); overflow-y:auto; min-height:0; }
   @media (max-width: 880px){ .main{padding:20px; max-width:100%;} }
   .no-selection{ color:var(--slate); padding-top:80px; text-align:center; font-size:0.95rem; }
+
+  .order-detail{ display:flex; gap:28px; align-items:flex-start; }
+  .order-detail-core{ flex:1 1 0; min-width:0; max-width:1100px; }
+  .order-detail-modules{ flex:0 0 340px; min-width:0; padding-top:2px; }
+  .order-detail-modules .timeline-head{ margin-top:0; flex-wrap:wrap; gap:8px; }
+  .order-detail-modules .timeline-head:not(:first-child){ margin-top:34px; }
+  .order-detail-modules .order-meta-grid{ grid-template-columns:1fr; }
+  @media (max-width: 1100px){
+    .order-detail{ flex-direction:column; }
+    .order-detail-modules{ width:100%; max-width:1100px; }
+  }
 
   .order-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding-bottom:16px; margin-bottom:18px; border-bottom:1px solid var(--line); }
   .order-head .komm{ display:inline-block; font-size:0.72rem; font-family:'IBM Plex Mono', monospace; font-weight:600; letter-spacing:0.02em; color:var(--steel); background:var(--steel-soft); padding:3px 10px; border-radius:20px; margin-bottom:9px; }
@@ -2315,38 +2326,45 @@ function renderMain(){
     return;
   }
 
+  const modulesHtml = currentTab === "auftrag"
+    ? `${item.asme ? renderAsmeSectionHtml() : ""}${renderAbSectionHtml(item)}`
+    : "";
+
   main.innerHTML = `
-    <div class="order-head">
-      <div>
-        ${item.kommission ? `<div class="komm mono">${item.kommission}</div>` : ""}
-        <h2 class="display"><span id="kundeTextEl">${item.kunde}</span><button class="icon-edit-btn" id="kundeBtn" title="Kundenname bearbeiten" aria-label="Kundenname bearbeiten">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button></h2>
+    <div class="order-detail">
+      <div class="order-detail-core">
+        <div class="order-head">
+          <div>
+            ${item.kommission ? `<div class="komm mono">${item.kommission}</div>` : ""}
+            <h2 class="display"><span id="kundeTextEl">${item.kunde}</span><button class="icon-edit-btn" id="kundeBtn" title="Kundenname bearbeiten" aria-label="Kundenname bearbeiten">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button></h2>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+            ${cfg.detailTag(item)}
+            <button class="btn text" id="deleteItemBtn" style="color:var(--red);">Löschen</button>
+          </div>
+        </div>
+        <div class="order-meta-grid">${cfg.metaGrid(item)}</div>
+        ${cfg.metaSecondary ? `<div class="order-meta-secondary">${cfg.metaSecondary(item)}</div>` : ""}
+        ${currentTab === "auftrag" ? renderLtHistorySection(item) : ""}
+        ${renderLieferumfangSection(item)}
+        ${currentTab === "auftrag" ? `
+        <div class="timeline-head">
+          <h3>Zeitplan</h3>
+          <button class="btn" id="newPhaseBtn">+ Phase</button>
+        </div>
+        <div id="orderTimelineBoard"></div>
+        ` : ""}
+        <div class="timeline-head">
+          <h3>Verlauf</h3>
+          <button class="btn" id="newEntryBtn">+ Neuer Eintrag</button>
+        </div>
+        <div id="newEntrySlot"></div>
+        <div class="pipeline">${item.verlauf.map(e => renderEntry(e, item)).join("")}</div>
       </div>
-      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-        ${cfg.detailTag(item)}
-        <button class="btn text" id="deleteItemBtn" style="color:var(--red);">Löschen</button>
-      </div>
+      ${modulesHtml ? `<div class="order-detail-modules">${modulesHtml}</div>` : ""}
     </div>
-    <div class="order-meta-grid">${cfg.metaGrid(item)}</div>
-    ${cfg.metaSecondary ? `<div class="order-meta-secondary">${cfg.metaSecondary(item)}</div>` : ""}
-    ${currentTab === "auftrag" ? renderLtHistorySection(item) : ""}
-    ${renderLieferumfangSection(item)}
-    ${currentTab === "auftrag" && item.asme ? renderAsmeSectionHtml() : ""}
-    ${currentTab === "auftrag" ? renderAbSectionHtml(item) : ""}
-    ${currentTab === "auftrag" ? `
-    <div class="timeline-head">
-      <h3>Zeitplan</h3>
-      <button class="btn" id="newPhaseBtn">+ Phase</button>
-    </div>
-    <div id="orderTimelineBoard"></div>
-    ` : ""}
-    <div class="timeline-head">
-      <h3>Verlauf</h3>
-      <button class="btn" id="newEntryBtn">+ Neuer Eintrag</button>
-    </div>
-    <div id="newEntrySlot"></div>
-    <div class="pipeline">${item.verlauf.map(e => renderEntry(e, item)).join("")}</div>
   `;
 
   document.getElementById("deleteItemBtn").addEventListener("click", () => openDeleteConfirm(item));
