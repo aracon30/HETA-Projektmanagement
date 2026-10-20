@@ -81,6 +81,21 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
 
 ## Fertige Funktionen
 
+- **Live-Aktualisierung per Polling** (seit 20.10.2026): alle 10 Sekunden
+  wird im Hintergrund leise neu geladen, was andere Nutzer:innen geändert
+  haben — kein manuelles Neuladen (F5) mehr nötig, um fremde Änderungen zu
+  sehen. `pollForUpdates()` in `static/index.html`, pausiert automatisch bei
+  verstecktem Browser-Tab (`document.hidden`) und bei jeder offenen,
+  ungespeicherten Eingabe (`hasOpenComposeForm()` prüft aktives Inline-Edit,
+  offenes Modal, "+ Neuer Eintrag"/"+ Update"/Update-Bearbeiten-Formular) —
+  sonst würde ein Re-Render mitten im Tippen die Eingabe löschen. Deckt
+  Anfragen/Aufträge/Angebote, Gantt- und Aufgaben-Reiter ab; der
+  Prozesse-Reiter ist bewusst ausgenommen (eigener, komplexerer State aus
+  Baum/Formularen, Risiko für Seiteneffekte beim Blind-Neurendern). Echtes
+  Server-Push (WebSocket) wurde bewusst nicht gewählt — der Server läuft nur
+  mit 2 synchronen Gunicorn-Workern, offene Push-Verbindungen würden die
+  schnell blockieren; 10s Verzögerung ist für ein Besprechungs-Vorbereitungs-
+  Tool unkritisch.
 - Aufträge/Angebote anlegen, ansehen, löschen (mit Bestätigungsdialog)
 - Verlaufseinträge hinzufügen, frei Verantwortliche zuweisen
 - "Aufgabe erstellen" — legt bei konfigurierter Graph-Anbindung eine echte
