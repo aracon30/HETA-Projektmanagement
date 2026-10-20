@@ -5309,6 +5309,46 @@ async function init(){
   renderMain();
   updateStats();
   applyDeepLinkFromUrl();
+  startPolling();
+}
+
+/* ===================== Polling (andere Nutzer sehen Änderungen ohne F5) ===================== */
+function hasOpenComposeForm(){
+  // nie mitten in einer unsicherbar offenen Eingabe neu rendern (würde sie löschen)
+  if(activeInlineEdit) return true;
+  const modalRoot = document.getElementById("modalRoot");
+  if(modalRoot && modalRoot.innerHTML.trim()) return true;
+  if(document.getElementById("newEntryText")) return true;
+  if(document.querySelector('[id^="updateText-"]')) return true;
+  if(document.querySelector('[id^="editUpdateText-"]')) return true;
+  return false;
+}
+
+async function pollForUpdates(){
+  if(document.hidden || hasOpenComposeForm()) return;
+  try{
+    if(currentTab === "anfrage" || currentTab === "auftrag" || currentTab === "angebot"){
+      await loadItems(currentTab);
+      renderList();
+      renderMain();
+      updateStats();
+    } else if(currentTab === "gantt"){
+      await loadItems("auftrag");
+      renderGanttBoard();
+      updateStatsForGantt();
+    } else if(currentTab === "wartend"){
+      await Promise.all([loadItems("anfrage"), loadItems("auftrag"), loadItems("angebot")]);
+      renderWaitingBoard();
+      updateStatsForWaiting();
+    }
+    // Prozesse-Reiter bewusst ausgenommen: eigener, komplexerer State (Baum/Formulare)
+  }catch(err){
+    // still silent — kurzer Netzwerk-/Server-Hänger, nächster Poll versucht es erneut
+  }
+}
+
+function startPolling(){
+  setInterval(pollForUpdates, 10000);
 }
 
 function applyDeepLinkFromUrl(){
