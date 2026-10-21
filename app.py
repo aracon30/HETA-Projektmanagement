@@ -167,6 +167,8 @@ def update_item(item_id):
         item.versand_adresse = data.get("versandAdresse")
     if "mwstAnwenden" in data and item.type == "auftrag":
         item.mwst_anwenden = bool(data.get("mwstAnwenden"))
+    if "abSprache" in data and item.type == "auftrag":
+        item.ab_sprache = data.get("abSprache") or "de"
     if "archiviert" in data and item.type == "auftrag":
         item.archiviert = bool(data.get("archiviert"))
     if "wert" in data and item.type == "angebot":

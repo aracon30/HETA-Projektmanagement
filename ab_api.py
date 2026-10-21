@@ -2,12 +2,14 @@
 Auftragsbestätigung als Word-Dokument: Daten stehen schon am Auftrag (Kunde,
 Liefertermin, Lieferbedingungen, Positionen …), zusätzlich ein paar nur dafür
 gebrauchte Felder (Unser Zeichen, Kundenreferenz, Zahlungsbedingungen,
-Kundenadresse). "Auftragsbestätigung erzeugen" rendert daraus die Vorlage
-vorlagen/auftragsbestaetigung/Auftragsbestaetigung.docx (docxtpl) und liefert
-sie als .docx zum Download.
+Kundenadresse, Sprache). "Auftragsbestätigung erzeugen" rendert daraus eine
+der beiden Vorlagen vorlagen/auftragsbestaetigung/DE|EN/Auftragsbestaetigung.docx
+(docxtpl, komplett deutsch bzw. komplett englisch — bewusst kein zweisprachiges
+Dokument) und liefert sie als .docx zum Download.
 
-Layout-Änderungen: nur die Word-Vorlage anpassen, kein Code — die Platzhalter
-({{ ... }}) darin dürfen dabei nicht verändert werden.
+Layout-Änderungen: nur die Word-Vorlagen anpassen, kein Code — die Platzhalter
+({{ ... }}) darin dürfen dabei nicht verändert werden, und beide Sprachvarianten
+müssen dieselben Platzhalter/Jinja-Tags enthalten.
 """
 import io
 import os
@@ -21,9 +23,14 @@ from asme_api import fmt_datum, fmt_zahl, fmt_menge, sicherer_dateiname
 
 bp = Blueprint("ab", __name__, url_prefix="/api")
 
-VORLAGE_PFAD = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "vorlagen", "auftragsbestaetigung", "Auftragsbestaetigung.docx"
-)
+VORLAGEN_ORDNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vorlagen", "auftragsbestaetigung")
+
+
+def vorlage_pfad(sprache):
+    """Komplett deutsche oder komplett englische Vorlage — bewusst kein
+    zweisprachiges Dokument mehr (Entscheidung 21.10.2026)."""
+    ordner = "EN" if sprache == "en" else "DE"
+    return os.path.join(VORLAGEN_ORDNER, ordner, "Auftragsbestaetigung.docx")
 
 
 def fmt_euro(wert):
@@ -64,15 +71,22 @@ def baue_kontext(item):
     mwst_anwenden = item.mwst_anwenden if item.mwst_anwenden is not None else True
     mwst_satz = 19.0
     mwst = round(summe * mwst_satz / 100, 2) if mwst_anwenden else 0.0
+    # Zwischensumme ("Summe") nur zeigen, wenn sie sich von der Gesamtsumme
+    # unterscheidet (MwSt wird aufgeschlagen) UND mehr als eine Position
+    # addiert wird — sonst ist sie nur eine Wiederholung der Gesamtsumme bzw.
+    # des einzigen Positions-Gesamtbetrags.
+    zeige_summe = mwst_anwenden and len(positionen) > 1
 
     kundenreferenz_zeile = " / ".join(x for x in (
         item.kunden_zeichen, item.kunden_bestellnr, fmt_datum(item.bestelleingang)
     ) if x)
-    # Kunden-Adresse (Firma + die frei eingetragenen Zeilen Straße/PLZ-Ort) —
-    # füllt das Anschriftfeld oben links.
-    adresse_zeilen = [x.strip() for x in (
-        [item.kunde or ""] + (item.kunden_adresse or "").split("\n")
-    ) if x.strip()]
+    # Kunden-Adresse: die frei eingetragenen Zeilen (Firma gehört als erste
+    # Zeile bereits in dieses Feld, nicht noch einmal aus "Kunde" vorangestellt
+    # — sonst erscheint der interne Kurzname doppelt über der vollen Adresse).
+    # Nur falls das Feld komplett leer ist, "Kunde" als Notlösung verwenden.
+    adresse_zeilen = [x.strip() for x in (item.kunden_adresse or "").split("\n") if x.strip()]
+    if not adresse_zeilen and item.kunde:
+        adresse_zeilen = [item.kunde]
     # Versandanschrift: eigenes Feld, da sie von der Kundenadresse abweichen
     # kann (andere Lieferadresse, Ansprechpartner vor Ort o.ä.) — ohne eigene
     # Eintragung wird die Kundenadresse übernommen.
@@ -93,6 +107,7 @@ def baue_kontext(item):
         "positionen": positionen,
         "summe_netto": fmt_euro(summe),
         "mwst_anwenden": mwst_anwenden,
+        "zeige_summe": zeige_summe,
         "mwst": fmt_euro(mwst),
         "summe_brutto": fmt_euro(summe + mwst),
     }
@@ -103,10 +118,11 @@ def erzeuge_auftragsbestaetigung(item_id):
     item = Item.query.get_or_404(item_id)
     if item.type != "auftrag":
         return jsonify({"error": "Nur für Aufträge verfügbar."}), 400
-    if not os.path.isfile(VORLAGE_PFAD):
-        return jsonify({"error": "Vorlage fehlt: vorlagen/auftragsbestaetigung/Auftragsbestaetigung.docx"}), 500
+    pfad = vorlage_pfad(item.ab_sprache)
+    if not os.path.isfile(pfad):
+        return jsonify({"error": f"Vorlage fehlt: {os.path.relpath(pfad, os.path.dirname(os.path.abspath(__file__)))}"}), 500
 
-    doc = DocxTemplate(VORLAGE_PFAD)
+    doc = DocxTemplate(pfad)
     doc.render(baue_kontext(item), autoescape=True)
     puffer = io.BytesIO()
     doc.save(puffer)

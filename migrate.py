@@ -372,6 +372,13 @@ def main():
     else:
         print("Spalte items.mwst_anwenden existiert bereits.")
 
+    if not column_exists(cur, "items", "ab_sprache"):
+        cur.execute("ALTER TABLE items ADD COLUMN ab_sprache VARCHAR(10) DEFAULT 'de'")
+        cur.execute("UPDATE items SET ab_sprache = 'de' WHERE ab_sprache IS NULL")
+        print("Spalte items.ab_sprache ergänzt (Auftragsbestätigung komplett Deutsch/Englisch, Standard: de).")
+    else:
+        print("Spalte items.ab_sprache existiert bereits.")
+
     if not column_exists(cur, "auftrag_positionen", "menge"):
         cur.execute("ALTER TABLE auftrag_positionen ADD COLUMN menge FLOAT")
         print("Spalte auftrag_positionen.menge ergänzt (Auftragsbestätigung).")

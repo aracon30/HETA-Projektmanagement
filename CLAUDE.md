@@ -248,24 +248,30 @@ siehe unten – nicht aus `items.erp_ab_nummer`, der nur für den ERP-Import-
 Abgleich gebraucht wird), Unser Zeichen,
 Ihr Zeichen (Kunde), Bestell-Nr. Kunde, Zahlungsbedingungen (Dropdown mit
 den Werten aus der Vorlage), Kundenadresse, Versandanschrift (eigenes Feld,
-s.u.) und ob 19% MwSt angewendet wird (Haken, s.u.) frei editierbar;
+s.u.), ob 19% MwSt angewendet wird (Haken, s.u.) und Sprache des Dokuments
+(Dropdown Deutsch/Englisch, s.u.) frei editierbar;
 Lieferbedingungen und Liefertermin kommen aus den ohnehin vorhandenen
 Auftragsfeldern. „Auftragsbestätigung erzeugen“ lädt `AB-<Nummer>.<Jahr>.docx`
 (z.B. `AB-4887.26.docx`, aus `ab_nummer_suffix()`). Code: `ab_api.py`
 (Blueprint, docxtpl, reicht die Formatierungs-Helfer aus `asme_api.py` weiter),
 Felder an `Item` (`unser_zeichen`/`kunden_zeichen`/`kunden_bestellnr`/
-`kunden_adresse`/`versand_adresse`/`zahlungsbedingungen`/`mwst_anwenden`)
+`kunden_adresse`/`versand_adresse`/`zahlungsbedingungen`/`mwst_anwenden`/
+`ab_sprache`)
 und `AuftragPosition`
 (`menge`/`einheit`/`preis_je_einheit`, optional – nur gebraucht, wenn die
 Position auch in der Auftragsbestätigung einen Preis haben soll; ohne Preis
-bleiben Menge/Preis/Gesamtbetrag in der Tabelle leer). Vorlage
-`vorlagen/auftragsbestaetigung/Auftragsbestaetigung.docx` ist Philipps
-Original-Formular (Dropdown-Kopf „Auftragsbestätigung/Lieferschein/
-Rechnung/…“ unverändert gelassen, nur für „Auftragsbestätigung“ ausgefüllt),
+bleiben Menge/Preis/Gesamtbetrag in der Tabelle leer). Vorlagen
+`vorlagen/auftragsbestaetigung/DE/Auftragsbestaetigung.docx` und
+`vorlagen/auftragsbestaetigung/EN/Auftragsbestaetigung.docx` (s.u., je
+Sprache ein eigenes Verzeichnis analog zu `vorlagen/asme/<Ordner>/`) basieren
+beide auf Philipps Original-Formular (Dropdown-Kopf „Auftragsbestätigung/
+Lieferschein/Rechnung/…“ unverändert gelassen, nur für „Auftragsbestätigung“
+bzw. „Order Confirmation“ ausgefüllt),
 Platzhalter direkt in den Wert-Zeilen ergänzt, Positionstabelle auf eine
 Jinja-Schleifenzeile (`{%tr for %}`/`{%tr endfor %}`, docxtpl-Syntax) reduziert.
-Layout-Änderung = nur Vorlage tauschen, kein Code – Platzhalter dabei nicht
-verändern. AB-Nummer bildet sich aus der Kommission: Kommission entsteht
+Layout-Änderung = beide Vorlagen passend anpassen (nicht nur eine!), kein
+Code – Platzhalter dabei nicht verändern, beide Sprachvarianten müssen
+dieselben Platzhalter/Jinja-Tags enthalten. AB-Nummer bildet sich aus der Kommission: Kommission entsteht
 beim ERP-Import aus der AB-Nummer (`K-{AB:05d}/{Jahr zweistellig}`, siehe
 `erp_import.py`) – `ab_nummer_suffix()` in `ab_api.py` kehrt das nur wieder
 um (`K-01234/26` → Rest nach „AB-“ = `1234/26`, in der Vorlage zu
@@ -279,7 +285,12 @@ es ist nur ein leeres, seitenfest verankertes Textfeld (floating
 Durchgehen der Vorlage übersehen wurde. Gefüllt wird es über einen
 docxtpl-Absatzschleife (`{%p for line in adresse_zeilen %}`/`{%p endfor %}`,
 je Zeile ein eigener `<w:p>` innerhalb des Textfelds). `adresse_zeilen` in
-`ab_api.py` = `kunde` + die freien Zeilen aus `kunden_adresse`.
+`ab_api.py` = die freien Zeilen aus `kunden_adresse` (die Firma trägt die
+Nutzerin/der Nutzer dort selbst als erste Zeile ein, sonst erschien `kunde`
+früher zusätzlich davor und die Firma stand doppelt in der Anschrift – Fund
+beim Vergleich mit einer echten, von Hand nachbearbeiteten Auftragsbestätigung
+am 21.10.2026). `kunde` wird nur noch als Notlösung verwendet, falls
+`kunden_adresse` komplett leer ist.
 
 **Versandanschrift ist ein eigenes Feld** (`items.versand_adresse`,
 mehrzeilig frei, z.B. mit abweichendem Ansprechpartner wie im Beispiel von
@@ -295,8 +306,39 @@ Zahlungsbedingungen. Ohne Haken erscheint die „+ 19% MwSt“-Zeile in der
 Tabelle gar nicht (nicht nur „€ 0,00“): Zeile ist in der Vorlage mit
 `{%tr if mwst_anwenden %}`/`{%tr endif %}` (docxtpl-Syntax, gleiches Prinzip
 wie die Positions-Schleife) umschlossen; `ab_api.py` setzt `mwst` dann auf 0
-und `summe_brutto` = `summe_netto`. „Summe“/„Gesamtsumme“ bleiben in beiden
-Fällen stehen (sind dann identisch).
+und `summe_brutto` = `summe_netto`.
+
+**„Summe“-Zeile nur bei Bedarf** (Fund beim selben Vergleich 21.10.2026):
+ohne MwSt oder bei nur einer Position ist die Zwischensumme „Summe“ immer
+identisch zur „Gesamtsumme“ bzw. zum ohnehin sichtbaren Gesamtbetrag der
+einen Position – eine echte Auftragsbestätigung von Philipp zeigte in genau
+diesem Fall nur noch eine einzige Summenzeile. Deshalb `zeige_summe` in
+`ab_api.py` (`mwst_anwenden and len(positionen) > 1`), Vorlage umschließt die
+„Summe“-Zeile zusätzlich mit `{%tr if zeige_summe %}`/`{%tr endif %}` (eigener,
+von der MwSt-Zeile unabhängiger Block). Die MwSt-Zeile bleibt davon unberührt
+und erscheint weiterhin unabhängig von der Positionsanzahl, sobald
+`mwst_anwenden` an ist – nur die überflüssige Zwischensumme wird ausgeblendet,
+nie die tatsächliche MwSt-Berechnung.
+
+**Sprache des Dokuments: komplett Deutsch oder komplett Englisch, bewusst kein
+zweisprachiges Dokument mehr** (Entscheidung 21.10.2026, nach demselben
+Vergleich): Philipps Original-Vorlage zeigte jedes Feld zweisprachig
+(„Nummer / No“, „Datum / Date“ usw.), die von Hand nachbearbeitete echte
+Auftragsbestätigung an einen englischsprachigen Kunden hatte das aber überall
+von Hand auf Englisch gekürzt (inkl. selbst erfundener Übersetzungen wie
+„Summe“ → „Subtotal“, „Gesamtsumme“ → „Total amount“, da die Vorlage dafür
+keine eigene Spalte vorsieht). Jetzt feste Wahl pro Auftrag: `items.ab_sprache`
+(`"de"`/`"en"`, Standard `"de"`), Dropdown „Sprache des Dokuments“ im
+Auftragsbestätigung-Abschnitt. `ab_api.py` wählt darüber die komplette
+Vorlagendatei (`vorlage_pfad()`), nicht nur einzelne Textbausteine — beide
+Vorlagen enthalten dieselben Jinja-Platzhalter, nur die statischen
+Beschriftungen sind je einmal auf Deutsch und einmal auf Englisch eingetragen
+(auch der Titel „Auftragsbestätigung“/„Order Confirmation“, ein
+Word-Inhaltssteuerelement/Dropdown im Kopf, sowie die Fortsetzungsseiten-
+Kopfzeile `header1.xml` mit „Seite - Page“ und den wiederholten
+Tabellenüberschriften). **Neue zweisprachige Beschriftung in der Vorlage
+ergänzt?** Immer in BEIDEN Ordnern (`DE/` und `EN/`) nachziehen, sonst
+driften die Vorlagen auseinander.
 
 **PDF-Vorschau in diesem Dev-Setup:** `soffice`/LibreOffice ist nur mit
 `libreoffice-core`/`-common` vorinstalliert, **`libreoffice-writer` fehlt**
