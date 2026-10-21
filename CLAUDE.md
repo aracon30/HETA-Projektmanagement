@@ -53,7 +53,11 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
 | `asme_api.py` | ASME-Dokumente: Lieferantenbestellungen + Formularerzeugung aus Word-Vorlagen |
 | `vorlagen/asme/` | Word-Vorlagen je QC-Handbuch-Revision (siehe README dort) |
 | `ab_api.py` | Auftragsbestätigung: Formularerzeugung aus Word-Vorlage (docxtpl) |
-| `vorlagen/auftragsbestaetigung/` | Word-Vorlage der Auftragsbestätigung (Jinja-Platzhalter) |
+| `vorlagen/auftragsbestaetigung/DE\|EN/` | Word-Vorlagen der Auftragsbestätigung je Sprache (Jinja-Platzhalter) |
+| `firmen_api.py` | Firmen-CRM Stufe 1: Firmenliste, Adressen, Assistent "Kunden zuordnen" |
+| `lieferanten_api.py` | Lieferantenbewertung Stufe 1: Bewertungslogik, Lieferung/Jahresbewertung, Auswertung |
+| `lieferanten_daten.py` | Startbestand Kriterienkatalog + Einstellungen der Lieferantenbewertung |
+| `seed_lieferanten.py` | Spielt den Lieferantenbewertungs-Startbestand idempotent ein |
 | `requirements.txt` | Python-Abhängigkeiten |
 | `deploy/projektbesprechung.service` | systemd-Unit-Vorlage |
 | `deploy/nginx-projektbesprechung.conf` | nginx-Reverse-Proxy-Vorlage |
@@ -351,6 +355,111 @@ prüfen (python-docx/Tabellenwerte), nicht visuell – das hat zu der oben
 beschriebenen übersehenen Kundenadresse geführt. Bei künftigen
 Vorlagen-Änderungen: immer als PDF rendern und mit einem echten Beispiel
 vergleichen, bevor man sich auf die reine XML-Analyse verlässt.
+
+## Firmen-CRM (Stufe 1 umgesetzt)
+
+Konzept: `docs/KONZEPT-FIRMEN-CRM.md` (auf Branch `claude/konzept-lieferantenbewertung`
+entstanden, Entwurfsstatus). Ziel: eine gemeinsame Firmenliste statt Freitext
+an jeder Anfrage/jedem Angebot/Auftrag (`items.kunde`/`kunden_adresse`/
+`versand_adresse`), damit eine Firma ein Datensatz ist statt mehrerer
+Schreibvarianten. **Bewusst nur Stufe 1 umgesetzt** (21.10.2026): Firmenliste,
+Adressen, Verknüpfung mit Anfragen/Angeboten/Aufträgen, Assistent „Kunden
+zuordnen", Auftragsbestätigung nutzt die Firmenadresse. **Kontakte und
+Aktivitäten (Stufe 2) sind bewusst NICHT umgesetzt** — das Konzept selbst
+nennt Login/Rechteverwaltung (Ausbaustufe 1) als Voraussetzung dafür, weil ab
+dort personenbezogene Daten (Namen, Telefon, Mail, Gesprächsnotizen)
+gespeichert würden, und das Tool heute für jeden im Netz/per VPN offen ist.
+Stufe 1 führt bewusst keine neue Art von Daten gegenüber dem bisherigen
+Freitext-Kundenfeld ein (nur Firmen-/Adressdaten, kein Namens-/Kontaktbezug)
+und braucht deshalb kein Login, um loszulegen. **Vor einer Stufe 2
+(Kontakte/Aktivitäten/Wiedervorlagen) unbedingt zuerst Login/Rechteverwaltung
+umsetzen und mit dem Datenschutzbeauftragten der PACO-Gruppe abstimmen**
+(siehe Konzept Abschnitt 2) — nicht einfach nachträglich Kontaktfelder
+ergänzen.
+
+Code: `firmen_api.py` (Blueprint), Modelle `Firma`/`FirmaAdresse` in
+`models.py`. Reiter „Firmen" in `static/index.html` (eigener Tab-Board wie
+„Prozesse", nicht Teil des Item-Listen-Musters/`KIND_CONFIG`): Firmenliste
+mit Suche/Rollen-Filter links, Steckbrief (Stammdaten, Adressen, bei Rolle
+Lieferant zusätzlich die Bewertungen) rechts. **Bewusst aus dem Live-Polling
+ausgenommen** (wie der Prozesse-Reiter) — eigener, komplexerer Formular-State
+(Bewertungs-Noten-Buttons), Risiko für Seiteneffekte beim Blind-Neurendern.
+
+**Einbindung in Anfrage/Angebot/Auftrag:** Das Kunde-Feld (Neuanlage-Modal
+und Inline-Edit im Detailkopf) bleibt ein Freitextfeld (keine komplette
+Umstellung auf ein Pflicht-Auswahlfeld, um nichts an der bestehenden Eingabe
+zu brechen), bekommt aber ein `<datalist>` mit allen Firmennamen; tippt
+man/wählt man einen exakten Treffer, wird automatisch `items.firma_id`
+mitgesetzt (`firma_aus_dict`/`extraFields` in `startInlineFieldEdit`). Ohne
+Treffer bleibt der Auftrag wie bisher unverknüpft (Freitext) und lässt sich
+später über den Assistenten nachträglich zuordnen. Ist eine Firma verknüpft,
+erscheint im Detailkopf neben dem Kundennamen ein Link „→ Firma" zum
+Steckbrief. **Nur im Detailkopf, nicht in den Listenkarten** — bewusst
+schlank gehalten, da die Kopf-Ansicht ohnehin der Haupteinstieg ist.
+
+**Assistent „Kunden zuordnen"** (`POST/GET /api/firmen/zuordnen/...`,
+Button im Firmen-Reiter): gruppiert alle noch nicht verknüpften
+`items.kunde`-Freitextwerte nach Ähnlichkeit (Normalisierung: Rechtsform wie
+GmbH/AG/SE raus, dann `difflib.SequenceMatcher`, Schwelle 0.84) und schlägt
+je Gruppe eine bestehende oder neue Firma vor. Vorschau → Bestätigen, wie
+beim ERP-Import — nichts wird ohne Bestätigung angelegt/verknüpft.
+
+**Auftragsbestätigung nutzt die Firmenadresse, wenn verknüpft** (`ab_api.py`):
+ist `items.adresse_id` gesetzt, wird genau diese `FirmaAdresse` genommen;
+sonst bei gesetztem `items.firma_id` die Standardadresse der Firma (oder die
+erste, falls keine als Standard markiert ist); sonst wie bisher der
+Freitext aus `kunden_adresse`/`versand_adresse`. Kein UI zum Auswählen
+zwischen mehreren Adressen einer Firma in Stufe 1 — wird automatisch die
+Standardadresse genommen, Freitext-Override bleibt weiterhin möglich.
+
+Noch offen (Stufe 2+, siehe Konzept Abschnitt 7): Kontakte, Zeitstrahl/
+Aktivitäten, Wiedervorlagen, Outlook-/Visitenkarten-Import, CSV-Export.
+
+## Lieferantenbewertung (Stufe 1 umgesetzt)
+
+Konzept: `docs/KONZEPT-LIEFERANTEN.md` (selbe Branch wie das Firmen-CRM-
+Konzept, Entwurfsstatus, Grundlage ISO 9001 Kap. 8.4). Baut auf der
+Firmenliste auf (Rolle „Lieferant", kein eigenes `lieferanten`-Modell).
+**Bewusst nur Stufe 1 umgesetzt** (21.10.2026): Lieferung bewerten,
+Jahresbewertung, Auswertung + CSV-Export, Kriterienkatalog als Startbestand.
+**Noch nicht umgesetzt** (Stufe 2/3, siehe Konzept Abschnitt 6):
+Maßnahmenverwaltung mit Mail-Versand und Einbindung in den Reiter „Aufgaben",
+Zertifikate mit Ablaufwarnung, Einstellungs-Oberfläche mit
+Katalogversionierung — dafür existieren in den Modellen schon vorbereitete
+Felder (`katalog_version`, `bewertung_einstellungen`-Tabelle), aber noch
+keine Bedienoberfläche.
+
+Rechenlogik (`lieferanten_api.py`, `berechne_ergebnis()`/
+`berechne_jahresergebnis()`) übernimmt exakt die Vorgabe aus dem Konzept:
+Ergebnis = Σ(Gewicht × Notenwert) / Σ(Gewicht der bewerteten Kriterien),
+Notenwerte 1→100 %/2→70 %/3→30 %/4→0 %, Jahresergebnis = 60 % Ø
+Lieferungsbewertungen + 40 % Jahresbewertung (beides in
+`bewertung_einstellungen` hinterlegt, noch ohne Editier-UI). Gegen die zwei
+Testfälle aus dem Konzept verifiziert: Noten 2/1/2/1 (Gewichte 30/15/35/20)
+→ 80,5 %; Ø 83,25 % + Jahresbewertung 86,5 % (60/40) → 84,55 %, Klasse B —
+beide ergeben über die echte API exakt die im Konzept genannten Werte.
+
+Kriterienkatalog v1 (4 Lieferungskriterien, 7 Jahreskriterien, alle
+Notendefinitionen) steht in `lieferanten_daten.py` und wird über
+`seed_lieferanten.py` idempotent eingespielt (läuft in `update.sh` und in
+`seed.py`). **Die Gewichte/Notendefinitionen sind ein eigener Vorschlag**
+(keine Lieferantenbewertung_HETA.xlsx im Repo verfügbar, aus der sie laut
+Konzept eigentlich 1:1 übernommen werden sollten) — unbedingt mit QM/Einkauf
+abgleichen, bevor die Bewertung produktiv fürs Audit genutzt wird (siehe
+Konzept, offene Frage 1). Kriterien werden laut Konzept nie gelöscht, nur
+deaktiviert (`aktiv`-Spalte) — `seed_lieferanten.py` legt nur fehlende
+Kriterien an und überschreibt nichts Vorhandenes, Gewichte lassen sich also
+direkt in der Datenbank anpassen, ohne dass ein erneuter Lauf das zurücksetzt.
+
+Frontend: Unteransichten „Lieferung bewerten"/„Jahresbewertung"/„Auswertung"
+im Reiter „Firmen" (Sub-Navigation `fm-subnav`, siehe oben). Noten-Buttons
+1–4 zeigen den jeweiligen Definitionstext direkt am Button (kein
+Nachschlagen), „–" = nicht bewertet. Bei Note 3/4 ist eine Bemerkung
+clientseitig Pflicht (Konzept 3.2). Nach dem Speichern bleibt das
+Lieferungs-Formular für die nächste Bewertung offen (Noten/Bemerkung
+zurückgesetzt, Firma/Datum/Bewerter bleiben stehen). „Sofort-Hinweis" bei
+Note 4 (Konzept 2.2) ist nur ein Texthinweis nach dem Speichern, noch ohne
+Button „Maßnahme anlegen" (das wäre Stufe 2, siehe oben).
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 

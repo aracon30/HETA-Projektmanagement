@@ -19,6 +19,7 @@ git pull --ff-only
 ./venv/bin/pip install -q -r requirements.txt
 ./venv/bin/python migrate.py
 ./venv/bin/python seed_prozesse.py
+./venv/bin/python seed_lieferanten.py
 
 sudo systemctl restart projektbesprechung
 sleep 2

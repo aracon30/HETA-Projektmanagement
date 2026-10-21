@@ -563,6 +563,43 @@
   .pz-tree-item .cnt{ font-size:0.68rem; color:var(--copper); font-weight:600; }
   .pz-main{ padding:28px clamp(24px, 3vw, 56px) 60px; overflow-y:auto; min-height:0; max-width:1250px; }
   @media (max-width: 880px){ .pz-main{padding:20px;} }
+
+  .firmen-board{ grid-column:1 / -1; display:grid; grid-template-rows:auto minmax(0, 1fr); min-height:0; min-width:0; }
+  .fm-subnav{ display:flex; gap:4px; padding:10px 20px 0; border-bottom:1px solid var(--line); background:var(--panel); flex-wrap:wrap; }
+  .fm-subnav-btn{ font-family:inherit; font-size:0.84rem; font-weight:600; color:var(--slate); background:none; border:none; border-bottom:2px solid transparent; padding:10px 12px; cursor:pointer; }
+  .fm-subnav-btn:hover{ color:var(--ink); }
+  .fm-subnav-btn.active{ color:var(--steel); border-bottom-color:var(--steel); }
+  .fm-content{ min-height:0; overflow:hidden; display:grid; }
+  .fm-firmen-layout{ display:grid; grid-template-columns:clamp(280px, 22vw, 380px) minmax(0, 1fr); min-height:0; min-width:0; }
+  @media (max-width: 880px){ .fm-firmen-layout{grid-template-columns:minmax(0, 1fr); overflow-y:auto;} .fm-list{border-right:none; border-bottom:1px solid var(--line); max-height:40vh;} .fm-detail{overflow-y:visible;} }
+  .fm-list{ border-right:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .fm-list-controls{ padding:14px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
+  .fm-list-items{ overflow-y:auto; flex:1; padding:8px; }
+  .fm-item{ display:flex; flex-direction:column; gap:2px; width:100%; text-align:left; background:none; border:1px solid transparent; border-radius:var(--radius); padding:8px 10px; cursor:pointer; font-family:inherit; color:var(--ink); }
+  .fm-item:hover{ background:var(--paper); }
+  .fm-item.selected{ background:var(--steel-soft); border-color:var(--steel-soft); }
+  .fm-item .fm-item-name{ font-weight:600; font-size:0.88rem; }
+  .fm-item .fm-item-meta{ font-size:0.74rem; color:var(--slate); display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .fm-rolle-chip{ display:inline-block; font-size:0.65rem; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; padding:1px 6px; border-radius:10px; background:var(--steel-soft); color:var(--steel); }
+  .fm-rolle-chip.lieferant{ background:var(--copper-soft); color:var(--copper); }
+  .fm-klasse{ font-weight:700; font-family:'IBM Plex Mono', monospace; }
+  .fm-klasse.A{ color:var(--green); } .fm-klasse.B{ color:var(--amber); } .fm-klasse.C{ color:var(--red); }
+  .fm-detail{ padding:28px clamp(24px, 3vw, 56px) 60px; overflow-y:auto; min-height:0; max-width:1100px; }
+  @media (max-width: 880px){ .fm-detail{padding:20px;} }
+  .fm-note-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+  .fm-note-btn{ flex:1; min-width:120px; text-align:left; font-family:inherit; border:1px solid var(--line); border-radius:var(--radius); padding:10px 12px; background:var(--panel); cursor:pointer; }
+  .fm-note-btn:hover{ border-color:var(--steel); }
+  .fm-note-btn.selected{ border-color:var(--steel); background:var(--steel-soft); }
+  .fm-note-btn .fm-note-label{ font-weight:700; font-size:0.84rem; }
+  .fm-note-btn .fm-note-text{ font-size:0.76rem; color:var(--slate); margin-top:3px; }
+  .fm-note-btn.note4 .fm-note-label{ color:var(--red); }
+  .fm-kriterium-block{ margin-bottom:22px; }
+  .fm-kriterium-block > .fm-kriterium-titel{ font-weight:700; font-size:0.86rem; margin-bottom:8px; display:flex; justify-content:space-between; align-items:baseline; }
+  .fm-kriterium-block > .fm-kriterium-titel .gewicht{ font-size:0.72rem; color:var(--slate); font-weight:400; }
+  table.fm-table{ width:100%; border-collapse:collapse; font-size:0.82rem; }
+  table.fm-table th, table.fm-table td{ padding:7px 10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+  table.fm-table th{ color:var(--slate); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.02em; }
+  table.fm-table tbody tr:hover{ background:var(--paper); }
   .dot.pz-vorgeschlagen{background:var(--slate-light);} .dot.pz-laut_aa{background:var(--amber);}
   .dot.pz-aufgenommen{background:var(--steel);} .dot.pz-bestaetigt{background:var(--green);} .dot.pz-anforderungen{background:var(--copper);}
   .status-badge.pz-vorgeschlagen{background:#ECEEEB; color:var(--slate);}
@@ -725,6 +762,7 @@
     <button class="tab-btn" data-tab="gantt" role="tab" aria-selected="false">Gantt</button>
     <button class="tab-btn" data-tab="wartend" role="tab" aria-selected="false">Aufgaben</button>
     <button class="tab-btn" data-tab="prozesse" role="tab" aria-selected="false">Prozesse</button>
+    <button class="tab-btn" data-tab="firmen" role="tab" aria-selected="false">Firmen</button>
   </div>
 
   <div class="sidebar" id="sidebarPane">
@@ -742,6 +780,7 @@
   <div class="gantt-board" id="ganttBoard" style="display:none;"></div>
   <div class="waiting-board" id="waitingBoard" style="display:none;"></div>
   <div class="prozess-board" id="prozessBoard" style="display:none;"></div>
+  <div class="firmen-board" id="firmenBoard" style="display:none;"></div>
 </div>
 
 <div id="modalRoot"></div>
@@ -1243,15 +1282,21 @@ function _activateTabNow(tab){
   const isGantt = tab === "gantt";
   const isWartend = tab === "wartend";
   const isProzesse = tab === "prozesse";
-  const isBoardTab = isGantt || isWartend || isProzesse;
+  const isFirmen = tab === "firmen";
+  const isBoardTab = isGantt || isWartend || isProzesse || isFirmen;
   document.getElementById("sidebarPane").style.display = isBoardTab ? "none" : "flex";
   document.getElementById("main").style.display = isBoardTab ? "none" : "block";
   document.getElementById("ganttBoard").style.display = isGantt ? "flex" : "none";
   document.getElementById("waitingBoard").style.display = isWartend ? "block" : "none";
   document.getElementById("prozessBoard").style.display = isProzesse ? "grid" : "none";
+  document.getElementById("firmenBoard").style.display = isFirmen ? "grid" : "none";
 
   if(isProzesse){
     openProzesseTab();
+    return;
+  }
+  if(isFirmen){
+    openFirmenTab();
     return;
   }
   if(isGantt){
@@ -1903,8 +1948,9 @@ function renderAbSectionHtml(item){
       <div class="field"><label>Zahlungsbedingungen</label><div class="val"><button class="val clickable-text" id="zahlungsbedingungenBtn" title="Zahlungsbedingungen ändern">${item.zahlungsbedingungen || '—'}</button></div></div>
       <div class="field"><label for="mwstCheck">19% MwSt anwenden</label><div class="val"><input type="checkbox" id="mwstCheck" ${item.mwstAnwenden !== false ? "checked" : ""} title="Ohne Haken erscheint keine MwSt-Zeile in der Auftragsbestätigung" style="margin:0; cursor:pointer;"></div></div>
       <div class="field"><label>Sprache des Dokuments</label><div class="val"><button class="val clickable-text" id="abSpracheBtn" title="Sprache der Auftragsbestätigung ändern">${item.abSprache === "en" ? "Englisch" : "Deutsch"}</button></div></div>
-      <div class="field" style="grid-column:1 / -1;"><label>Kundenadresse (Straße/PLZ-Ort)</label><div class="val"><button class="val clickable-text" id="kundenAdresseBtn" title="Kundenadresse ändern" style="white-space:pre-line; text-align:left;">${item.kundenAdresse || '—'}</button></div></div>
+      <div class="field" style="grid-column:1 / -1;"><label>Kundenadresse (Straße/PLZ-Ort)</label><div class="val"><button class="val clickable-text" id="kundenAdresseBtn" title="Kundenadresse ändern" style="white-space:pre-line; text-align:left;">${item.kundenAdresse || (item.firmaId ? '— (wird aus der verknüpften Firma übernommen)' : '—')}</button></div></div>
       <div class="field" style="grid-column:1 / -1;"><label>Versandanschrift (nur falls abweichend von der Kundenadresse)</label><div class="val"><button class="val clickable-text" id="versandAdresseBtn" title="Versandanschrift ändern" style="white-space:pre-line; text-align:left;">${item.versandAdresse || '— (wie Kundenadresse)'}</button></div></div>
+      ${item.firmaId ? `<div class="sub" style="grid-column:1 / -1; margin-top:-8px;">Firma verknüpft — ohne eigene Eintragung hier wird die Standardadresse der Firma genommen.</div>` : ""}
     </div>
     ` : ""}
   `;
@@ -2340,7 +2386,7 @@ function renderMain(){
             ${item.kommission ? `<div class="komm mono">${item.kommission}</div>` : ""}
             <h2 class="display"><span id="kundeTextEl">${item.kunde}</span><button class="icon-edit-btn" id="kundeBtn" title="Kundenname bearbeiten" aria-label="Kundenname bearbeiten">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button></h2>
+            </button>${item.firmaId ? ` <button class="btn text small" id="kundeFirmaLink" style="font-weight:400;" title="Zur Firma">→ Firma</button>` : ""}</h2>
           </div>
           <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
             ${cfg.detailTag(item)}
@@ -2371,7 +2417,16 @@ function renderMain(){
 
   document.getElementById("deleteItemBtn").addEventListener("click", () => openDeleteConfirm(item));
   document.getElementById("newEntryBtn").addEventListener("click", () => renderNewEntryForm(item));
-  document.getElementById("kundeBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"kunde", label:"Kundenname", inputType:"text" }, ev.currentTarget, document.getElementById("kundeTextEl")));
+  document.getElementById("kundeBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, {
+    field:"kunde", label:"Kundenname", inputType:"text",
+    datalistOptions: firmen.map(f => f.name),
+    extraFields: (value) => ({ firmaId: (firmen.find(f => f.name.toLowerCase() === (value || "").toLowerCase()) || {}).id || null }),
+  }, ev.currentTarget, document.getElementById("kundeTextEl")));
+  document.getElementById("kundeFirmaLink")?.addEventListener("click", () => {
+    selectedFirmaId = item.firmaId;
+    fmView = "firmen";
+    activateTab("firmen");
+  });
   document.getElementById("lieferumfangBtn")?.addEventListener("click", (ev) => startInlineFieldEdit(item, { field:"lieferumfang", label: currentTab === "anfrage" ? "Beschreibung" : "Lieferumfang", inputType:"textarea", rows:6 }, ev.currentTarget, document.getElementById("lieferumfangTextEl")));
   document.getElementById("splitLieferumfangBtn")?.addEventListener("click", () => splitLieferumfangInPositionen(item));
 
@@ -2817,6 +2872,14 @@ function startInlineFieldEdit(item, opts, triggerEl, explicitValueEl){
     inputEl.type = opts.inputType;
     inputEl.value = currentValue;
     if(opts.placeholder) inputEl.placeholder = opts.placeholder;
+    if(opts.datalistOptions){
+      const listId = `inlineEditDatalist-${opts.field}`;
+      inputEl.setAttribute("list", listId);
+      const datalist = document.createElement("datalist");
+      datalist.id = listId;
+      datalist.innerHTML = opts.datalistOptions.map(v => `<option value="${v.replace(/"/g, "&quot;")}">`).join("");
+      wrap.appendChild(datalist);
+    }
   }
   inputEl.className = "inline-edit-input";
   wrap.appendChild(inputEl);
@@ -2854,7 +2917,9 @@ function startInlineFieldEdit(item, opts, triggerEl, explicitValueEl){
     const value = opts.inputType === "select" ? (inputEl.value || null) : (inputEl.value.trim() || null);
     saveBtn.disabled = true; cancelBtn.disabled = true; inputEl.disabled = true;
     try{
-      await apiPatch(`/items/${item.id}`, { [opts.field]: value });
+      const body = { [opts.field]: value };
+      if(opts.extraFields) Object.assign(body, opts.extraFields(value));
+      await apiPatch(`/items/${item.id}`, body);
       activeInlineEdit = null;
       await loadItems(currentTab);
       renderList();
@@ -3856,7 +3921,8 @@ function openCreateModal(kind, prefill){
         ${kommissionField}
         <div class="form-row">
           <label for="createKunde">Kunde</label>
-          <input type="text" id="createKunde" placeholder="Firmenname" value="${prefill?.kunde ? prefill.kunde.replace(/"/g, "&quot;") : ""}">
+          <input type="text" id="createKunde" list="createKundeList" placeholder="Firmenname" value="${prefill?.kunde ? prefill.kunde.replace(/"/g, "&quot;") : ""}">
+          <datalist id="createKundeList">${firmen.map(f => `<option value="${f.name.replace(/"/g, '&quot;')}">`).join("")}</datalist>
         </div>
         <div class="form-row">
           <label for="createLieferumfang">${isAnfrage ? 'Beschreibung' : 'Lieferumfang / Beschreibung'}</label>
@@ -3888,10 +3954,12 @@ function openCreateModal(kind, prefill){
     const confirmBtn = document.getElementById("createConfirm");
     confirmBtn.disabled = true;
 
+    const firmaTreffer = firmen.find(f => f.name.toLowerCase() === kunde.toLowerCase());
     const body = {
       type: kind,
       kommission,
       kunde,
+      firmaId: firmaTreffer ? firmaTreffer.id : null,
       lieferumfang: document.getElementById("createLieferumfang").value.trim(),
       ordnerPfad: document.getElementById("createOrdner").value.trim() || null,
     };
@@ -5287,6 +5355,735 @@ function openPzFrageModal(p, f){
   document.addEventListener("keydown", escCloseOnce);
 }
 
+/* ===================== Firmen / CRM + Lieferantenbewertung (Stufe 1) ===================== */
+let firmen = [];                 // Firmenliste, global gecacht (auch für die Kunde-Suche in Anfrage/Angebot/Auftrag)
+let fmView = "firmen";            // firmen | bewerten | jahresbewertung | auswertung
+let fmFilterRolle = "alle";
+let fmSearch = "";
+let selectedFirmaId = null;
+let bewertungKatalog = null;      // { kriterien, einstellungen }, einmal geladen
+let fmNoten = {};                 // aktuelles Bewertungsformular: kriteriumId -> Note (1-4)
+let fmAuswertungJahr = new Date().getFullYear();
+let fmAuswertungDaten = [];
+
+async function loadFirmen(){
+  firmen = await apiGet("/firmen?aktiv=alle");
+}
+
+async function loadBewertungKatalog(){
+  if(!bewertungKatalog) bewertungKatalog = await apiGet("/bewertung/katalog");
+  return bewertungKatalog;
+}
+
+function fmLieferanten(){
+  return firmen.filter(f => f.rollen.includes("lieferant") && f.aktiv);
+}
+
+async function openFirmenTab(){
+  const board = document.getElementById("firmenBoard");
+  if(!board.innerHTML){
+    board.innerHTML = `
+      <div class="fm-subnav">
+        <button class="fm-subnav-btn" data-fm-view="firmen">Firmen</button>
+        <button class="fm-subnav-btn" data-fm-view="bewerten">Lieferung bewerten</button>
+        <button class="fm-subnav-btn" data-fm-view="jahresbewertung">Jahresbewertung</button>
+        <button class="fm-subnav-btn" data-fm-view="auswertung">Auswertung</button>
+      </div>
+      <div class="fm-content" id="fmContent"></div>`;
+    board.querySelectorAll("[data-fm-view]").forEach(btn => {
+      btn.addEventListener("click", () => switchFmView(btn.dataset.fmView));
+    });
+  }
+  try{
+    await Promise.all([loadFirmen(), loadBewertungKatalog()]);
+  }catch(err){
+    document.getElementById("fmContent").innerHTML = `<div class="no-selection">Firmen konnten nicht geladen werden.</div>`;
+    return;
+  }
+  switchFmView(fmView);
+}
+
+function switchFmView(view){
+  fmView = view;
+  document.querySelectorAll("[data-fm-view]").forEach(b => b.classList.toggle("active", b.dataset.fmView === view));
+  fmNoten = {};
+  if(view === "firmen") renderFmFirmenView();
+  else if(view === "bewerten") renderFmBewertenView();
+  else if(view === "jahresbewertung") renderFmJahresbewertungView();
+  else if(view === "auswertung") renderFmAuswertungView();
+}
+
+/* ---------- Firmenliste + Steckbrief ---------- */
+function fmRolleLabel(r){
+  return { kunde:"Kunde", interessent:"Interessent", lieferant:"Lieferant", partner:"Partner" }[r] || r;
+}
+
+function renderFmFirmenView(){
+  const content = document.getElementById("fmContent");
+  content.innerHTML = `
+    <div class="fm-firmen-layout">
+      <div class="fm-list">
+        <div class="fm-list-controls">
+          <input type="text" class="search" id="fmSearchInput" placeholder="Firma suchen…" value="${fmSearch}">
+          <select id="fmRolleFilter">
+            <option value="alle">Alle Rollen</option>
+            <option value="kunde">Kunde</option>
+            <option value="interessent">Interessent</option>
+            <option value="lieferant">Lieferant</option>
+            <option value="partner">Partner</option>
+          </select>
+          <button class="btn" id="fmNewFirmaBtn" style="width:100%;">+ Neue Firma</button>
+          <button class="btn ghost" id="fmZuordnenBtn" style="width:100%;" title="Noch nicht zugeordnete Kundennamen aus Anfragen/Angeboten/Aufträgen einer Firma zuordnen">Kunden zuordnen…</button>
+        </div>
+        <div class="fm-list-items" id="fmListItems"></div>
+      </div>
+      <div class="fm-detail" id="fmDetail"></div>
+    </div>
+  `;
+  document.getElementById("fmRolleFilter").value = fmFilterRolle;
+  document.getElementById("fmSearchInput").addEventListener("input", (ev) => { fmSearch = ev.target.value; renderFmList(); });
+  document.getElementById("fmRolleFilter").addEventListener("change", (ev) => { fmFilterRolle = ev.target.value; renderFmList(); });
+  document.getElementById("fmNewFirmaBtn").addEventListener("click", () => openFirmaModal(null));
+  document.getElementById("fmZuordnenBtn").addEventListener("click", openZuordnenModal);
+  renderFmList();
+  renderFmDetail();
+}
+
+function renderFmList(){
+  const el = document.getElementById("fmListItems");
+  if(!el) return;
+  const term = fmSearch.trim().toLowerCase();
+  let gefiltert = firmen.filter(f => f.aktiv);
+  if(fmFilterRolle !== "alle") gefiltert = gefiltert.filter(f => f.rollen.includes(fmFilterRolle));
+  if(term) gefiltert = gefiltert.filter(f => f.name.toLowerCase().includes(term) || (f.kurzname || "").toLowerCase().includes(term));
+  gefiltert.sort((a, b) => a.name.localeCompare(b.name));
+
+  if(gefiltert.length === 0){
+    el.innerHTML = `<div class="no-selection" style="padding-top:30px;">Keine Firmen gefunden.</div>`;
+    return;
+  }
+  el.innerHTML = gefiltert.map(f => `
+    <button class="fm-item ${f.id === selectedFirmaId ? 'selected' : ''}" data-firma-id="${f.id}">
+      <span class="fm-item-name">${f.name}</span>
+      <span class="fm-item-meta">
+        ${f.rollen.map(r => `<span class="fm-rolle-chip ${r}">${fmRolleLabel(r)}</span>`).join("")}
+        ${f.freigabestatus ? `<span>${f.freigabestatus}</span>` : ""}
+      </span>
+    </button>
+  `).join("");
+  el.querySelectorAll("[data-firma-id]").forEach(btn => {
+    btn.addEventListener("click", () => { selectedFirmaId = parseInt(btn.dataset.firmaId, 10); renderFmList(); renderFmDetail(); });
+  });
+}
+
+async function renderFmDetail(){
+  const el = document.getElementById("fmDetail");
+  if(!el) return;
+  if(!selectedFirmaId){
+    el.innerHTML = `<div class="no-selection">Firma auswählen oder „+ Neue Firma" anlegen.</div>`;
+    return;
+  }
+  let firma;
+  try{
+    firma = await apiGet(`/firmen/${selectedFirmaId}`);
+  }catch(err){
+    el.innerHTML = `<div class="no-selection">Firma konnte nicht geladen werden.</div>`;
+    return;
+  }
+  const istLieferant = firma.rollen.includes("lieferant");
+  el.innerHTML = `
+    <div class="timeline-head">
+      <h2>${firma.name} <button class="pz-icon-btn" id="fmEditBtn" title="Firma bearbeiten">✎</button></h2>
+    </div>
+    <div class="order-meta-grid" style="margin-bottom:20px;">
+      <div class="field"><label>Kurzname</label><div class="val">${firma.kurzname || '—'}</div></div>
+      <div class="field"><label>Rollen</label><div class="val">${firma.rollen.map(fmRolleLabel).join(", ") || '—'}</div></div>
+      <div class="field"><label>Branche</label><div class="val">${firma.branche || '—'}</div></div>
+      <div class="field"><label>Land</label><div class="val">${firma.land || '—'}</div></div>
+      <div class="field"><label>Website</label><div class="val">${firma.website || '—'}</div></div>
+      <div class="field"><label>Quelle</label><div class="val">${firma.quelle || '—'}</div></div>
+      <div class="field"><label>Status</label><div class="val">${firma.status || '—'}</div></div>
+      ${istLieferant ? `
+      <div class="field"><label>Warengruppe</label><div class="val">${firma.warengruppe || '—'}</div></div>
+      <div class="field"><label>Freigabestatus</label><div class="val">${firma.freigabestatus || '—'}</div></div>
+      <div class="field"><label>Lieferantenportal</label><div class="val">${firma.lieferantenportal || '—'}</div></div>
+      ` : ""}
+      <div class="field" style="grid-column:1 / -1;"><label>Notiz</label><div class="val" style="white-space:pre-line;">${firma.notiz || '—'}</div></div>
+    </div>
+    <div class="timeline-head">
+      <h3>Adressen</h3>
+      <button class="btn ghost small" id="fmAddAdresseBtn">+ Adresse</button>
+    </div>
+    ${firma.adressen.length ? `
+      <table class="fm-table" style="margin-bottom:24px;">
+        <thead><tr><th>Art</th><th>Zeilen</th><th>Standard</th><th></th></tr></thead>
+        <tbody>
+          ${firma.adressen.map(a => `
+            <tr>
+              <td>${a.art}</td>
+              <td style="white-space:pre-line;">${a.zeilen}</td>
+              <td>${a.standard ? "✓" : ""}</td>
+              <td><button class="btn text small" data-edit-adresse="${a.id}">Bearbeiten</button> <button class="btn text small" data-delete-adresse="${a.id}" style="color:var(--red);">Löschen</button></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    ` : `<div class="sub" style="margin-bottom:24px;">Noch keine Adresse hinterlegt.</div>`}
+    <div class="sub">Verknüpft: ${firma.anzahlAnfragen} Anfrage(n), ${firma.anzahlAngebote} Angebot(e), ${firma.anzahlAuftraege} Auftrag/Aufträge.</div>
+    ${istLieferant ? `
+      <div class="timeline-head" style="margin-top:28px;">
+        <h3>Bewertungen</h3>
+      </div>
+      <div id="fmFirmaBewertungen"><div class="sub">Lädt…</div></div>
+    ` : ""}
+  `;
+  document.getElementById("fmEditBtn").addEventListener("click", () => openFirmaModal(firma));
+  document.getElementById("fmAddAdresseBtn").addEventListener("click", () => openAdresseModal(firma, null));
+  el.querySelectorAll("[data-edit-adresse]").forEach(btn => {
+    btn.addEventListener("click", () => openAdresseModal(firma, firma.adressen.find(a => a.id === parseInt(btn.dataset.editAdresse, 10))));
+  });
+  el.querySelectorAll("[data-delete-adresse]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if(!confirm("Diese Adresse wirklich löschen?")) return;
+      await apiDelete(`/adressen/${btn.dataset.deleteAdresse}`);
+      renderFmDetail();
+    });
+  });
+  if(istLieferant) renderFmFirmaBewertungen(firma.id);
+}
+
+async function renderFmFirmaBewertungen(firmaId){
+  const el = document.getElementById("fmFirmaBewertungen");
+  if(!el) return;
+  const [lieferungen, jahre] = await Promise.all([
+    apiGet(`/lieferungsbewertungen?firmaId=${firmaId}`),
+    apiGet(`/jahresbewertungen?firmaId=${firmaId}`),
+  ]);
+  if(lieferungen.length === 0 && jahre.length === 0){
+    el.innerHTML = `<div class="sub">Noch keine Bewertung erfasst.</div>`;
+    return;
+  }
+  el.innerHTML = `
+    ${jahre.length ? `
+      <table class="fm-table" style="margin-bottom:16px;">
+        <thead><tr><th>Jahr</th><th>Ergebnis</th><th>Bewerter</th></tr></thead>
+        <tbody>${jahre.map(j => `<tr><td>${j.jahr}</td><td>${j.ergebnis != null ? j.ergebnis + ' %' : '—'}</td><td>${j.bewerter || '—'}</td></tr>`).join("")}</tbody>
+      </table>
+    ` : ""}
+    <table class="fm-table">
+      <thead><tr><th>Datum</th><th>Bestell-Nr.</th><th>Ergebnis</th><th>Bewerter</th></tr></thead>
+      <tbody>${lieferungen.map(l => `<tr><td>${fmtDatumDE(l.datum)}</td><td>${l.bestellNr || '—'}</td><td>${l.ergebnis != null ? l.ergebnis + ' %' : '—'}</td><td>${l.bewerter || '—'}</td></tr>`).join("")}</tbody>
+    </table>
+  `;
+}
+
+function fmtDatumDE(iso){
+  if(!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+function openFirmaModal(firma){
+  const isEdit = !!firma;
+  const root = document.getElementById("modalRoot");
+  const rollenAlle = ["kunde", "interessent", "lieferant", "partner"];
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="firmaModalTitle">
+        <h3 id="firmaModalTitle">${isEdit ? "Firma bearbeiten" : "Neue Firma"}</h3>
+        <div class="form-row">
+          <label for="fmNameInput">Name</label>
+          <input type="text" id="fmNameInput" value="${isEdit ? firma.name.replace(/"/g, '&quot;') : ''}">
+        </div>
+        <div class="form-row">
+          <label for="fmKurznameInput">Kurzname</label>
+          <input type="text" id="fmKurznameInput" value="${isEdit ? (firma.kurzname || '') : ''}">
+        </div>
+        <div class="form-row">
+          <label>Rollen</label>
+          <div class="fm-note-btns">
+            ${rollenAlle.map(r => `<label style="display:flex; align-items:center; gap:6px; font-weight:400; cursor:pointer;"><input type="checkbox" value="${r}" class="fmRolleCheck" ${isEdit && firma.rollen.includes(r) ? "checked" : ""}> ${fmRolleLabel(r)}</label>`).join("")}
+          </div>
+        </div>
+        <div class="form-row" style="display:flex; gap:10px;">
+          <div style="flex:1;"><label for="fmBrancheInput">Branche</label><input type="text" id="fmBrancheInput" value="${isEdit ? (firma.branche || '') : ''}"></div>
+          <div style="flex:1;"><label for="fmLandInput">Land</label><input type="text" id="fmLandInput" value="${isEdit ? (firma.land || '') : ''}"></div>
+        </div>
+        <div class="form-row" id="fmLieferantFelder" style="display:${isEdit && firma.rollen.includes('lieferant') ? 'flex' : 'none'}; gap:10px;">
+          <div style="flex:1;"><label for="fmWarengruppeInput">Warengruppe</label><input type="text" id="fmWarengruppeInput" value="${isEdit ? (firma.warengruppe || '') : ''}"></div>
+          <div style="flex:1;">
+            <label for="fmFreigabeInput">Freigabestatus</label>
+            <select id="fmFreigabeInput">
+              <option value="">— keine Angabe —</option>
+              ${["freigegeben", "bedingt", "gesperrt", "neu"].map(s => `<option value="${s}" ${isEdit && firma.freigabestatus === s ? "selected" : ""}>${s}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="fmNotizInput">Notiz</label>
+          <textarea id="fmNotizInput" rows="3">${isEdit ? (firma.notiz || '') : ''}</textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="fmCancel">Abbrechen</button>
+          <button class="btn" id="fmSave">${isEdit ? "Speichern" : "Anlegen"}</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("fmCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.addEventListener("keydown", escCloseOnce);
+  document.querySelectorAll(".fmRolleCheck").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const lieferantAn = document.querySelector('.fmRolleCheck[value="lieferant"]').checked;
+      document.getElementById("fmLieferantFelder").style.display = lieferantAn ? "flex" : "none";
+    });
+  });
+  document.getElementById("fmSave").addEventListener("click", async () => {
+    const name = document.getElementById("fmNameInput").value.trim();
+    if(!name){ showToast("Name ist ein Pflichtfeld.", true); return; }
+    const btn = document.getElementById("fmSave");
+    btn.disabled = true;
+    const rollen = Array.from(document.querySelectorAll(".fmRolleCheck:checked")).map(cb => cb.value);
+    const body = {
+      name, kurzname: document.getElementById("fmKurznameInput").value.trim() || null,
+      rollen, branche: document.getElementById("fmBrancheInput").value.trim() || null,
+      land: document.getElementById("fmLandInput").value.trim() || null,
+      warengruppe: document.getElementById("fmWarengruppeInput").value.trim() || null,
+      freigabestatus: document.getElementById("fmFreigabeInput").value || null,
+      notiz: document.getElementById("fmNotizInput").value.trim() || null,
+    };
+    try{
+      let result;
+      if(isEdit) result = await apiPatch(`/firmen/${firma.id}`, body);
+      else result = await apiPost("/firmen", body);
+      await loadFirmen();
+      selectedFirmaId = result.id;
+      closeModal();
+      renderFmList();
+      renderFmDetail();
+      showToast(isEdit ? "Firma gespeichert." : "Firma angelegt.");
+    }catch(err){
+      showToast("Firma konnte nicht gespeichert werden.", true);
+      btn.disabled = false;
+    }
+  });
+}
+
+function openAdresseModal(firma, adresse){
+  const isEdit = !!adresse;
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="adresseModalTitle">
+        <h3 id="adresseModalTitle">${isEdit ? "Adresse bearbeiten" : "Adresse hinzufügen"}</h3>
+        <div class="sub">${firma.name}</div>
+        <div class="form-row">
+          <label for="fmAdresseArt">Art</label>
+          <select id="fmAdresseArt">
+            ${["haupt", "rechnung", "lieferung", "werk"].map(a => `<option value="${a}" ${isEdit && adresse.art === a ? "selected" : ""}>${a}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="fmAdresseZeilen">Adresse (mehrzeilig, erste Zeile = Firmenname)</label>
+          <textarea id="fmAdresseZeilen" rows="4" placeholder="${firma.name}\nStraße Hausnummer\nPLZ Ort">${isEdit ? adresse.zeilen : ''}</textarea>
+        </div>
+        <div class="form-row">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" id="fmAdresseStandard" ${isEdit && adresse.standard ? "checked" : ""}> Standardadresse</label>
+        </div>
+        <div class="modal-actions" style="justify-content:${isEdit ? 'space-between' : 'flex-end'};">
+          ${isEdit ? `<button class="btn text" id="fmAdresseDelete" style="color:var(--red);">Löschen</button>` : ""}
+          <div style="display:flex; gap:10px;">
+            <button class="btn text" id="fmAdresseCancel">Abbrechen</button>
+            <button class="btn" id="fmAdresseSave">${isEdit ? "Speichern" : "Hinzufügen"}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("fmAdresseCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.addEventListener("keydown", escCloseOnce);
+  if(isEdit){
+    document.getElementById("fmAdresseDelete").addEventListener("click", async () => {
+      if(!confirm("Diese Adresse wirklich löschen?")) return;
+      await apiDelete(`/adressen/${adresse.id}`);
+      closeModal();
+      renderFmDetail();
+    });
+  }
+  document.getElementById("fmAdresseSave").addEventListener("click", async () => {
+    const zeilen = document.getElementById("fmAdresseZeilen").value.trim();
+    if(!zeilen){ showToast("Adresse darf nicht leer sein.", true); return; }
+    const btn = document.getElementById("fmAdresseSave");
+    btn.disabled = true;
+    const body = { art: document.getElementById("fmAdresseArt").value, zeilen, standard: document.getElementById("fmAdresseStandard").checked };
+    try{
+      if(isEdit) await apiPatch(`/adressen/${adresse.id}`, body);
+      else await apiPost(`/firmen/${firma.id}/adressen`, body);
+      closeModal();
+      renderFmDetail();
+      showToast(isEdit ? "Adresse gespeichert." : "Adresse hinzugefügt.");
+    }catch(err){
+      showToast("Adresse konnte nicht gespeichert werden.", true);
+      btn.disabled = false;
+    }
+  });
+}
+
+/* ---------- Assistent "Kunden zuordnen" ---------- */
+async function openZuordnenModal(){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="zuordnenTitle">
+        <h3 id="zuordnenTitle">Kunden zuordnen</h3>
+        <div class="sub">Lädt Vorschläge…</div>
+      </div>
+    </div>
+  `;
+  document.addEventListener("keydown", escCloseOnce);
+  let gruppen;
+  try{
+    gruppen = await apiGet("/firmen/zuordnen/vorschlag");
+  }catch(err){
+    document.querySelector(".modal .sub").textContent = "Vorschläge konnten nicht geladen werden.";
+    return;
+  }
+  renderZuordnenModal(gruppen);
+}
+
+function renderZuordnenModal(gruppen){
+  const root = document.getElementById("modalRoot");
+  if(gruppen.length === 0){
+    root.innerHTML = `
+      <div class="modal-backdrop" id="modalBackdrop">
+        <div class="modal" role="dialog" aria-modal="true">
+          <h3>Kunden zuordnen</h3>
+          <div class="sub">Alle Kundennamen sind bereits einer Firma zugeordnet.</div>
+          <div class="modal-actions"><button class="btn" id="zuordnenClose">Schließen</button></div>
+        </div>
+      </div>`;
+    document.getElementById("zuordnenClose").addEventListener("click", closeModal);
+    document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+    return;
+  }
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="zuordnenTitle">
+        <h3 id="zuordnenTitle">Kunden zuordnen</h3>
+        <div class="sub">${gruppen.length} Gruppe(n) aus noch nicht zugeordneten Kundennamen. Vorschau — erst nach „Übernehmen" werden Firmen angelegt/verknüpft.</div>
+        <div style="max-height:50vh; overflow-y:auto; margin:14px 0;">
+          ${gruppen.map((g, i) => `
+            <div class="fm-kriterium-block" data-gruppe="${i}">
+              <div class="fm-kriterium-titel"><span>${g.namen.join(" / ")}</span><span class="gewicht">${g.anzahlAuftraege} Vorgang/Vorgänge</span></div>
+              <label style="display:flex; align-items:center; gap:6px; font-weight:400; margin-bottom:4px;">
+                <input type="checkbox" class="zuordnenAktiv" checked> übernehmen als
+              </label>
+              <select class="zuordnenZiel" style="width:100%;">
+                ${g.firmaVorschlag ? `<option value="firma:${g.firmaVorschlag.id}">bestehende Firma: ${g.firmaVorschlag.name}</option>` : ""}
+                <option value="neu" ${!g.firmaVorschlag ? "selected" : ""}>neue Firma: ${g.namen[0]}</option>
+              </select>
+            </div>
+          `).join("")}
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="zuordnenCancel">Abbrechen</button>
+          <button class="btn" id="zuordnenSave">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("zuordnenCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.getElementById("zuordnenSave").addEventListener("click", async () => {
+    const btn = document.getElementById("zuordnenSave");
+    btn.disabled = true;
+    const body = { gruppen: [] };
+    document.querySelectorAll("[data-gruppe]").forEach((block, i) => {
+      if(!block.querySelector(".zuordnenAktiv").checked) return;
+      const ziel = block.querySelector(".zuordnenZiel").value;
+      const g = gruppen[i];
+      if(ziel === "neu") body.gruppen.push({ namen: g.namen, neueFirma: { name: g.namen[0], rollen: ["kunde"] } });
+      else body.gruppen.push({ namen: g.namen, firmaId: parseInt(ziel.split(":")[1], 10) });
+    });
+    try{
+      const result = await apiPost("/firmen/zuordnen/bestaetigen", body);
+      await loadFirmen();
+      closeModal();
+      renderFmList();
+      renderFmDetail();
+      showToast(`${result.firmenNeu} neue Firma/Firmen, ${result.auftraegeVerknuepft} Vorgänge verknüpft.`);
+    }catch(err){
+      showToast("Zuordnung fehlgeschlagen.", true);
+      btn.disabled = false;
+    }
+  });
+}
+
+/* ---------- Lieferung bewerten / Jahresbewertung (gemeinsame Bausteine) ---------- */
+function renderNoteButtons(kriterium){
+  const aktuelle = fmNoten[kriterium.id];
+  return `
+    <div class="fm-kriterium-block" data-kriterium="${kriterium.id}">
+      <div class="fm-kriterium-titel"><span>${kriterium.bezeichnung}</span><span class="gewicht">${kriterium.gewicht} %</span></div>
+      <div class="fm-note-btns">
+        ${[1, 2, 3, 4].map(n => `
+          <button type="button" class="fm-note-btn note${n} ${aktuelle === n ? 'selected' : ''}" data-kriterium="${kriterium.id}" data-note="${n}">
+            <div class="fm-note-label">${n}</div>
+            <div class="fm-note-text">${kriterium.noteText[n]}</div>
+          </button>
+        `).join("")}
+        <button type="button" class="fm-note-btn ${aktuelle == null ? 'selected' : ''}" data-kriterium="${kriterium.id}" data-note="">
+          <div class="fm-note-label">–</div>
+          <div class="fm-note-text">nicht bewertet</div>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function wireNoteButtons(container, onChange){
+  container.querySelectorAll(".fm-note-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const kriteriumId = parseInt(btn.dataset.kriterium, 10);
+      const note = btn.dataset.note ? parseInt(btn.dataset.note, 10) : null;
+      if(note === null) delete fmNoten[kriteriumId];
+      else fmNoten[kriteriumId] = note;
+      container.querySelectorAll(`[data-kriterium="${kriteriumId}"]`).forEach(b => {
+        b.classList.toggle("selected", (b.dataset.note ? parseInt(b.dataset.note, 10) : null) === note);
+      });
+      if(onChange) onChange();
+    });
+  });
+}
+
+function fmFirmaDatalist(id){
+  return `<datalist id="${id}">${fmLieferanten().map(f => `<option value="${f.name.replace(/"/g, '&quot;')}">`).join("")}</datalist>`;
+}
+
+function fmFirmaAusName(name){
+  const n = (name || "").trim().toLowerCase();
+  return fmLieferanten().find(f => f.name.toLowerCase() === n);
+}
+
+/* ---------- Lieferung bewerten ---------- */
+function renderFmBewertenView(){
+  const content = document.getElementById("fmContent");
+  const kriterien = bewertungKatalog.kriterien.filter(k => k.ebene === "lieferung");
+  content.innerHTML = `
+    <div class="fm-detail" style="max-width:800px;">
+      <h2>Lieferung bewerten</h2>
+      <div class="sub">Wareneingang schnell bewerten — nicht bewertete Kriterien zählen nicht mit.</div>
+      <div class="order-meta-grid" style="margin:18px 0;">
+        <div class="field"><label for="fmBwFirma">Lieferant</label><input type="text" id="fmBwFirma" list="fmBwFirmaList" placeholder="Firma suchen…">${fmFirmaDatalist("fmBwFirmaList")}</div>
+        <div class="field"><label for="fmBwDatum">Datum</label><input type="date" id="fmBwDatum" value="${new Date().toISOString().slice(0, 10)}"></div>
+        <div class="field"><label for="fmBwBestellNr">Bestell-Nr.</label><input type="text" id="fmBwBestellNr"></div>
+        <div class="field"><label for="fmBwKommission">Kommission (optional)</label><select id="fmBwKommission"><option value="">— keine —</option></select></div>
+        <div class="field"><label for="fmBwBewerter">Bewerter</label>
+          <select id="fmBwBewerter"><option value="">— wählen —</option>${nutzer.map(n => `<option value="${n.name}">${n.name}</option>`).join("")}</select>
+        </div>
+      </div>
+      <div id="fmBwKriterien">${kriterien.map(renderNoteButtons).join("")}</div>
+      <div class="form-row">
+        <label for="fmBwBemerkung">Bemerkung ${Object.values(fmNoten).some(n => n >= 3) ? "(Pflicht bei Note 3/4)" : "(optional)"}</label>
+        <textarea id="fmBwBemerkung" rows="2"></textarea>
+      </div>
+      <div style="margin-top:10px;"><button class="btn" id="fmBwSave">Bewertung speichern</button></div>
+      <div id="fmBwErgebnis"></div>
+    </div>
+  `;
+  wireNoteButtons(document.getElementById("fmBwKriterien"), () => {
+    renderFmBewertenView_refreshBemerkungLabel();
+  });
+  document.getElementById("fmBwFirma").addEventListener("change", fmBwLadeKommissionen);
+  document.getElementById("fmBwSave").addEventListener("click", fmBewertungSpeichern);
+}
+
+function renderFmBewertenView_refreshBemerkungLabel(){
+  const label = document.querySelector('label[for="fmBwBemerkung"]');
+  if(label) label.textContent = `Bemerkung ${Object.values(fmNoten).some(n => n >= 3) ? "(Pflicht bei Note 3/4)" : "(optional)"}`;
+}
+
+async function fmBwLadeKommissionen(){
+  const select = document.getElementById("fmBwKommission");
+  const firma = fmFirmaAusName(document.getElementById("fmBwFirma").value);
+  select.innerHTML = `<option value="">— keine —</option>`;
+  if(!firma) return;
+  const auftraege = await apiGet("/items?type=auftrag");
+  auftraege.filter(a => a.firmaId === firma.id).forEach(a => {
+    select.innerHTML += `<option value="${a.id}">${a.kommission}</option>`;
+  });
+}
+
+async function fmBewertungSpeichern(){
+  const firma = fmFirmaAusName(document.getElementById("fmBwFirma").value);
+  if(!firma){ showToast("Bitte einen Lieferanten aus der Liste wählen.", true); return; }
+  if(Object.keys(fmNoten).length === 0){ showToast("Bitte mindestens ein Kriterium bewerten.", true); return; }
+  if(Object.values(fmNoten).some(n => n >= 3) && !document.getElementById("fmBwBemerkung").value.trim()){
+    showToast("Bei Note 3 oder 4 ist eine Bemerkung Pflicht.", true);
+    return;
+  }
+  const btn = document.getElementById("fmBwSave");
+  btn.disabled = true;
+  try{
+    const result = await apiPost("/lieferungsbewertungen", {
+      firmaId: firma.id,
+      datum: document.getElementById("fmBwDatum").value,
+      bestellNr: document.getElementById("fmBwBestellNr").value.trim() || null,
+      itemId: document.getElementById("fmBwKommission").value ? parseInt(document.getElementById("fmBwKommission").value, 10) : null,
+      bewerter: document.getElementById("fmBwBewerter").value || null,
+      bemerkung: document.getElementById("fmBwBemerkung").value.trim() || null,
+      noten: fmNoten,
+    });
+    document.getElementById("fmBwErgebnis").innerHTML =
+      `<div class="sub" style="margin-top:14px;">Ergebnis: <b>${result.ergebnis} %</b> — Klasse <span class="fm-klasse ${result.klasse}">${result.klasse}</span>${result.ergebnis >= 100 ? "" : (fmNoten && Object.values(fmNoten).includes(4) ? " — Hinweis: Reklamation/Maßnahme prüfen." : "")}</div>`;
+    showToast("Bewertung gespeichert.");
+    fmNoten = {};
+    // Formular für die nächste Lieferung offen lassen (Konzept 3.2), nur Kriterien/Bemerkung zurücksetzen
+    document.getElementById("fmBwKriterien").innerHTML = bewertungKatalog.kriterien.filter(k => k.ebene === "lieferung").map(renderNoteButtons).join("");
+    wireNoteButtons(document.getElementById("fmBwKriterien"), renderFmBewertenView_refreshBemerkungLabel);
+    document.getElementById("fmBwBestellNr").value = "";
+    document.getElementById("fmBwBemerkung").value = "";
+    renderFmBewertenView_refreshBemerkungLabel();
+  }catch(err){
+    showToast("Bewertung konnte nicht gespeichert werden.", true);
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+/* ---------- Jahresbewertung ---------- */
+async function renderFmJahresbewertungView(){
+  const content = document.getElementById("fmContent");
+  const jahr = new Date().getFullYear();
+  content.innerHTML = `<div class="fm-detail" style="max-width:800px;"><div class="sub">Lädt…</div></div>`;
+  const faellig = await apiGet(`/jahresbewertungen/faellig?jahr=${jahr}`);
+  const kriterien = bewertungKatalog.kriterien.filter(k => k.ebene === "jahr");
+  content.innerHTML = `
+    <div class="fm-detail" style="max-width:800px;">
+      <h2>Jahresbewertung ${jahr}</h2>
+      ${faellig.length ? `
+        <div class="sub">Fällig (Lieferungen im Jahr, aber noch keine Jahresbewertung):</div>
+        <div class="fm-note-btns" style="margin:10px 0 20px;">
+          ${faellig.map(f => `<button type="button" class="chip" data-faellig-firma="${f.id}">${f.name}</button>`).join("")}
+        </div>
+      ` : `<div class="sub" style="margin-bottom:20px;">Keine fälligen Jahresbewertungen für ${jahr}.</div>`}
+      <div class="order-meta-grid" style="margin-bottom:18px;">
+        <div class="field"><label for="fmJbFirma">Lieferant</label><input type="text" id="fmJbFirma" list="fmJbFirmaList" placeholder="Firma suchen…">${fmFirmaDatalist("fmJbFirmaList")}</div>
+        <div class="field"><label for="fmJbJahr">Jahr</label><input type="number" id="fmJbJahr" value="${jahr}" style="width:100px;"></div>
+        <div class="field"><label for="fmJbBewerter">Bewerter</label>
+          <select id="fmJbBewerter"><option value="">— wählen —</option>${nutzer.map(n => `<option value="${n.name}">${n.name}</option>`).join("")}</select>
+        </div>
+      </div>
+      <div id="fmJbKriterien">${kriterien.map(renderNoteButtons).join("")}</div>
+      <div class="form-row">
+        <label for="fmJbBemerkung">Bemerkung</label>
+        <textarea id="fmJbBemerkung" rows="2"></textarea>
+      </div>
+      <div style="margin-top:10px;"><button class="btn" id="fmJbSave">Jahresbewertung speichern</button></div>
+      <div id="fmJbErgebnis"></div>
+    </div>
+  `;
+  wireNoteButtons(document.getElementById("fmJbKriterien"));
+  content.querySelectorAll("[data-faellig-firma]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const f = firmen.find(x => x.id === parseInt(btn.dataset.faelligFirma, 10));
+      if(f) document.getElementById("fmJbFirma").value = f.name;
+    });
+  });
+  document.getElementById("fmJbSave").addEventListener("click", fmJahresbewertungSpeichern);
+}
+
+async function fmJahresbewertungSpeichern(){
+  const firma = fmFirmaAusName(document.getElementById("fmJbFirma").value);
+  if(!firma){ showToast("Bitte einen Lieferanten aus der Liste wählen.", true); return; }
+  if(Object.keys(fmNoten).length === 0){ showToast("Bitte mindestens ein Kriterium bewerten.", true); return; }
+  const btn = document.getElementById("fmJbSave");
+  btn.disabled = true;
+  try{
+    const result = await apiPost("/jahresbewertungen", {
+      firmaId: firma.id,
+      jahr: parseInt(document.getElementById("fmJbJahr").value, 10),
+      bewerter: document.getElementById("fmJbBewerter").value || null,
+      bemerkung: document.getElementById("fmJbBemerkung").value.trim() || null,
+      noten: fmNoten,
+    });
+    document.getElementById("fmJbErgebnis").innerHTML =
+      `<div class="sub" style="margin-top:14px;">Ergebnis: <b>${result.ergebnis} %</b> — Klasse <span class="fm-klasse ${result.klasse}">${result.klasse}</span></div>`;
+    showToast("Jahresbewertung gespeichert.");
+    fmNoten = {};
+    renderFmJahresbewertungView();
+  }catch(err){
+    showToast("Jahresbewertung konnte nicht gespeichert werden (ggf. existiert für dieses Jahr schon eine).", true);
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+/* ---------- Auswertung ---------- */
+async function renderFmAuswertungView(){
+  const content = document.getElementById("fmContent");
+  content.innerHTML = `<div class="fm-detail"><div class="sub">Lädt…</div></div>`;
+  fmAuswertungDaten = await apiGet(`/lieferanten/auswertung?jahr=${fmAuswertungJahr}`);
+  const kriterien = bewertungKatalog.kriterien.filter(k => k.ebene === "lieferung");
+  const anzahl = { A: 0, B: 0, C: 0 };
+  fmAuswertungDaten.forEach(z => { if(z.klasse) anzahl[z.klasse]++; });
+  const cOhneMassnahme = fmAuswertungDaten.filter(z => z.klasse === "C").length;
+
+  content.innerHTML = `
+    <div class="fm-detail" style="max-width:none;">
+      <div class="timeline-head">
+        <h2>Auswertung</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="number" id="fmAwJahr" value="${fmAuswertungJahr}" style="width:100px;">
+          <a class="btn ghost small" href="${API}/lieferanten/auswertung?jahr=${fmAuswertungJahr}&format=csv">CSV-Export</a>
+        </div>
+      </div>
+      <div class="sub" style="margin-bottom:16px;">
+        A: ${anzahl.A} · B: ${anzahl.B} · C: ${anzahl.C}${cOhneMassnahme ? ` · <span style="color:var(--red);">${cOhneMassnahme} Lieferant(en) Klasse C</span>` : ""}
+      </div>
+      ${fmAuswertungDaten.length === 0 ? `<div class="no-selection">Keine Bewertungen für ${fmAuswertungJahr}.</div>` : `
+      <div style="overflow-x:auto;">
+        <table class="fm-table">
+          <thead><tr>
+            <th>Lieferant</th><th>Warengruppe</th><th>Lief.</th><th>Ø Lief.</th><th>Jahr</th><th>Gesamt</th>
+            <th>Datenbasis</th><th>Klasse</th><th>Vorjahr</th>
+            ${kriterien.map(k => `<th>Ø ${k.bezeichnung}</th>`).join("")}
+          </tr></thead>
+          <tbody>
+            ${fmAuswertungDaten.map(z => `
+              <tr>
+                <td><button class="btn text small" data-open-firma="${z.firmaId}">${z.firmaName}</button></td>
+                <td>${z.warengruppe || '—'}</td>
+                <td>${z.anzahlLieferungen}</td>
+                <td>${z.avgLieferungen != null ? z.avgLieferungen + ' %' : '—'}</td>
+                <td>${z.jahresbewertung != null ? z.jahresbewertung + ' %' : '—'}</td>
+                <td><b>${z.gesamt != null ? z.gesamt + ' %' : '—'}</b></td>
+                <td>${z.datenbasis}</td>
+                <td><span class="fm-klasse ${z.klasse}">${z.klasse || '—'}</span></td>
+                <td>${z.vorjahrKlasse || '—'}</td>
+                ${kriterien.map(k => `<td>${z.avgJeKriterium[k.bezeichnung] != null ? z.avgJeKriterium[k.bezeichnung] : '—'}</td>`).join("")}
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+      `}
+    </div>
+  `;
+  document.getElementById("fmAwJahr").addEventListener("change", (ev) => {
+    fmAuswertungJahr = parseInt(ev.target.value, 10) || new Date().getFullYear();
+    renderFmAuswertungView();
+  });
+  content.querySelectorAll("[data-open-firma]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      selectedFirmaId = parseInt(btn.dataset.openFirma, 10);
+      switchFmView("firmen");
+    });
+  });
+}
+
 /* ===================== Toast ===================== */
 let toastTimer = null;
 function showToast(msg, isError){
@@ -5300,7 +6097,7 @@ function showToast(msg, isError){
 async function init(){
   document.getElementById("main").innerHTML = `<div class="no-selection">Lädt…</div>`;
   try{
-    await Promise.all([loadUsers(), loadItems("anfrage"), loadItems("auftrag"), loadItems("angebot")]);
+    await Promise.all([loadUsers(), loadFirmen(), loadItems("anfrage"), loadItems("auftrag"), loadItems("angebot")]);
   }catch(err){
     document.getElementById("main").innerHTML = `<div class="no-selection">Daten konnten nicht geladen werden. Läuft der Server?</div>`;
     return;

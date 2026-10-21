@@ -18,7 +18,7 @@ from datetime import date
 from flask import Blueprint, jsonify, request, send_file
 from docxtpl import DocxTemplate
 
-from models import Item
+from models import Item, FirmaAdresse
 from asme_api import fmt_datum, fmt_zahl, fmt_menge, sicherer_dateiname
 
 bp = Blueprint("ab", __name__, url_prefix="/api")
@@ -80,17 +80,35 @@ def baue_kontext(item):
     kundenreferenz_zeile = " / ".join(x for x in (
         item.kunden_zeichen, item.kunden_bestellnr, fmt_datum(item.bestelleingang)
     ) if x)
-    # Kunden-Adresse: die frei eingetragenen Zeilen (Firma gehört als erste
+    # Kunden-Adresse: wenn eine Firma aus der Firmenliste verknüpft ist (siehe
+    # docs/KONZEPT-FIRMEN-CRM.md), deren Adresse nehmen (adresse_id eine
+    # bestimmte, sonst die Standardadresse der Firma) — sonst wie bisher die
+    # frei eingetragenen Zeilen aus kunden_adresse (Firma gehört als erste
     # Zeile bereits in dieses Feld, nicht noch einmal aus "Kunde" vorangestellt
     # — sonst erscheint der interne Kurzname doppelt über der vollen Adresse).
-    # Nur falls das Feld komplett leer ist, "Kunde" als Notlösung verwenden.
-    adresse_zeilen = [x.strip() for x in (item.kunden_adresse or "").split("\n") if x.strip()]
+    # Nur falls gar nichts davon vorhanden ist, "Kunde" als Notlösung verwenden.
+    firma_adresse = FirmaAdresse.query.get(item.adresse_id) if item.adresse_id else None
+    if not firma_adresse and item.firma_id:
+        firma_adresse = (
+            FirmaAdresse.query.filter_by(firma_id=item.firma_id, standard=True).first()
+            or FirmaAdresse.query.filter_by(firma_id=item.firma_id).first()
+        )
+    if firma_adresse:
+        adresse_zeilen = [x.strip() for x in firma_adresse.zeilen.split("\n") if x.strip()]
+    else:
+        adresse_zeilen = [x.strip() for x in (item.kunden_adresse or "").split("\n") if x.strip()]
     if not adresse_zeilen and item.kunde:
         adresse_zeilen = [item.kunde]
-    # Versandanschrift: eigenes Feld, da sie von der Kundenadresse abweichen
-    # kann (andere Lieferadresse, Ansprechpartner vor Ort o.ä.) — ohne eigene
-    # Eintragung wird die Kundenadresse übernommen.
-    versand_zeilen = [x.strip() for x in (item.versand_adresse or "").split("\n") if x.strip()] or adresse_zeilen
+    # Versandanschrift: eigenes Feld (bzw. eigene verknüpfte Firmenadresse), da
+    # sie von der Kundenadresse abweichen kann (andere Lieferadresse,
+    # Ansprechpartner vor Ort o.ä.) — ohne eigene Eintragung wird die
+    # Kundenadresse übernommen.
+    versand_adresse = FirmaAdresse.query.get(item.versand_adresse_id) if item.versand_adresse_id else None
+    if versand_adresse:
+        versand_zeilen = [x.strip() for x in versand_adresse.zeilen.split("\n") if x.strip()]
+    else:
+        versand_zeilen = [x.strip() for x in (item.versand_adresse or "").split("\n") if x.strip()]
+    versand_zeilen = versand_zeilen or adresse_zeilen
 
     return {
         "ab_nummer": ab_nummer_suffix(item.kommission),
