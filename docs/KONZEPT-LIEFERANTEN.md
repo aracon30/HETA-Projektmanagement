@@ -1,6 +1,10 @@
-# Konzept: Reiter „Lieferanten“ – Lieferantenbewertung nach ISO 9001 Kap. 8.4
+# Konzept: Lieferantenbewertung nach ISO 9001 Kap. 8.4
 
-**Status:** Entwurf v0.1 zur Abstimmung (noch nicht umgesetzt)
+**Status:** Entwurf v0.2 zur Abstimmung (noch nicht umgesetzt)
+**Änderung zu v0.1:** Lieferanten werden nicht mehr in einer eigenen Tabelle
+geführt, sondern über die gemeinsame Firmenliste (Rolle „Lieferant“, siehe
+`docs/KONZEPT-FIRMEN-CRM.md`). Die Bewertung ist ein Bereich im Reiter
+„Firmen“, nicht mehr ein eigener Reiter.
 **Grundlage:** Excel-Datei `Lieferantenbewertung_HETA.xlsx` (Neuaufbau 10/2026,
 ersetzt die alte Makro-Datei `Lieferanten-_bewertung-Blanco.xls`). Das Tool
 übernimmt **dieselbe Bewertungslogik**, damit Excel und Tool während des
@@ -24,7 +28,7 @@ ersetzt die alte Makro-Datei `Lieferanten-_bewertung-Blanco.xls`). Das Tool
   verfolgen.
 
 **Abgrenzung:** Kernelement des Tools bleibt der Verlauf in den Aufträgen. Die
-Lieferantenbewertung ist ein **eigener Reiter**: Die Auftrags-Detailansicht
+Lieferantenbewertung ist ein **Bereich im Reiter „Firmen“**: Die Auftrags-Detailansicht
 ändert sich nicht. Die Verknüpfung zu Aufträgen ist optional (Kommission
 auswählbar). Es gibt kein Bestell- oder Einkaufsmodul, also kein ERP-Ersatz.
 
@@ -75,18 +79,19 @@ später geändert werden. Vorschlag:
 
 ---
 
-## 3. Oberfläche: Reiter „Lieferanten“
+## 3. Oberfläche: Bereich „Lieferantenbewertung“ im Reiter „Firmen“
 
-Neuer Tab-Button nach „Prozesse“. Innerhalb des Reiters gibt es Unteransichten
-als Umschalter, so wie die Prozesskette/der Baum im Reiter „Prozesse“.
+Die folgenden Ansichten sind Unteransichten im Reiter „Firmen“
+(`docs/KONZEPT-FIRMEN-CRM.md`, Abschnitt 4.4). Es gibt keinen eigenen Tab-Button.
 
-### 3.1 Lieferanten (Stammliste)
-Tabelle mit Suche/Filter: Name, Warengruppe, Ansprechpartner, Freigabestatus
+### 3.1 Lieferanten (Firmenliste, Filter Rolle „Lieferant“)
+Firmenliste mit Rolle „Lieferant“, zusätzliche Spalten: Warengruppe, Freigabestatus
 (freigegeben / bedingt freigegeben / gesperrt / neu – in Prüfung), aktuelle
 Klasse, Zertifikate mit Ablaufdatum und Ampel (gültig / läuft in 90 Tagen ab /
-abgelaufen). Klick öffnet den **Lieferanten-Steckbrief**: Stammdaten,
-Zertifikate, Verlauf aller Bewertungen (kleine Linie Ergebnis über Zeit),
-Maßnahmen, Notizen.
+abgelaufen). Klick öffnet den **Firmen-Steckbrief**. Dort ergänzt der Bereich
+„Bewertung“ die Zertifikate, den Verlauf aller Bewertungen (kleine Linie
+Ergebnis über Zeit) und die Maßnahmen. Ansprechpartner und Notizen kommen aus
+dem CRM-Teil (Kontakte, Aktivitäten).
 
 ### 3.2 Lieferung bewerten
 Schnellformular, optimiert für den Wareneingang:
@@ -138,14 +143,14 @@ beim Bewerten nichts verloren geht.
 
 | Tabelle | Wichtige Felder |
 |---|---|
-| `lieferanten` | id, name (unique), warengruppe, ansprechpartner, kontakt, freigabestatus, notiz, aktiv, created_at |
-| `lieferanten_zertifikate` | id, lieferant_id, art (ISO 9001, AD 2000 HP0, DGRL, ASME, ISO 14001 …), nummer, gueltig_bis, datei_pfad (K-Laufwerk-Link wie bei Aufträgen) |
+| `firmen` *(aus dem CRM-Konzept)* | Lieferant = Firma mit Rolle „Lieferant“. Zusätzliche Felder für diese Rolle: warengruppe, freigabestatus, bewertungspflichtig. Ansprechpartner über `kontakte` |
+| `lieferanten_zertifikate` | id, firma_id, art (ISO 9001, AD 2000 HP0, DGRL, ASME, ISO 14001 …), nummer, gueltig_bis, datei_pfad (K-Laufwerk-Link wie bei Aufträgen) |
 | `bewertung_kriterien` | id, ebene (`lieferung`/`jahr`), reihenfolge, bezeichnung, gewicht, note1..note4 (Definitionstexte), aktiv, katalog_version |
 | `bewertung_einstellungen` | key/value: notenwerte, klassengrenzen, konsequenzen, anteil_lieferung, anteil_jahr, warn_tage, aktuelle katalog_version |
-| `lieferungsbewertungen` | id, lieferant_id, datum, bestell_nr, item_id (optional → Kommission), bewerter (User), bemerkung, katalog_version, ergebnis_gespeichert, created_at |
-| `jahresbewertungen` | id, lieferant_id, jahr, datum, bewerter, bemerkung, katalog_version, ergebnis_gespeichert; unique (lieferant_id, jahr) |
+| `lieferungsbewertungen` | id, firma_id, datum, bestell_nr, item_id (optional → Kommission), bewerter (User), bemerkung, katalog_version, ergebnis_gespeichert, created_at |
+| `jahresbewertungen` | id, firma_id, jahr, datum, bewerter, bemerkung, katalog_version, ergebnis_gespeichert; unique (firma_id, jahr) |
 | `bewertung_noten` | id, bewertung_typ (`lieferung`/`jahr`), bewertung_id, kriterium_id, note (1–4) – nur bewertete Kriterien als Zeile |
-| `lieferanten_massnahmen` | id, lieferant_id, anlass, beschreibung, verantwortlich (User), termin, status, wirksam_geprueft_am, wirksam_ergebnis, ausloeser_bewertung_id (optional), mail_gesendet, created_at |
+| `lieferanten_massnahmen` | id, firma_id, anlass, beschreibung, verantwortlich (User), termin, status, wirksam_geprueft_am, wirksam_ergebnis, ausloeser_bewertung_id (optional), mail_gesendet, created_at |
 
 Alle Berechnungen (2.2) laufen in einer Funktion in `lieferanten_api.py`, die
 sowohl die API als auch der CSV-Export nutzen. So gibt es einen einzigen
@@ -161,8 +166,8 @@ Rechenweg, der mit Testfällen abgesichert ist.
   Render-Funktionen `renderLieferanten…`.
 
 ### 5.2 API (Auszug)
-`GET/POST /api/lieferanten`, `GET/PATCH /api/lieferanten/<id>` ·
-`POST /api/lieferanten/<id>/zertifikate` ·
+Lieferanten-Stammdaten über die Firmen-API (`/api/firmen?rolle=lieferant`,
+siehe CRM-Konzept) · `POST /api/firmen/<id>/zertifikate` ·
 `GET/POST /api/lieferungsbewertungen` · `GET/POST /api/jahresbewertungen` ·
 `GET/POST/PATCH /api/lieferanten-massnahmen` ·
 `GET /api/lieferanten/auswertung?jahr=2026` (+ `&format=csv`) ·
@@ -171,19 +176,22 @@ Rechenweg, der mit Testfällen abgesichert ist.
 ### 5.3 Migration & Startbestand
 - Neue Tabellen über `migrate.py` (additiv, keine bestehende Tabelle wird
   angefasst).
-- Startbestand (Kriterienkatalog v1, Einstellungen, Lieferantennamen aus der
-  alten Excel-Datei) in `lieferanten_daten.py`. Eingespielt wird er idempotent
+- Startbestand (Kriterienkatalog v1, Einstellungen) in `lieferanten_daten.py`.
+  Die Lieferantennamen kommen nicht in den Startbestand, sondern über den
+  Excel-Import in die Firmenliste. Eingespielt wird er idempotent
   über ein `seed_lieferanten.py`, das `update.sh` aufruft, nach demselben
   Prinzip wie `seed_prozesse.py`/`startbestand_stand`. Nutzeränderungen werden
   nie überschrieben.
 - **Excel-Übergang:** einmaliger Import der Blätter „Lieferanten“,
   „Lieferungsbewertung“, „Jahresbewertung“, „Maßnahmen“ aus
-  `Lieferantenbewertung_HETA.xlsx` (Vorschau + Bestätigen, Abgleich über
-  Lieferantenname, keine Duplikate, also dasselbe Muster wie beim ERP-Import
+  `Lieferantenbewertung_HETA.xlsx` (Vorschau + Bestätigen, Abgleich gegen
+  vorhandene Firmen wie beim Assistenten „Kunden zuordnen“, keine Duplikate, also dasselbe Muster wie beim ERP-Import
   der Aufträge).
 
 ### 5.4 Bekannte Grenze: kein Login
-Solange es keine Login-/Rechteverwaltung gibt (Ausbaustufe 1 laut
+Die Firmenliste mit Kontakten setzt laut CRM-Konzept den Login voraus. Die
+Lieferantenbewertung selbst enthält keine personenbezogenen Daten außer dem
+Bewerter und könnte notfalls auch vorher starten. Solange es keine Login-/Rechteverwaltung gibt (Ausbaustufe 1 laut
 CLAUDE.md), wird der Bewerter aus der Nutzerliste **ausgewählt**, nicht
 automatisch erkannt. Fürs Audit reicht das als Nachweis „wer hat bewertet“.
 Manipulationssicher ist es nicht. Sobald Login kommt, wird das Feld automatisch
@@ -193,18 +201,21 @@ befüllt.
 
 ## 6. Ausbaustufen
 
-1. **Stufe 1 – Grundfunktion:** Lieferantenliste, Lieferung bewerten,
+Reihenfolge im Gesamtplan: nach CRM-Stufe 1 (Firmenliste), siehe
+`docs/KONZEPT-FIRMEN-CRM.md` Abschnitt 7.
+
+1. **Stufe 1 – Grundfunktion:** Rolle „Lieferant“ in der Firmenliste, Lieferung bewerten,
    Jahresbewertung, Auswertung + CSV-Export, Katalog als Startbestand (noch
    ohne Einstellungs-Oberfläche).
 2. **Stufe 2 – Maßnahmen & Zertifikate:** Maßnahmenliste mit Mail und
    Einbindung in den Reiter „Aufgaben“, Zertifikate mit Ablaufwarnung,
-   Lieferanten-Steckbrief.
+   Bereich „Bewertung“ im Firmen-Steckbrief.
 3. **Stufe 3 – Pflege & Übergang:** Einstellungs-Oberfläche mit
    Katalogversionierung, Excel-Import.
 4. **Später/optional:**
    - Verknüpfung mit den ASME-Lieferantenbestellungen
      (`LieferantenBestellung.lieferant` ist heute Freitext → Auswahl aus
-     `lieferanten`). Beim Erzeugen des WE-Kontrollscheins könnte gleich die
+     `firmen`). Beim Erzeugen des WE-Kontrollscheins könnte gleich die
      Lieferungsbewertung angeboten werden.
    - Termintreue automatisch aus Lieferdatum (Bestellung) vs. Datum Wareneingang.
 
