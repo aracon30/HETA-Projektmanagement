@@ -57,6 +57,7 @@ class Item(db.Model):
     zahlungsbedingungen = db.Column(db.String(120), nullable=True)
     versand_adresse = db.Column(db.Text, nullable=True)  # nur falls abweichend von kunde/kunden_adresse, mehrzeilig (frei, inkl. Firma/Ansprechpartner)
     mwst_anwenden = db.Column(db.Boolean, default=True)  # 19% MwSt in der Auftragsbestätigung anzeigen (z.B. nein bei Export/steuerfrei)
+    ab_sprache = db.Column(db.String(10), default="de")  # "de" oder "en" — wählt die komplett deutsche oder komplett englische Vorlage, kein zweisprachiges Dokument
 
     # Angebot-spezifisch
     angebot_status = db.Column(db.String(20), nullable=True)  # in_bearbeitung | versendet | wiedervorlage | gewonnen | verloren
@@ -121,6 +122,7 @@ class Item(db.Model):
                 "versandAdresse": self.versand_adresse,
                 "mwstAnwenden": self.mwst_anwenden if self.mwst_anwenden is not None else True,
                 "zahlungsbedingungen": self.zahlungsbedingungen,
+                "abSprache": self.ab_sprache or "de",
             })
         elif self.type == "angebot":
             base.update({
