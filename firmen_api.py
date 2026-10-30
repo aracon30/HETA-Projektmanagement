@@ -1,19 +1,29 @@
 """
-Firmen-CRM (Stufe 1, siehe docs/KONZEPT-FIRMEN-CRM.md): eine gemeinsame
-Firmenliste statt Freitext an jeder Anfrage/jedem Angebot/Auftrag. Kontakte,
-Aktivitäten und Wiedervorlagen (Stufe 2) sind bewusst noch nicht Teil davon,
-siehe CLAUDE.md — die stehen auf Login/Rechteverwaltung, da sie
-personenbezogene Daten wären.
+Firmen-CRM: eine gemeinsame Firmenliste statt Freitext an jeder Anfrage/jedem
+Angebot/Auftrag (Stufe 1), dazu Kontakte und Aktivitäten/Zeitstrahl inkl.
+Wiedervorlage (Stufe 2, siehe docs/KONZEPT-FIRMEN-CRM.md). Stufe 2 speichert
+personenbezogene Daten, obwohl das Konzept dafür eigentlich erst
+Login/Rechteverwaltung vorsieht — bewusste Entscheidung von Philipp, siehe
+CLAUDE.md; Datenschutz-Abstimmung mit der PACO-Gruppe steht noch aus.
 """
 import difflib
 import re
-from datetime import datetime
+from datetime import date, datetime
 
 from flask import Blueprint, jsonify, request
 
-from models import db, Firma, FirmaAdresse, Item
+from models import db, Firma, FirmaAdresse, Kontakt, Aktivitaet, Item
 
 bp = Blueprint("firmen", __name__, url_prefix="/api")
+
+
+def parse_date(value):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
 
 RECHTSFORMEN = [
     "gmbh", "ag", "se", "kg", "ohg", "ug", "co kg", "inc", "ltd",
@@ -228,3 +238,121 @@ def zuordnen_bestaetigen():
         verknuepft += updated
     db.session.commit()
     return jsonify({"firmenNeu": firmen_neu, "auftraegeVerknuepft": verknuepft})
+
+
+# ---------- Kontakte (Firmen-CRM Stufe 2) ----------
+@bp.route("/firmen/<int:firma_id>/kontakte", methods=["GET"])
+def list_kontakte(firma_id):
+    Firma.query.get_or_404(firma_id)
+    kontakte = Kontakt.query.filter_by(firma_id=firma_id, aktiv=True).order_by(Kontakt.nachname).all()
+    return jsonify([k.to_dict() for k in kontakte])
+
+
+@bp.route("/firmen/<int:firma_id>/kontakte", methods=["POST"])
+def add_kontakt(firma_id):
+    Firma.query.get_or_404(firma_id)
+    data = request.get_json(force=True)
+    if not (data.get("nachname") or "").strip():
+        return jsonify({"error": "Nachname ist ein Pflichtfeld."}), 400
+    kontakt = Kontakt(
+        firma_id=firma_id,
+        anrede=data.get("anrede") or None,
+        vorname=(data.get("vorname") or "").strip() or None,
+        nachname=data.get("nachname").strip(),
+        funktion=data.get("funktion") or None,
+        abteilung=data.get("abteilung") or None,
+        telefon=data.get("telefon") or None,
+        mobil=data.get("mobil") or None,
+        email=data.get("email") or None,
+        kontaktweg_erlaubt=data.get("kontaktwegErlaubt") or "anfrage",
+        einwilligung_am=parse_date(data.get("einwilligungAm")),
+        notiz=data.get("notiz") or None,
+    )
+    db.session.add(kontakt)
+    db.session.commit()
+    return jsonify(kontakt.to_dict()), 201
+
+
+@bp.route("/kontakte/<int:kontakt_id>", methods=["PATCH"])
+def update_kontakt(kontakt_id):
+    kontakt = Kontakt.query.get_or_404(kontakt_id)
+    data = request.get_json(force=True)
+    for feld, spalte in [
+        ("anrede", "anrede"), ("vorname", "vorname"), ("nachname", "nachname"),
+        ("funktion", "funktion"), ("abteilung", "abteilung"), ("telefon", "telefon"),
+        ("mobil", "mobil"), ("email", "email"), ("notiz", "notiz"),
+    ]:
+        if feld in data:
+            setattr(kontakt, spalte, data.get(feld))
+    if "kontaktwegErlaubt" in data:
+        kontakt.kontaktweg_erlaubt = data.get("kontaktwegErlaubt") or "anfrage"
+    if "einwilligungAm" in data:
+        kontakt.einwilligung_am = parse_date(data.get("einwilligungAm"))
+    if "aktiv" in data:
+        kontakt.aktiv = bool(data.get("aktiv"))
+    db.session.commit()
+    return jsonify(kontakt.to_dict())
+
+
+@bp.route("/kontakte/<int:kontakt_id>", methods=["DELETE"])
+def delete_kontakt(kontakt_id):
+    kontakt = Kontakt.query.get_or_404(kontakt_id)
+    db.session.delete(kontakt)
+    db.session.commit()
+    return "", 204
+
+
+# ---------- Aktivitäten / Zeitstrahl (Firmen-CRM Stufe 2) ----------
+@bp.route("/firmen/<int:firma_id>/aktivitaeten", methods=["GET"])
+def list_aktivitaeten(firma_id):
+    Firma.query.get_or_404(firma_id)
+    aktivitaeten = Aktivitaet.query.filter_by(firma_id=firma_id).order_by(Aktivitaet.datum.desc(), Aktivitaet.id.desc()).all()
+    return jsonify([a.to_dict() for a in aktivitaeten])
+
+
+@bp.route("/firmen/<int:firma_id>/aktivitaeten", methods=["POST"])
+def add_aktivitaet(firma_id):
+    Firma.query.get_or_404(firma_id)
+    data = request.get_json(force=True)
+    datum = parse_date(data.get("datum")) or date.today()
+    aktivitaet = Aktivitaet(
+        firma_id=firma_id,
+        kontakt_id=data.get("kontaktId") or None,
+        item_id=data.get("itemId") or None,
+        art=data.get("art") or "sonstiges",
+        datum=datum,
+        nutzer=data.get("nutzer") or None,
+        inhalt=data.get("inhalt") or None,
+        wiedervorlage_am=parse_date(data.get("wiedervorlageAm")),
+        wiedervorlage_status="offen",
+    )
+    db.session.add(aktivitaet)
+    db.session.commit()
+    return jsonify(aktivitaet.to_dict()), 201
+
+
+@bp.route("/aktivitaeten/<int:aktivitaet_id>", methods=["PATCH"])
+def update_aktivitaet(aktivitaet_id):
+    aktivitaet = Aktivitaet.query.get_or_404(aktivitaet_id)
+    data = request.get_json(force=True)
+    for feld, spalte in [("art", "art"), ("nutzer", "nutzer"), ("inhalt", "inhalt")]:
+        if feld in data:
+            setattr(aktivitaet, spalte, data.get(feld))
+    if "kontaktId" in data:
+        aktivitaet.kontakt_id = data.get("kontaktId") or None
+    if "datum" in data:
+        aktivitaet.datum = parse_date(data.get("datum")) or aktivitaet.datum
+    if "wiedervorlageAm" in data:
+        aktivitaet.wiedervorlage_am = parse_date(data.get("wiedervorlageAm"))
+    if "wiedervorlageStatus" in data:
+        aktivitaet.wiedervorlage_status = data.get("wiedervorlageStatus") or "offen"
+    db.session.commit()
+    return jsonify(aktivitaet.to_dict())
+
+
+@bp.route("/aktivitaeten/<int:aktivitaet_id>", methods=["DELETE"])
+def delete_aktivitaet(aktivitaet_id):
+    aktivitaet = Aktivitaet.query.get_or_404(aktivitaet_id)
+    db.session.delete(aktivitaet)
+    db.session.commit()
+    return "", 204

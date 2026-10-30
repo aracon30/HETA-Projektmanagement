@@ -449,6 +449,51 @@ def main():
         else:
             print(f"Spalte items.{spalte} existiert bereits.")
 
+    # ---- Kontakte & Aktivitäten (Stufe 2, siehe docs/KONZEPT-FIRMEN-CRM.md) ----
+    if not table_exists(cur, "kontakte"):
+        cur.execute("""
+            CREATE TABLE kontakte (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                firma_id INTEGER NOT NULL REFERENCES firmen(id),
+                anrede VARCHAR(20),
+                vorname VARCHAR(100),
+                nachname VARCHAR(100) NOT NULL,
+                funktion VARCHAR(150),
+                abteilung VARCHAR(150),
+                telefon VARCHAR(50),
+                mobil VARCHAR(50),
+                email VARCHAR(150),
+                kontaktweg_erlaubt VARCHAR(20) DEFAULT 'anfrage',
+                einwilligung_am DATE,
+                notiz TEXT,
+                aktiv BOOLEAN DEFAULT 1,
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle kontakte angelegt (Firmen-CRM Stufe 2).")
+    else:
+        print("Tabelle kontakte existiert bereits.")
+
+    if not table_exists(cur, "aktivitaeten"):
+        cur.execute("""
+            CREATE TABLE aktivitaeten (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                firma_id INTEGER NOT NULL REFERENCES firmen(id),
+                kontakt_id INTEGER REFERENCES kontakte(id),
+                item_id INTEGER REFERENCES items(id),
+                art VARCHAR(20) DEFAULT 'sonstiges',
+                datum DATE NOT NULL,
+                nutzer VARCHAR(120),
+                inhalt TEXT,
+                wiedervorlage_am DATE,
+                wiedervorlage_status VARCHAR(20) DEFAULT 'offen',
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle aktivitaeten angelegt (Firmen-CRM Stufe 2).")
+    else:
+        print("Tabelle aktivitaeten existiert bereits.")
+
     # ---- Lieferantenbewertung (Stufe 1, siehe docs/KONZEPT-LIEFERANTEN.md) ----
     if not table_exists(cur, "bewertung_kriterien"):
         cur.execute("""
