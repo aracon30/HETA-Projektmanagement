@@ -356,32 +356,35 @@ beschriebenen übersehenen Kundenadresse geführt. Bei künftigen
 Vorlagen-Änderungen: immer als PDF rendern und mit einem echten Beispiel
 vergleichen, bevor man sich auf die reine XML-Analyse verlässt.
 
-## Firmen-CRM (Stufe 1 umgesetzt)
+## Firmen-CRM (Stufe 1 + Stufe 2 Kontakte/Aktivitäten umgesetzt)
 
 Konzept: `docs/KONZEPT-FIRMEN-CRM.md` (auf Branch `claude/konzept-lieferantenbewertung`
 entstanden, Entwurfsstatus). Ziel: eine gemeinsame Firmenliste statt Freitext
 an jeder Anfrage/jedem Angebot/Auftrag (`items.kunde`/`kunden_adresse`/
 `versand_adresse`), damit eine Firma ein Datensatz ist statt mehrerer
-Schreibvarianten. **Bewusst nur Stufe 1 umgesetzt** (21.10.2026): Firmenliste,
-Adressen, Verknüpfung mit Anfragen/Angeboten/Aufträgen, Assistent „Kunden
-zuordnen", Auftragsbestätigung nutzt die Firmenadresse. **Kontakte und
-Aktivitäten (Stufe 2) sind bewusst NICHT umgesetzt** — das Konzept selbst
-nennt Login/Rechteverwaltung (Ausbaustufe 1) als Voraussetzung dafür, weil ab
-dort personenbezogene Daten (Namen, Telefon, Mail, Gesprächsnotizen)
-gespeichert würden, und das Tool heute für jeden im Netz/per VPN offen ist.
-Stufe 1 führt bewusst keine neue Art von Daten gegenüber dem bisherigen
-Freitext-Kundenfeld ein (nur Firmen-/Adressdaten, kein Namens-/Kontaktbezug)
-und braucht deshalb kein Login, um loszulegen. **Vor einer Stufe 2
-(Kontakte/Aktivitäten/Wiedervorlagen) unbedingt zuerst Login/Rechteverwaltung
-umsetzen und mit dem Datenschutzbeauftragten der PACO-Gruppe abstimmen**
-(siehe Konzept Abschnitt 2) — nicht einfach nachträglich Kontaktfelder
-ergänzen.
+Schreibvarianten. **Stufe 1** (21.10.2026): Firmenliste, Adressen,
+Verknüpfung mit Anfragen/Angeboten/Aufträgen, Assistent „Kunden zuordnen",
+Auftragsbestätigung nutzt die Firmenadresse.
 
-Code: `firmen_api.py` (Blueprint), Modelle `Firma`/`FirmaAdresse` in
-`models.py`. Reiter „Firmen" in `static/index.html` (eigener Tab-Board wie
-„Prozesse", nicht Teil des Item-Listen-Musters/`KIND_CONFIG`): Firmenliste
-mit Suche/Rollen-Filter links, Steckbrief (Stammdaten, Adressen, bei Rolle
-Lieferant zusätzlich die Bewertungen) rechts. **Bewusst aus dem Live-Polling
+**Kontakte und Aktivitäten (Stufe 2) wurden am 30.10.2026 auf ausdrücklichen
+Wunsch von Philipp umgesetzt, OBWOHL das Konzept selbst (Abschnitt 2) dafür
+eigentlich zuerst Login/Rechteverwaltung (Ausbaustufe 1) als Voraussetzung
+nennt** — ab hier werden personenbezogene Daten (Namen, Telefon, Mail,
+Gesprächsnotizen) gespeichert, und das Tool ist heute für jeden im Netz/per
+VPN offen, ganz ohne Login. Das wurde Philipp vor der Umsetzung explizit so
+gespiegelt (inkl. Alternativen: erst Login, oder eine abgespeckte Variante
+ohne Gesprächsnotizen) — er hat sich bewusst für „jetzt trotzdem bauen"
+entschieden. **Datenschutz-Abstimmung mit dem Datenschutzbeauftragten der
+PACO-Gruppe (Konzept Abschnitt 2) steht deshalb weiterhin aus** und sollte
+nachgeholt werden, sobald sich die Gelegenheit ergibt — das Login-Thema
+bleibt davon unabhängig Ausbaustufe 1 in der Priorität oben.
+
+Code: `firmen_api.py` (Blueprint), Modelle `Firma`/`FirmaAdresse`/`Kontakt`/
+`Aktivitaet` in `models.py`. Reiter „Firmen" in `static/index.html` (eigener
+Tab-Board wie „Prozesse", nicht Teil des Item-Listen-Musters/`KIND_CONFIG`):
+Firmenliste mit Suche/Rollen-Filter links, Steckbrief (Stammdaten, Adressen,
+Anfragen/Angebote/Aufträge, Kontakte, Zeitstrahl, bei Rolle Lieferant
+zusätzlich die Bewertungen) rechts. **Bewusst aus dem Live-Polling
 ausgenommen** (wie der Prozesse-Reiter) — eigener, komplexerer Formular-State
 (Bewertungs-Noten-Buttons), Risiko für Seiteneffekte beim Blind-Neurendern.
 
@@ -396,6 +399,13 @@ später über den Assistenten nachträglich zuordnen. Ist eine Firma verknüpft,
 erscheint im Detailkopf neben dem Kundennamen ein Link „→ Firma" zum
 Steckbrief. **Nur im Detailkopf, nicht in den Listenkarten** — bewusst
 schlank gehalten, da die Kopf-Ansicht ohnehin der Haupteinstieg ist.
+
+**Firma-Steckbrief zeigt die verknüpften Anfragen/Angebote/Aufträge direkt**
+(nicht nur die Anzahl): Tabelle mit Typ/Kommission/Status/Liefertermin
+(`Firma.to_dict(detail=True)["items"]` in `models.py`), Klick auf die
+Kommission springt über `activateTab(type)` + `selectedId[type]` direkt zum
+jeweiligen Datensatz im bestehenden Reiter — derselbe Navigations-Mechanismus
+wie der „→ Firma"-Link, nur umgekehrt.
 
 **Assistent „Kunden zuordnen"** (`POST/GET /api/firmen/zuordnen/...`,
 Button im Firmen-Reiter): gruppiert alle noch nicht verknüpften
@@ -412,8 +422,34 @@ Freitext aus `kunden_adresse`/`versand_adresse`. Kein UI zum Auswählen
 zwischen mehreren Adressen einer Firma in Stufe 1 — wird automatisch die
 Standardadresse genommen, Freitext-Override bleibt weiterhin möglich.
 
-Noch offen (Stufe 2+, siehe Konzept Abschnitt 7): Kontakte, Zeitstrahl/
-Aktivitäten, Wiedervorlagen, Outlook-/Visitenkarten-Import, CSV-Export.
+**Kontakte** (`Kontakt`-Modell, Abschnitt „Kontakte" im Steckbrief): Anrede/
+Vorname/Nachname, Funktion/Abteilung, Telefon/Mobil/E-Mail, Notiz. Feld
+`kontaktweg_erlaubt` (`mail`/`telefon`/`anfrage`, Standard `anfrage` = am
+wenigsten) als farbige Ampel vor dem Namen (grün/gelb/grau) — hält laut
+Konzept fest, worüber ein Kontakt angesprochen werden darf, weil Werbe-Mails
+ohne Einwilligung auch im B2B nach § 7 UWG unzulässig sind. `einwilligung_am`
+ist in Modell/API vorbereitet, aber noch ohne eigenes UI-Feld im
+Kontakt-Formular (nur das Kontaktweg-Dropdown selbst) — bei Bedarf einfach im
+Formular ergänzen, Spalte existiert schon.
+
+**Aktivitäten / Zeitstrahl** (`Aktivitaet`-Modell, Abschnitt „Zeitstrahl"):
+freie Schnellerfassung über „+ Aktivität" (Art: Anruf/Mail/Besuch/Messe/
+Teams/Sonstiges, Datum, optional Kontakt, Notiz/Gesprächsinhalt, optional
+Wiedervorlage-Datum, „Erfasst von" aus der bestehenden Nutzerliste — es gibt
+kein Login, also kein automatischer „angemeldeter Nutzer", genau wie bei
+`erstelltVon` im Verlauf). Chronologisch absteigend, neueste zuerst. Offene
+Wiedervorlagen zeigen einen „erledigt"-Button direkt in der Zeile
+(`wiedervorlage_status`); **noch nicht umgesetzt** (siehe Konzept Abschnitt
+4.3): ein eigener Wiedervorlagen-Reiter/-Filter über alle Firmen hinweg, die
+Aufnahme offener Wiedervorlagen in den Reiter „Aufgaben", und eine
+Erinnerungs-Mail am Fälligkeitstag über `mail_client.py` — bei Bedarf separat
+ergänzen, Datenmodell (`wiedervorlage_am`/`wiedervorlage_status`) trägt das
+bereits.
+
+Noch offen (siehe Konzept Abschnitt 7): Wiedervorlagen-Reiter/Aufgaben-
+Integration/Erinnerungs-Mail (s.o.), Outlook-/Visitenkarten-Import,
+CSV-Export, Löschkonzept-Ansicht (Kontakte ohne Aktivität seit X Jahren zur
+Prüfung).
 
 ## Lieferantenbewertung (Stufe 1 umgesetzt)
 

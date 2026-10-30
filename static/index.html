@@ -601,6 +601,10 @@
   table.fm-table th, table.fm-table td{ padding:7px 10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
   table.fm-table th{ color:var(--slate); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.02em; }
   table.fm-table tbody tr:hover{ background:var(--paper); }
+  .fm-ampel{ display:inline-block; width:9px; height:9px; border-radius:50%; }
+  .fm-ampel-mail{ background:var(--green); }
+  .fm-ampel-telefon{ background:var(--amber); }
+  .fm-ampel-anfrage{ background:var(--slate-light); }
   .dot.pz-vorgeschlagen{background:var(--slate-light);} .dot.pz-laut_aa{background:var(--amber);}
   .dot.pz-aufgenommen{background:var(--steel);} .dot.pz-bestaetigt{background:var(--green);} .dot.pz-anforderungen{background:var(--copper);}
   .status-badge.pz-vorgeschlagen{background:#ECEEEB; color:var(--slate);}
@@ -5419,6 +5423,10 @@ function fmRolleLabel(r){
   return { kunde:"Kunde", interessent:"Interessent", lieferant:"Lieferant", partner:"Partner" }[r] || r;
 }
 
+function fmItemTypLabel(t){
+  return { anfrage:"Anfrage", angebot:"Angebot", auftrag:"Auftrag" }[t] || t;
+}
+
 function renderFmFirmenView(){
   const content = document.getElementById("fmContent");
   content.innerHTML = `
@@ -5484,9 +5492,13 @@ async function renderFmDetail(){
     el.innerHTML = `<div class="no-selection">Firma auswählen oder „+ Neue Firma" anlegen.</div>`;
     return;
   }
-  let firma;
+  let firma, kontakte, aktivitaeten;
   try{
-    firma = await apiGet(`/firmen/${selectedFirmaId}`);
+    [firma, kontakte, aktivitaeten] = await Promise.all([
+      apiGet(`/firmen/${selectedFirmaId}`),
+      apiGet(`/firmen/${selectedFirmaId}/kontakte`),
+      apiGet(`/firmen/${selectedFirmaId}/aktivitaeten`),
+    ]);
   }catch(err){
     el.innerHTML = `<div class="no-selection">Firma konnte nicht geladen werden.</div>`;
     return;
@@ -5530,7 +5542,67 @@ async function renderFmDetail(){
         </tbody>
       </table>
     ` : `<div class="sub" style="margin-bottom:24px;">Noch keine Adresse hinterlegt.</div>`}
-    <div class="sub">Verknüpft: ${firma.anzahlAnfragen} Anfrage(n), ${firma.anzahlAngebote} Angebot(e), ${firma.anzahlAuftraege} Auftrag/Aufträge.</div>
+    <div class="timeline-head">
+      <h3>Anfragen / Angebote / Aufträge (${firma.items.length})</h3>
+    </div>
+    ${firma.items.length ? `
+      <table class="fm-table" style="margin-bottom:24px;">
+        <thead><tr><th>Typ</th><th>Kommission</th><th>Status</th><th>Liefertermin</th></tr></thead>
+        <tbody>
+          ${firma.items.map(i => `
+            <tr>
+              <td>${fmItemTypLabel(i.type)}</td>
+              <td><button class="btn text small" data-open-item="${i.type}:${i.id}">${i.kommission || '—'}</button></td>
+              <td>${statusLabel(i.status) || '—'}</td>
+              <td>${i.liefertermin ? fmtDatumDE(i.liefertermin) : '—'}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    ` : `<div class="sub" style="margin-bottom:24px;">Noch keine Anfrage/kein Angebot/Auftrag verknüpft.</div>`}
+    <div class="timeline-head">
+      <h3>Kontakte</h3>
+      <button class="btn ghost small" id="fmAddKontaktBtn">+ Kontakt</button>
+    </div>
+    ${kontakte.length ? `
+      <table class="fm-table" style="margin-bottom:24px;">
+        <thead><tr><th></th><th>Name</th><th>Funktion</th><th>Telefon</th><th>Mobil</th><th>E-Mail</th><th></th></tr></thead>
+        <tbody>
+          ${kontakte.map(k => `
+            <tr>
+              <td><span class="fm-ampel fm-ampel-${k.kontaktwegErlaubt}" title="Kontaktweg erlaubt: ${fmKontaktwegLabel(k.kontaktwegErlaubt)}"></span></td>
+              <td>${[k.anrede, k.name].filter(Boolean).join(" ")}</td>
+              <td>${[k.funktion, k.abteilung].filter(Boolean).join(" · ") || '—'}</td>
+              <td>${k.telefon || '—'}</td>
+              <td>${k.mobil || '—'}</td>
+              <td>${k.email ? `<a href="mailto:${k.email}">${k.email}</a>` : '—'}</td>
+              <td><button class="btn text small" data-edit-kontakt="${k.id}">Bearbeiten</button></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    ` : `<div class="sub" style="margin-bottom:24px;">Noch kein Kontakt hinterlegt.</div>`}
+    <div class="timeline-head">
+      <h3>Zeitstrahl</h3>
+      <button class="btn ghost small" id="fmAddAktivitaetBtn">+ Aktivität</button>
+    </div>
+    ${aktivitaeten.length ? `
+      <table class="fm-table" style="margin-bottom:24px;">
+        <thead><tr><th>Datum</th><th>Art</th><th>Kontakt</th><th>Notiz</th><th>Wiedervorlage</th><th></th></tr></thead>
+        <tbody>
+          ${aktivitaeten.map(a => `
+            <tr>
+              <td>${fmtDatumDE(a.datum)}</td>
+              <td>${fmAktArtLabel(a.art)}</td>
+              <td>${a.kontaktName || '—'}${a.itemKommission ? ` <span class="sub">(${fmItemTypLabel(a.itemType)} ${a.itemKommission})</span>` : ''}</td>
+              <td style="white-space:pre-line;">${a.inhalt || '—'}${a.nutzer ? `<div class="sub">erfasst von ${a.nutzer}</div>` : ''}</td>
+              <td style="white-space:nowrap;">${a.wiedervorlageAm ? `${fmtDatumDE(a.wiedervorlageAm)} ${a.wiedervorlageStatus === 'erledigt' ? '✓' : `<button class="btn text small" data-erledigt-aktivitaet="${a.id}">erledigt</button>`}` : '—'}</td>
+              <td><button class="btn text small" data-delete-aktivitaet="${a.id}" style="color:var(--red);">Löschen</button></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    ` : `<div class="sub" style="margin-bottom:24px;">Noch keine Aktivität erfasst.</div>`}
     ${istLieferant ? `
       <div class="timeline-head" style="margin-top:28px;">
         <h3>Bewertungen</h3>
@@ -5540,6 +5612,13 @@ async function renderFmDetail(){
   `;
   document.getElementById("fmEditBtn").addEventListener("click", () => openFirmaModal(firma));
   document.getElementById("fmAddAdresseBtn").addEventListener("click", () => openAdresseModal(firma, null));
+  el.querySelectorAll("[data-open-item]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const [type, id] = btn.dataset.openItem.split(":");
+      selectedId[type] = parseInt(id, 10);
+      activateTab(type);
+    });
+  });
   el.querySelectorAll("[data-edit-adresse]").forEach(btn => {
     btn.addEventListener("click", () => openAdresseModal(firma, firma.adressen.find(a => a.id === parseInt(btn.dataset.editAdresse, 10))));
   });
@@ -5550,7 +5629,33 @@ async function renderFmDetail(){
       renderFmDetail();
     });
   });
+  document.getElementById("fmAddKontaktBtn").addEventListener("click", () => openKontaktModal(firma, null));
+  el.querySelectorAll("[data-edit-kontakt]").forEach(btn => {
+    btn.addEventListener("click", () => openKontaktModal(firma, kontakte.find(k => k.id === parseInt(btn.dataset.editKontakt, 10))));
+  });
+  document.getElementById("fmAddAktivitaetBtn").addEventListener("click", () => openAktivitaetModal(firma, kontakte));
+  el.querySelectorAll("[data-erledigt-aktivitaet]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      await apiPatch(`/aktivitaeten/${btn.dataset.erledigtAktivitaet}`, { wiedervorlageStatus: "erledigt" });
+      renderFmDetail();
+    });
+  });
+  el.querySelectorAll("[data-delete-aktivitaet]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if(!confirm("Diese Aktivität wirklich löschen?")) return;
+      await apiDelete(`/aktivitaeten/${btn.dataset.deleteAktivitaet}`);
+      renderFmDetail();
+    });
+  });
   if(istLieferant) renderFmFirmaBewertungen(firma.id);
+}
+
+function fmKontaktwegLabel(v){
+  return { mail: "Mail-Werbung erlaubt", telefon: "nur Telefon", anfrage: "nur auf Anfrage" }[v] || v;
+}
+
+function fmAktArtLabel(v){
+  return { anruf: "Anruf", mail: "Mail", besuch: "Besuch", messe: "Messe", teams: "Teams", sonstiges: "Sonstiges" }[v] || v;
 }
 
 async function renderFmFirmaBewertungen(firmaId){
@@ -5727,6 +5832,178 @@ function openAdresseModal(firma, adresse){
       showToast(isEdit ? "Adresse gespeichert." : "Adresse hinzugefügt.");
     }catch(err){
       showToast("Adresse konnte nicht gespeichert werden.", true);
+      btn.disabled = false;
+    }
+  });
+}
+
+/* ---------- Kontakte (Firmen-CRM Stufe 2) ---------- */
+function openKontaktModal(firma, kontakt){
+  const isEdit = !!kontakt;
+  const root = document.getElementById("modalRoot");
+  const esc = (v) => (v || "").replace(/"/g, "&quot;");
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="kontaktModalTitle">
+        <h3 id="kontaktModalTitle">${isEdit ? "Kontakt bearbeiten" : "Kontakt hinzufügen"}</h3>
+        <div class="sub">${firma.name}</div>
+        <div class="form-row" style="display:flex; gap:10px;">
+          <div style="flex:0 0 120px;">
+            <label for="fmKtAnrede">Anrede</label>
+            <select id="fmKtAnrede">
+              <option value="">—</option>
+              ${["Herr", "Frau"].map(a => `<option value="${a}" ${isEdit && kontakt.anrede === a ? "selected" : ""}>${a}</option>`).join("")}
+            </select>
+          </div>
+          <div style="flex:1;"><label for="fmKtVorname">Vorname</label><input type="text" id="fmKtVorname" value="${isEdit ? esc(kontakt.vorname) : ''}"></div>
+          <div style="flex:1;"><label for="fmKtNachname">Nachname</label><input type="text" id="fmKtNachname" value="${isEdit ? esc(kontakt.nachname) : ''}"></div>
+        </div>
+        <div class="form-row" style="display:flex; gap:10px;">
+          <div style="flex:1;"><label for="fmKtFunktion">Funktion</label><input type="text" id="fmKtFunktion" value="${isEdit ? esc(kontakt.funktion) : ''}"></div>
+          <div style="flex:1;"><label for="fmKtAbteilung">Abteilung</label><input type="text" id="fmKtAbteilung" value="${isEdit ? esc(kontakt.abteilung) : ''}"></div>
+        </div>
+        <div class="form-row" style="display:flex; gap:10px;">
+          <div style="flex:1;"><label for="fmKtTelefon">Telefon</label><input type="text" id="fmKtTelefon" value="${isEdit ? esc(kontakt.telefon) : ''}"></div>
+          <div style="flex:1;"><label for="fmKtMobil">Mobil</label><input type="text" id="fmKtMobil" value="${isEdit ? esc(kontakt.mobil) : ''}"></div>
+        </div>
+        <div class="form-row">
+          <label for="fmKtEmail">E-Mail</label>
+          <input type="email" id="fmKtEmail" value="${isEdit ? esc(kontakt.email) : ''}">
+        </div>
+        <div class="form-row">
+          <label for="fmKtKontaktweg">Kontaktweg erlaubt</label>
+          <select id="fmKtKontaktweg">
+            ${["anfrage", "telefon", "mail"].map(v => `<option value="${v}" ${isEdit && kontakt.kontaktwegErlaubt === v ? "selected" : (!isEdit && v === "anfrage") ? "selected" : ""}>${fmKontaktwegLabel(v)}</option>`).join("")}
+          </select>
+          <div class="sub" style="margin-top:4px;">Werbe-Mails ohne Einwilligung sind auch im B2B unzulässig (§ 7 UWG).</div>
+        </div>
+        <div class="form-row">
+          <label for="fmKtNotiz">Notiz</label>
+          <textarea id="fmKtNotiz" rows="3">${isEdit ? (kontakt.notiz || '') : ''}</textarea>
+        </div>
+        <div class="modal-actions" style="justify-content:${isEdit ? 'space-between' : 'flex-end'};">
+          ${isEdit ? `<button class="btn text" id="fmKtDelete" style="color:var(--red);">Löschen</button>` : ""}
+          <div style="display:flex; gap:10px;">
+            <button class="btn text" id="fmKtCancel">Abbrechen</button>
+            <button class="btn" id="fmKtSave">${isEdit ? "Speichern" : "Hinzufügen"}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("fmKtCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.addEventListener("keydown", escCloseOnce);
+  if(isEdit){
+    document.getElementById("fmKtDelete").addEventListener("click", async () => {
+      if(!confirm("Diesen Kontakt wirklich löschen?")) return;
+      await apiDelete(`/kontakte/${kontakt.id}`);
+      closeModal();
+      renderFmDetail();
+    });
+  }
+  document.getElementById("fmKtSave").addEventListener("click", async () => {
+    const nachname = document.getElementById("fmKtNachname").value.trim();
+    if(!nachname){ showToast("Nachname ist ein Pflichtfeld.", true); return; }
+    const btn = document.getElementById("fmKtSave");
+    btn.disabled = true;
+    const body = {
+      anrede: document.getElementById("fmKtAnrede").value || null,
+      vorname: document.getElementById("fmKtVorname").value.trim() || null,
+      nachname,
+      funktion: document.getElementById("fmKtFunktion").value.trim() || null,
+      abteilung: document.getElementById("fmKtAbteilung").value.trim() || null,
+      telefon: document.getElementById("fmKtTelefon").value.trim() || null,
+      mobil: document.getElementById("fmKtMobil").value.trim() || null,
+      email: document.getElementById("fmKtEmail").value.trim() || null,
+      kontaktwegErlaubt: document.getElementById("fmKtKontaktweg").value,
+      notiz: document.getElementById("fmKtNotiz").value.trim() || null,
+    };
+    try{
+      if(isEdit) await apiPatch(`/kontakte/${kontakt.id}`, body);
+      else await apiPost(`/firmen/${firma.id}/kontakte`, body);
+      closeModal();
+      renderFmDetail();
+      showToast(isEdit ? "Kontakt gespeichert." : "Kontakt hinzugefügt.");
+    }catch(err){
+      showToast("Kontakt konnte nicht gespeichert werden.", true);
+      btn.disabled = false;
+    }
+  });
+}
+
+/* ---------- Aktivitäten / Zeitstrahl (Firmen-CRM Stufe 2) ---------- */
+function openAktivitaetModal(firma, kontakte){
+  const root = document.getElementById("modalRoot");
+  const heute = new Date().toISOString().slice(0, 10);
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="aktModalTitle">
+        <h3 id="aktModalTitle">Aktivität erfassen</h3>
+        <div class="sub">${firma.name}</div>
+        <div class="form-row" style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label for="fmAktArt">Art</label>
+            <select id="fmAktArt">
+              ${["anruf", "mail", "besuch", "messe", "teams", "sonstiges"].map(a => `<option value="${a}">${fmAktArtLabel(a)}</option>`).join("")}
+            </select>
+          </div>
+          <div style="flex:1;"><label for="fmAktDatum">Datum</label><input type="date" id="fmAktDatum" value="${heute}"></div>
+        </div>
+        <div class="form-row" style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label for="fmAktKontakt">Kontakt</label>
+            <select id="fmAktKontakt">
+              <option value="">— kein Kontakt —</option>
+              ${kontakte.map(k => `<option value="${k.id}">${k.name}${k.funktion ? ' (' + k.funktion + ')' : ''}</option>`).join("")}
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label for="fmAktNutzer">Erfasst von</label>
+            <select id="fmAktNutzer">
+              <option value="">—</option>
+              ${nutzer.map(n => `<option value="${n.name}">${n.name}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="fmAktInhalt">Notiz / Inhalt</label>
+          <textarea id="fmAktInhalt" rows="4" placeholder="Worum ging es, was wurde besprochen/vereinbart?"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="fmAktWiedervorlage">Wiedervorlage am (optional)</label>
+          <input type="date" id="fmAktWiedervorlage">
+        </div>
+        <div class="modal-actions">
+          <button class="btn text" id="fmAktCancel">Abbrechen</button>
+          <button class="btn" id="fmAktSave">Erfassen</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("fmAktCancel").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  document.addEventListener("keydown", escCloseOnce);
+  document.getElementById("fmAktSave").addEventListener("click", async () => {
+    const datum = document.getElementById("fmAktDatum").value;
+    if(!datum){ showToast("Datum ist ein Pflichtfeld.", true); return; }
+    const btn = document.getElementById("fmAktSave");
+    btn.disabled = true;
+    const body = {
+      art: document.getElementById("fmAktArt").value,
+      datum,
+      kontaktId: document.getElementById("fmAktKontakt").value ? parseInt(document.getElementById("fmAktKontakt").value, 10) : null,
+      inhalt: document.getElementById("fmAktInhalt").value.trim() || null,
+      wiedervorlageAm: document.getElementById("fmAktWiedervorlage").value || null,
+      nutzer: document.getElementById("fmAktNutzer").value || null,
+    };
+    try{
+      await apiPost(`/firmen/${firma.id}/aktivitaeten`, body);
+      closeModal();
+      renderFmDetail();
+      showToast("Aktivität erfasst.");
+    }catch(err){
+      showToast("Aktivität konnte nicht gespeichert werden.", true);
       btn.disabled = false;
     }
   });

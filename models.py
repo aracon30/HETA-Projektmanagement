@@ -610,8 +610,10 @@ class Firma(db.Model):
     """Eine Firma (Kunde/Interessent/Lieferant/Partner, mehrere Rollen
     möglich). Ersetzt schrittweise den Freitext an items.kunde — bestehende
     Anfragen/Angebote/Aufträge bleiben ohne Zuordnung weiter funktionsfähig
-    (siehe Item.firma_id). Kontakte/Aktivitäten (personenbezogene Daten)
-    sind bewusst nicht Teil von Stufe 1, siehe CLAUDE.md."""
+    (siehe Item.firma_id). Kontakte/Aktivitäten (Stufe 2, personenbezogene
+    Daten) sind bewusst auf Philipps Wunsch schon vor Login/Rechteverwaltung
+    umgesetzt worden, siehe CLAUDE.md — Datenschutz-Abstimmung mit der
+    PACO-Gruppe steht noch aus."""
     __tablename__ = "firmen"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -667,6 +669,13 @@ class Firma(db.Model):
         }
         if detail:
             data["adressen"] = [a.to_dict() for a in self.adressen]
+            items_sortiert = sorted(self.items, key=lambda i: i.created_at or datetime.min, reverse=True)
+            data["items"] = [{
+                "id": i.id, "type": i.type, "kommission": i.kommission,
+                "status": {"auftrag": i.auftrag_status, "angebot": i.angebot_status,
+                           "anfrage": i.anfrage_status}[i.type],
+                "liefertermin": i.liefertermin.isoformat() if i.type == "auftrag" and i.liefertermin else None,
+            } for i in items_sortiert]
             data["anzahlAuftraege"] = sum(1 for i in self.items if i.type == "auftrag")
             data["anzahlAngebote"] = sum(1 for i in self.items if i.type == "angebot")
             data["anzahlAnfragen"] = sum(1 for i in self.items if i.type == "anfrage")
@@ -692,6 +701,103 @@ class FirmaAdresse(db.Model):
             "art": self.art,
             "zeilen": self.zeilen,
             "standard": bool(self.standard),
+        }
+
+
+class Kontakt(db.Model):
+    """Ansprechpartner einer Firma (Firmen-CRM Stufe 2, siehe
+    docs/KONZEPT-FIRMEN-CRM.md Abschnitt 3/7). Personenbezogene Daten — das
+    Tool hat aktuell kein Login/Rechteverwaltung, das Konzept nennt das
+    eigentlich als Voraussetzung. Bewusste Entscheidung, trotzdem schon
+    umzusetzen (siehe CLAUDE.md); Datenschutz-Abstimmung mit der
+    PACO-Gruppe steht noch aus. kontaktweg_erlaubt hält fest, worüber der
+    Kontakt angesprochen werden darf (Werbe-Mails ohne Einwilligung sind
+    laut Konzept auch im B2B nach § 7 UWG unzulässig)."""
+    __tablename__ = "kontakte"
+    id = db.Column(db.Integer, primary_key=True)
+    firma_id = db.Column(db.Integer, db.ForeignKey("firmen.id"), nullable=False)
+    anrede = db.Column(db.String(20), nullable=True)
+    vorname = db.Column(db.String(100), nullable=True)
+    nachname = db.Column(db.String(100), nullable=False)
+    funktion = db.Column(db.String(150), nullable=True)
+    abteilung = db.Column(db.String(150), nullable=True)
+    telefon = db.Column(db.String(50), nullable=True)
+    mobil = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(150), nullable=True)
+    kontaktweg_erlaubt = db.Column(db.String(20), default="anfrage")  # mail | telefon | anfrage
+    einwilligung_am = db.Column(db.Date, nullable=True)
+    notiz = db.Column(db.Text, nullable=True)
+    aktiv = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    firma = db.relationship(
+        "Firma",
+        backref=db.backref("kontakte", order_by="Kontakt.nachname", cascade="all, delete-orphan"),
+    )
+
+    def name(self):
+        return " ".join(x for x in [self.vorname, self.nachname] if x)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "firmaId": self.firma_id,
+            "anrede": self.anrede,
+            "vorname": self.vorname,
+            "nachname": self.nachname,
+            "name": self.name(),
+            "funktion": self.funktion,
+            "abteilung": self.abteilung,
+            "telefon": self.telefon,
+            "mobil": self.mobil,
+            "email": self.email,
+            "kontaktwegErlaubt": self.kontaktweg_erlaubt,
+            "einwilligungAm": self.einwilligung_am.isoformat() if self.einwilligung_am else None,
+            "notiz": self.notiz,
+            "aktiv": bool(self.aktiv),
+        }
+
+
+class Aktivitaet(db.Model):
+    """Kontakthistorie einer Firma (Anruf/Mail/Besuch/Messe/...), Teil des
+    Zeitstrahls im Firmen-Steckbrief (Firmen-CRM Stufe 2). Optional an einen
+    Kontakt und/oder eine Anfrage/ein Angebot/einen Auftrag geknüpft, trägt
+    auch die Wiedervorlage."""
+    __tablename__ = "aktivitaeten"
+    id = db.Column(db.Integer, primary_key=True)
+    firma_id = db.Column(db.Integer, db.ForeignKey("firmen.id"), nullable=False)
+    kontakt_id = db.Column(db.Integer, db.ForeignKey("kontakte.id"), nullable=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=True)
+    art = db.Column(db.String(20), default="sonstiges")  # anruf | mail | besuch | messe | teams | sonstiges
+    datum = db.Column(db.Date, nullable=False)
+    nutzer = db.Column(db.String(120), nullable=True)
+    inhalt = db.Column(db.Text, nullable=True)
+    wiedervorlage_am = db.Column(db.Date, nullable=True)
+    wiedervorlage_status = db.Column(db.String(20), default="offen")  # offen | erledigt
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    firma = db.relationship(
+        "Firma",
+        backref=db.backref("aktivitaeten", order_by="Aktivitaet.datum.desc()", cascade="all, delete-orphan"),
+    )
+    kontakt = db.relationship("Kontakt")
+    item = db.relationship("Item")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "firmaId": self.firma_id,
+            "kontaktId": self.kontakt_id,
+            "kontaktName": self.kontakt.name() if self.kontakt else None,
+            "itemId": self.item_id,
+            "itemType": self.item.type if self.item else None,
+            "itemKommission": self.item.kommission if self.item else None,
+            "art": self.art,
+            "datum": self.datum.isoformat() if self.datum else None,
+            "nutzer": self.nutzer,
+            "inhalt": self.inhalt,
+            "wiedervorlageAm": self.wiedervorlage_am.isoformat() if self.wiedervorlage_am else None,
+            "wiedervorlageStatus": self.wiedervorlage_status,
         }
 
 
