@@ -16,15 +16,18 @@ from models import db, Firma, FirmaAdresse, Item
 bp = Blueprint("firmen", __name__, url_prefix="/api")
 
 RECHTSFORMEN = [
-    "gmbh & co kg", "gmbh", "ag", "se", "kg", "ohg", "ug", "co kg", "inc", "ltd",
+    "gmbh", "ag", "se", "kg", "ohg", "ug", "co kg", "inc", "ltd",
     "llc", "sa", "sarl", "bv", "nv", "spa", "srl", "oy", "ab", "plc",
 ]
 
 
 def normalisiere(name):
     """Für den Ähnlichkeitsvergleich beim Zuordnen: klein, Rechtsform/Satzzeichen
-    weg, Mehrfach-Leerzeichen zusammengefasst."""
+    weg, Mehrfach-Leerzeichen zusammengefasst. "GmbH & Co KG" muss vor dem
+    Entfernen der Satzzeichen behandelt werden, sonst ist das "&" schon weg
+    und der Ausdruck matcht nie."""
     s = (name or "").lower()
+    s = re.sub(r"\bgmbh\s*&\s*co\.?\s*kg\b", " ", s)
     s = re.sub(r"[.,&/]", " ", s)
     for form in RECHTSFORMEN:
         s = re.sub(rf"\b{re.escape(form)}\b", " ", s)
@@ -106,9 +109,12 @@ def add_adresse(firma_id):
     data = request.get_json(force=True)
     if not data.get("zeilen"):
         return jsonify({"error": "Adresse darf nicht leer sein."}), 400
+    standard = bool(data.get("standard"))
+    if standard:
+        FirmaAdresse.query.filter_by(firma_id=firma.id, standard=True).update({"standard": False})
     adresse = FirmaAdresse(
         firma_id=firma.id, art=data.get("art") or "haupt", zeilen=data.get("zeilen"),
-        standard=bool(data.get("standard")),
+        standard=standard,
     )
     db.session.add(adresse)
     db.session.commit()
@@ -124,7 +130,12 @@ def update_adresse(adresse_id):
     if "zeilen" in data:
         adresse.zeilen = data.get("zeilen")
     if "standard" in data:
-        adresse.standard = bool(data.get("standard"))
+        standard = bool(data.get("standard"))
+        if standard:
+            FirmaAdresse.query.filter(
+                FirmaAdresse.firma_id == adresse.firma_id, FirmaAdresse.id != adresse.id, FirmaAdresse.standard.is_(True)
+            ).update({"standard": False})
+        adresse.standard = standard
     db.session.commit()
     return jsonify(adresse.to_dict())
 
