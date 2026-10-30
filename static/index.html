@@ -476,7 +476,8 @@
   .order-timeline-label-spacer{ flex-shrink:0; position:sticky; left:0; z-index:1; background:var(--panel); }
   .order-timeline-week{
     flex-shrink:0;
-    font-size:0.68rem;
+    font-size:0.74rem;
+    font-weight:600;
     color:var(--slate);
     text-align:center;
     border-left:1px solid var(--line);
@@ -485,15 +486,15 @@
   .order-timeline-day-header{ display:flex; margin-bottom:8px; }
   .order-timeline-day{
     flex-shrink:0;
-    font-size:0.62rem;
+    font-size:0.68rem;
     color:var(--slate-light);
     text-align:center;
     border-left:1px solid #EDEEEA;
   }
-  .order-timeline-row{ display:flex; align-items:center; height:34px; position:relative; }
+  .order-timeline-row{ display:flex; align-items:center; height:40px; position:relative; }
   .order-timeline-label{
     flex-shrink:0;
-    font-size:0.76rem;
+    font-size:0.82rem;
     padding-right:10px;
     white-space:nowrap;
     overflow:hidden;
@@ -509,8 +510,8 @@
   .order-timeline-track{ position:relative; flex:1; height:100%; }
   .order-timeline-bar{
     position:absolute;
-    top:6px;
-    height:20px;
+    top:8px;
+    height:24px;
     border-radius:4px;
     background:var(--steel);
     cursor:pointer;
@@ -523,11 +524,11 @@
   .order-timeline-bar.verlauf:hover{ filter:none; }
   .order-timeline-bar-label{
     position:absolute;
-    top:6px;
-    height:20px;
+    top:8px;
+    height:24px;
     display:flex;
     align-items:center;
-    font-size:0.68rem;
+    font-size:0.76rem;
     color:var(--slate);
     white-space:nowrap;
     pointer-events:none;
@@ -3053,7 +3054,7 @@ function renderOrderTimeline(item){
   }
 
   const DAY_W = 24;
-  const LABEL_W = 170;
+  const LABEL_W = 190;
 
   const dates = [];
   if(item.erstelltAm) dates.push(toUTCDateOnly(item.erstelltAm.slice(0, 10)));
