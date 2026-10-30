@@ -264,7 +264,6 @@ def _auswertung_zeilen(jahr):
             db.extract("year", Lieferungsbewertung.datum) == jahr,
         ).all()
         jahresbewertung = Jahresbewertung.query.filter_by(firma_id=firma.id, jahr=jahr).first()
-        jahr_vorher = Jahresbewertung.query.filter_by(firma_id=firma.id, jahr=jahr - 1).first()
 
         if not lieferungen and not jahresbewertung:
             continue  # nichts zu diesem Lieferanten in diesem Jahr
@@ -274,7 +273,21 @@ def _auswertung_zeilen(jahr):
             ergebnisse_lieferung, jahresbewertung.ergebnis_gespeichert if jahresbewertung else None, e
         )
         klasse = klasse_fuer(gesamt, e)
-        klasse_vorjahr = klasse_fuer(jahr_vorher.ergebnis_gespeichert, e) if jahr_vorher else None
+
+        # Vorjahres-Klasse: dasselbe gewichtete Gesamtergebnis wie oben, nicht
+        # nur die rohe Jahresbewertung — sonst vergleicht man zwei
+        # unterschiedliche Kennzahlen miteinander.
+        lieferungen_vorjahr = Lieferungsbewertung.query.filter(
+            Lieferungsbewertung.firma_id == firma.id,
+            db.extract("year", Lieferungsbewertung.datum) == jahr - 1,
+        ).all()
+        jahresbewertung_vorjahr = Jahresbewertung.query.filter_by(firma_id=firma.id, jahr=jahr - 1).first()
+        gesamt_vorjahr, _ = berechne_jahresergebnis(
+            [l.ergebnis_gespeichert for l in lieferungen_vorjahr],
+            jahresbewertung_vorjahr.ergebnis_gespeichert if jahresbewertung_vorjahr else None,
+            e,
+        )
+        klasse_vorjahr = klasse_fuer(gesamt_vorjahr, e)
 
         avg_je_kriterium = {}
         for k in kriterien_lieferung:
