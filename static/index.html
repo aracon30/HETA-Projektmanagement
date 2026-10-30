@@ -5419,6 +5419,10 @@ function fmRolleLabel(r){
   return { kunde:"Kunde", interessent:"Interessent", lieferant:"Lieferant", partner:"Partner" }[r] || r;
 }
 
+function fmItemTypLabel(t){
+  return { anfrage:"Anfrage", angebot:"Angebot", auftrag:"Auftrag" }[t] || t;
+}
+
 function renderFmFirmenView(){
   const content = document.getElementById("fmContent");
   content.innerHTML = `
@@ -5530,7 +5534,24 @@ async function renderFmDetail(){
         </tbody>
       </table>
     ` : `<div class="sub" style="margin-bottom:24px;">Noch keine Adresse hinterlegt.</div>`}
-    <div class="sub">Verknüpft: ${firma.anzahlAnfragen} Anfrage(n), ${firma.anzahlAngebote} Angebot(e), ${firma.anzahlAuftraege} Auftrag/Aufträge.</div>
+    <div class="timeline-head">
+      <h3>Anfragen / Angebote / Aufträge (${firma.items.length})</h3>
+    </div>
+    ${firma.items.length ? `
+      <table class="fm-table" style="margin-bottom:24px;">
+        <thead><tr><th>Typ</th><th>Kommission</th><th>Status</th><th>Liefertermin</th></tr></thead>
+        <tbody>
+          ${firma.items.map(i => `
+            <tr>
+              <td>${fmItemTypLabel(i.type)}</td>
+              <td><button class="btn text small" data-open-item="${i.type}:${i.id}">${i.kommission || '—'}</button></td>
+              <td>${statusLabel(i.status) || '—'}</td>
+              <td>${i.liefertermin ? fmtDatumDE(i.liefertermin) : '—'}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    ` : `<div class="sub" style="margin-bottom:24px;">Noch keine Anfrage/kein Angebot/Auftrag verknüpft.</div>`}
     ${istLieferant ? `
       <div class="timeline-head" style="margin-top:28px;">
         <h3>Bewertungen</h3>
@@ -5540,6 +5561,13 @@ async function renderFmDetail(){
   `;
   document.getElementById("fmEditBtn").addEventListener("click", () => openFirmaModal(firma));
   document.getElementById("fmAddAdresseBtn").addEventListener("click", () => openAdresseModal(firma, null));
+  el.querySelectorAll("[data-open-item]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const [type, id] = btn.dataset.openItem.split(":");
+      selectedId[type] = parseInt(id, 10);
+      activateTab(type);
+    });
+  });
   el.querySelectorAll("[data-edit-adresse]").forEach(btn => {
     btn.addEventListener("click", () => openAdresseModal(firma, firma.adressen.find(a => a.id === parseInt(btn.dataset.editAdresse, 10))));
   });

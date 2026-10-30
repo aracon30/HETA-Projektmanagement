@@ -667,6 +667,13 @@ class Firma(db.Model):
         }
         if detail:
             data["adressen"] = [a.to_dict() for a in self.adressen]
+            items_sortiert = sorted(self.items, key=lambda i: i.created_at or datetime.min, reverse=True)
+            data["items"] = [{
+                "id": i.id, "type": i.type, "kommission": i.kommission,
+                "status": {"auftrag": i.auftrag_status, "angebot": i.angebot_status,
+                           "anfrage": i.anfrage_status}[i.type],
+                "liefertermin": i.liefertermin.isoformat() if i.type == "auftrag" and i.liefertermin else None,
+            } for i in items_sortiert]
             data["anzahlAuftraege"] = sum(1 for i in self.items if i.type == "auftrag")
             data["anzahlAngebote"] = sum(1 for i in self.items if i.type == "angebot")
             data["anzahlAnfragen"] = sum(1 for i in self.items if i.type == "anfrage")
