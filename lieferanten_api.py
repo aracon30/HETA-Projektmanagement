@@ -274,9 +274,10 @@ def _auswertung_zeilen(jahr):
         )
         klasse = klasse_fuer(gesamt, e)
 
-        # Vorjahres-Klasse: dasselbe gewichtete Gesamtergebnis wie oben, nicht
-        # nur die rohe Jahresbewertung — sonst vergleicht man zwei
-        # unterschiedliche Kennzahlen miteinander.
+        # Vorjahresvergleich wie im Blatt "Auswertung" der Excel-Datei:
+        # "Gesamt <Vorjahr>" aus denselben zwei Teilen wie oben (nicht nur
+        # die rohe Jahresbewertung — sonst vergleicht man zwei
+        # unterschiedliche Kennzahlen), plus "Trend (%-Pkt.)" = Gesamt - Gesamt Vorjahr.
         lieferungen_vorjahr = Lieferungsbewertung.query.filter(
             Lieferungsbewertung.firma_id == firma.id,
             db.extract("year", Lieferungsbewertung.datum) == jahr - 1,
@@ -287,7 +288,7 @@ def _auswertung_zeilen(jahr):
             jahresbewertung_vorjahr.ergebnis_gespeichert if jahresbewertung_vorjahr else None,
             e,
         )
-        klasse_vorjahr = klasse_fuer(gesamt_vorjahr, e)
+        trend = round(gesamt - gesamt_vorjahr, 2) if gesamt is not None and gesamt_vorjahr is not None else None
 
         avg_je_kriterium = {}
         for k in kriterien_lieferung:
@@ -302,7 +303,8 @@ def _auswertung_zeilen(jahr):
             "gesamt": gesamt,
             "datenbasis": datenbasis,
             "klasse": klasse,
-            "vorjahrKlasse": klasse_vorjahr,
+            "gesamtVorjahr": gesamt_vorjahr,
+            "trend": trend,
             "konsequenz": e.get(f"konsequenz_{klasse.lower()}") if klasse else None,
             "avgJeKriterium": avg_je_kriterium,
         })
@@ -321,15 +323,16 @@ def auswertung():
         buf = io.StringIO()
         writer = csv.writer(buf, delimiter=";")
         writer.writerow(
-            ["Lieferant", "Warengruppe", "Freigabestatus", "Lieferungen", "Ø Lieferungen", "Jahresbewertung",
-             "Gesamt", "Datenbasis", "Klasse", "Vorjahr", "Konsequenz"] +
-            [f"Ø {k.bezeichnung}" for k in kriterien_lieferung]
+            ["Lieferant", "Warengruppe", "Freigabestatus", f"Lieferungen {jahr}", f"Ø Lieferungen {jahr}",
+             f"Jahresbewertung {jahr}", f"Gesamt {jahr}", "Datenbasis", f"Klasse {jahr}", f"Gesamt {jahr - 1}",
+             "Trend (%-Pkt.)", "Konsequenz"] +
+            [f"Ø Note: {k.bezeichnung}" for k in kriterien_lieferung]
         )
         for z in zeilen:
             writer.writerow([
                 z["firma"].name, z["firma"].warengruppe or "", z["firma"].freigabestatus or "",
                 z["anzahlLieferungen"], z["avgLieferungen"], z["jahresbewertung"], z["gesamt"],
-                z["datenbasis"], z["klasse"], z["vorjahrKlasse"], z["konsequenz"],
+                z["datenbasis"], z["klasse"], z["gesamtVorjahr"], z["trend"], z["konsequenz"],
             ] + [z["avgJeKriterium"].get(k.bezeichnung) for k in kriterien_lieferung])
         return Response(
             buf.getvalue(), mimetype="text/csv",
@@ -347,7 +350,8 @@ def auswertung():
         "gesamt": z["gesamt"],
         "datenbasis": z["datenbasis"],
         "klasse": z["klasse"],
-        "vorjahrKlasse": z["vorjahrKlasse"],
+        "gesamtVorjahr": z["gesamtVorjahr"],
+        "trend": z["trend"],
         "konsequenz": z["konsequenz"],
         "avgJeKriterium": z["avgJeKriterium"],
     } for z in zeilen])

@@ -5572,8 +5572,8 @@ async function renderFmFirmaBewertungen(firmaId){
       </table>
     ` : ""}
     <table class="fm-table">
-      <thead><tr><th>Datum</th><th>Bestell-Nr.</th><th>Ergebnis</th><th>Bewerter</th></tr></thead>
-      <tbody>${lieferungen.map(l => `<tr><td>${fmtDatumDE(l.datum)}</td><td>${l.bestellNr || '—'}</td><td>${l.ergebnis != null ? l.ergebnis + ' %' : '—'}</td><td>${l.bewerter || '—'}</td></tr>`).join("")}</tbody>
+      <thead><tr><th>Datum</th><th>Bestell-Nr.</th><th>Ergebnis</th><th>Bewerter</th><th>Hinweis</th></tr></thead>
+      <tbody>${lieferungen.map(l => `<tr><td>${fmtDatumDE(l.datum)}</td><td>${l.bestellNr || '—'}</td><td>${l.ergebnis != null ? l.ergebnis + ' %' : '—'}</td><td>${l.bewerter || '—'}</td><td>${l.hinweis || '—'}</td></tr>`).join("")}</tbody>
     </table>
   `;
 }
@@ -5938,7 +5938,7 @@ async function fmBewertungSpeichern(){
       noten: fmNoten,
     });
     document.getElementById("fmBwErgebnis").innerHTML =
-      `<div class="sub" style="margin-top:14px;">Ergebnis: <b>${result.ergebnis} %</b> — Klasse <span class="fm-klasse ${result.klasse}">${result.klasse}</span>${result.ergebnis >= 100 ? "" : (fmNoten && Object.values(fmNoten).includes(4) ? " — Hinweis: Reklamation/Maßnahme prüfen." : "")}</div>`;
+      `<div class="sub" style="margin-top:14px;">Ergebnis: <b>${result.ergebnis} %</b> — Klasse <span class="fm-klasse ${result.klasse}">${result.klasse}</span>${result.hinweis ? ` — Hinweis: ${result.hinweis}` : ""}</div>`;
     showToast("Bewertung gespeichert.");
     fmNoten = {};
     // Formular für die nächste Lieferung offen lassen (Konzept 3.2), nur Kriterien/Bemerkung zurücksetzen
@@ -6049,7 +6049,7 @@ async function renderFmAuswertungView(){
         <table class="fm-table">
           <thead><tr>
             <th>Lieferant</th><th>Warengruppe</th><th>Lief.</th><th>Ø Lief.</th><th>Jahr</th><th>Gesamt</th>
-            <th>Datenbasis</th><th>Klasse</th><th>Vorjahr</th>
+            <th>Datenbasis</th><th>Klasse</th><th>Gesamt Vorjahr</th><th>Trend</th>
             ${kriterien.map(k => `<th>Ø ${k.bezeichnung}</th>`).join("")}
           </tr></thead>
           <tbody>
@@ -6063,7 +6063,8 @@ async function renderFmAuswertungView(){
                 <td><b>${z.gesamt != null ? z.gesamt + ' %' : '—'}</b></td>
                 <td>${z.datenbasis}</td>
                 <td><span class="fm-klasse ${z.klasse}">${z.klasse || '—'}</span></td>
-                <td>${z.vorjahrKlasse || '—'}</td>
+                <td>${z.gesamtVorjahr != null ? z.gesamtVorjahr + ' %' : '—'}</td>
+                <td>${z.trend != null ? (z.trend > 0 ? '+' : '') + z.trend + ' Pkt.' : '—'}</td>
                 ${kriterien.map(k => `<td>${z.avgJeKriterium[k.bezeichnung] != null ? z.avgJeKriterium[k.bezeichnung] : '—'}</td>`).join("")}
               </tr>
             `).join("")}

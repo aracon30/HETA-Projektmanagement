@@ -439,17 +439,38 @@ Testfälle aus dem Konzept verifiziert: Noten 2/1/2/1 (Gewichte 30/15/35/20)
 → 80,5 %; Ø 83,25 % + Jahresbewertung 86,5 % (60/40) → 84,55 %, Klasse B —
 beide ergeben über die echte API exakt die im Konzept genannten Werte.
 
-Kriterienkatalog v1 (4 Lieferungskriterien, 7 Jahreskriterien, alle
-Notendefinitionen) steht in `lieferanten_daten.py` und wird über
-`seed_lieferanten.py` idempotent eingespielt (läuft in `update.sh` und in
-`seed.py`). **Die Gewichte/Notendefinitionen sind ein eigener Vorschlag**
-(keine Lieferantenbewertung_HETA.xlsx im Repo verfügbar, aus der sie laut
-Konzept eigentlich 1:1 übernommen werden sollten) — unbedingt mit QM/Einkauf
-abgleichen, bevor die Bewertung produktiv fürs Audit genutzt wird (siehe
-Konzept, offene Frage 1). Kriterien werden laut Konzept nie gelöscht, nur
-deaktiviert (`aktiv`-Spalte) — `seed_lieferanten.py` legt nur fehlende
-Kriterien an und überschreibt nichts Vorhandenes, Gewichte lassen sich also
-direkt in der Datenbank anpassen, ohne dass ein erneuter Lauf das zurücksetzt.
+**Kriterienkatalog am 30.10.2026 gegen die echte `Lieferantenbewertung_HETA.xlsx`
+abgeglichen** (zuvor ohne diese Datei entwickelt, siehe unten) — Gewichte,
+Notenskala, Klassengrenzen, Anteil Lieferung/Jahr und Zertifikat-Vorwarnzeit
+stimmten bereits exakt (unabhängig voneinander auf dieselben Werte gekommen,
+inkl. des Bugs unten, den die echte Datei bestätigt hat). Angepasst auf den
+wörtlichen Text der Datei: Kriteriennamen (z. B. „Anlieferqualität (Maß,
+Werkstoff, Oberfläche, Verpackung)" statt nur „Anlieferqualität"),
+Notendefinitionen, Konsequenz-Texte. `lieferanten_daten.py` ist jetzt 1:1 aus
+den Blättern „Kriterien"/„Einstellungen" der Datei übernommen, nicht mehr
+ein eigener Vorschlag. Kriterien werden laut Konzept nie gelöscht, nur
+deaktiviert (`aktiv`-Spalte) — Identität eines Kriteriums ist **(ebene,
+reihenfolge)**, nicht die Bezeichnung: `seed_lieferanten.py` synchronisiert
+Name/Gewicht/Notentexte vorhandener Zeilen bei jedem Lauf auf den aktuellen
+Stand in `lieferanten_daten.py` (läuft in `update.sh` und in `seed.py`),
+solange es keine Einstellungs-Oberfläche (Stufe 3) gibt, über die jemand
+eigene Anpassungen vornehmen könnte — `bewertung_noten` hängen an der
+stabilen `kriterium_id`, bleiben also auch bei geändertem Wortlaut gültig.
+Sobald Stufe 3 kommt, muss dieses Sync-Verhalten gegen echte Nutzeränderungen
+abgesichert werden (dann nicht mehr blind überschreiben).
+
+Beim Abgleich zusätzlich zwei echte Lücken gefunden und behoben (Fund/Fix
+30.10.2026): (1) Die Vorjahres-Kennzahl in der Auswertung verglich die rohe
+Jahresbewertung statt desselben gewichteten Gesamtergebnisses wie das
+aktuelle Jahr — jetzt `gesamtVorjahr` (dieselbe 60/40-Formel fürs Vorjahr)
+und `trend` (= Gesamt − Gesamt Vorjahr, in %-Punkten), genau wie die Spalten
+„Gesamt &lt;Vorjahr&gt;"/„Trend (%-Pkt.)" in der Excel-Datei — keine
+Buchstaben-Klasse fürs Vorjahr mehr, die gibt es dort nicht. (2) Die
+Lieferungsbewertung hatte in der echten Datei einen zweistufigen Hinweis
+(`Lieferungsbewertung.hinweis()` in `models.py`, wortgleich mit der
+Excel-Formel): Note 4 → „Note 4 → Reklamation / Maßnahme prüfen", sonst bei
+Note 3 → „Note 3 → beim Lieferanten ansprechen" — vorher gab es nur einen
+Note-4-Hinweis mit abweichendem Wortlaut.
 
 Frontend: Unteransichten „Lieferung bewerten"/„Jahresbewertung"/„Auswertung"
 im Reiter „Firmen" (Sub-Navigation `fm-subnav`, siehe oben). Noten-Buttons
@@ -457,9 +478,9 @@ im Reiter „Firmen" (Sub-Navigation `fm-subnav`, siehe oben). Noten-Buttons
 Nachschlagen), „–" = nicht bewertet. Bei Note 3/4 ist eine Bemerkung
 clientseitig Pflicht (Konzept 3.2). Nach dem Speichern bleibt das
 Lieferungs-Formular für die nächste Bewertung offen (Noten/Bemerkung
-zurückgesetzt, Firma/Datum/Bewerter bleiben stehen). „Sofort-Hinweis" bei
-Note 4 (Konzept 2.2) ist nur ein Texthinweis nach dem Speichern, noch ohne
-Button „Maßnahme anlegen" (das wäre Stufe 2, siehe oben).
+zurückgesetzt, Firma/Datum/Bewerter bleiben stehen) und zeigt den Hinweis aus
+`result.hinweis`, noch ohne Button „Maßnahme anlegen" (das wäre Stufe 2,
+siehe oben).
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 

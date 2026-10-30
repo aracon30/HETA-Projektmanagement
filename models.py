@@ -759,6 +759,16 @@ class Lieferungsbewertung(db.Model):
     def noten_liste(self):
         return BewertungNote.query.filter_by(bewertung_typ="lieferung", bewertung_id=self.id).all()
 
+    def hinweis(self):
+        """Wortgleich mit der Hinweis-Formel in Lieferantenbewertung_HETA.xlsx
+        (Blatt Lieferungsbewertung): Note 4 geht vor Note 3, sonst kein Hinweis."""
+        noten = [n.note for n in self.noten_liste()]
+        if 4 in noten:
+            return "Note 4 → Reklamation / Maßnahme prüfen"
+        if 3 in noten:
+            return "Note 3 → beim Lieferanten ansprechen"
+        return ""
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -773,6 +783,7 @@ class Lieferungsbewertung(db.Model):
             "katalogVersion": self.katalog_version,
             "ergebnis": self.ergebnis_gespeichert,
             "noten": {n.kriterium_id: n.note for n in self.noten_liste()},
+            "hinweis": self.hinweis(),
             "erstelltAm": self.created_at.isoformat() if self.created_at else None,
         }
 
