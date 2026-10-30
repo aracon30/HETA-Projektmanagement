@@ -397,6 +397,142 @@ def main():
     else:
         print("Spalte auftrag_positionen.preis_je_einheit existiert bereits.")
 
+    # ---- Firmen / CRM (Stufe 1, siehe docs/KONZEPT-FIRMEN-CRM.md) ----
+    if not table_exists(cur, "firmen"):
+        cur.execute("""
+            CREATE TABLE firmen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name VARCHAR(200) NOT NULL,
+                kurzname VARCHAR(80),
+                konzern_id INTEGER REFERENCES firmen(id),
+                rollen VARCHAR(120) DEFAULT 'kunde',
+                branche VARCHAR(120),
+                land VARCHAR(80),
+                website VARCHAR(200),
+                lieferantenportal VARCHAR(200),
+                quelle VARCHAR(80),
+                status VARCHAR(20) DEFAULT 'aktiv',
+                notiz TEXT,
+                warengruppe VARCHAR(120),
+                freigabestatus VARCHAR(20),
+                bewertungspflichtig BOOLEAN DEFAULT 1,
+                aktiv BOOLEAN DEFAULT 1,
+                created_at DATETIME,
+                created_by VARCHAR(120)
+            )
+        """)
+        print("Tabelle firmen angelegt (Firmen-CRM Stufe 1).")
+    else:
+        print("Tabelle firmen existiert bereits.")
+
+    if not table_exists(cur, "firmen_adressen"):
+        cur.execute("""
+            CREATE TABLE firmen_adressen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                firma_id INTEGER NOT NULL REFERENCES firmen(id),
+                art VARCHAR(20) DEFAULT 'haupt',
+                zeilen TEXT NOT NULL,
+                standard BOOLEAN DEFAULT 0,
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle firmen_adressen angelegt.")
+    else:
+        print("Tabelle firmen_adressen existiert bereits.")
+
+    for spalte, typ in [("firma_id", "INTEGER REFERENCES firmen(id)"),
+                        ("adresse_id", "INTEGER REFERENCES firmen_adressen(id)"),
+                        ("versand_adresse_id", "INTEGER REFERENCES firmen_adressen(id)")]:
+        if not column_exists(cur, "items", spalte):
+            cur.execute(f"ALTER TABLE items ADD COLUMN {spalte} {typ}")
+            print(f"Spalte items.{spalte} ergänzt (Firmen-Verknüpfung).")
+        else:
+            print(f"Spalte items.{spalte} existiert bereits.")
+
+    # ---- Lieferantenbewertung (Stufe 1, siehe docs/KONZEPT-LIEFERANTEN.md) ----
+    if not table_exists(cur, "bewertung_kriterien"):
+        cur.execute("""
+            CREATE TABLE bewertung_kriterien (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ebene VARCHAR(20) NOT NULL,
+                reihenfolge INTEGER DEFAULT 0,
+                bezeichnung VARCHAR(200) NOT NULL,
+                gewicht FLOAT NOT NULL,
+                note1_text TEXT,
+                note2_text TEXT,
+                note3_text TEXT,
+                note4_text TEXT,
+                aktiv BOOLEAN DEFAULT 1,
+                katalog_version INTEGER DEFAULT 1
+            )
+        """)
+        print("Tabelle bewertung_kriterien angelegt (Lieferantenbewertung Stufe 1).")
+    else:
+        print("Tabelle bewertung_kriterien existiert bereits.")
+
+    if not table_exists(cur, "bewertung_einstellungen"):
+        cur.execute("""
+            CREATE TABLE bewertung_einstellungen (
+                "key" VARCHAR(60) PRIMARY KEY,
+                value VARCHAR(200) NOT NULL
+            )
+        """)
+        print("Tabelle bewertung_einstellungen angelegt.")
+    else:
+        print("Tabelle bewertung_einstellungen existiert bereits.")
+
+    if not table_exists(cur, "lieferungsbewertungen"):
+        cur.execute("""
+            CREATE TABLE lieferungsbewertungen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                firma_id INTEGER NOT NULL REFERENCES firmen(id),
+                datum DATE NOT NULL,
+                bestell_nr VARCHAR(60),
+                item_id INTEGER REFERENCES items(id),
+                bewerter VARCHAR(120),
+                bemerkung TEXT,
+                katalog_version INTEGER DEFAULT 1,
+                ergebnis_gespeichert FLOAT,
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle lieferungsbewertungen angelegt.")
+    else:
+        print("Tabelle lieferungsbewertungen existiert bereits.")
+
+    if not table_exists(cur, "jahresbewertungen"):
+        cur.execute("""
+            CREATE TABLE jahresbewertungen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                firma_id INTEGER NOT NULL REFERENCES firmen(id),
+                jahr INTEGER NOT NULL,
+                datum DATE NOT NULL,
+                bewerter VARCHAR(120),
+                bemerkung TEXT,
+                katalog_version INTEGER DEFAULT 1,
+                ergebnis_gespeichert FLOAT,
+                created_at DATETIME,
+                UNIQUE (firma_id, jahr)
+            )
+        """)
+        print("Tabelle jahresbewertungen angelegt.")
+    else:
+        print("Tabelle jahresbewertungen existiert bereits.")
+
+    if not table_exists(cur, "bewertung_noten"):
+        cur.execute("""
+            CREATE TABLE bewertung_noten (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                bewertung_typ VARCHAR(20) NOT NULL,
+                bewertung_id INTEGER NOT NULL,
+                kriterium_id INTEGER NOT NULL REFERENCES bewertung_kriterien(id),
+                note INTEGER NOT NULL
+            )
+        """)
+        print("Tabelle bewertung_noten angelegt.")
+    else:
+        print("Tabelle bewertung_noten existiert bereits.")
+
     # Bekannte Nutzer mit E-Mail-Adresse befüllen (nur wenn noch leer)
     cur.execute("SELECT id, name, email FROM users")
     updated = 0

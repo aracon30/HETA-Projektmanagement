@@ -3,6 +3,7 @@ from datetime import date
 from app import app
 from models import db, User, Item, VerlaufEintrag, Phase
 import seed_prozesse
+import seed_lieferanten
 
 NUTZER = [
     ("Heiko Hensel", "Geschäftsführung", "hensel@heta.de"),
@@ -180,6 +181,7 @@ def run():
         print("Datenbank befüllt.")
 
         seed_prozesse.seed()
+        seed_lieferanten.seed()
 
 
 if __name__ == "__main__":

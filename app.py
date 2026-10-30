@@ -8,6 +8,8 @@ from erp_import import parse_positionsansicht_auftrag, hat_offene_position
 from prozesse_api import bp as prozesse_bp
 from asme_api import bp as asme_bp
 from ab_api import bp as ab_bp
+from firmen_api import bp as firmen_bp
+from lieferanten_api import bp as lieferanten_bp
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -18,6 +20,8 @@ db.init_app(app)
 app.register_blueprint(prozesse_bp)
 app.register_blueprint(asme_bp)
 app.register_blueprint(ab_bp)
+app.register_blueprint(firmen_bp)
+app.register_blueprint(lieferanten_bp)
 
 
 def parse_date(value):
@@ -89,6 +93,7 @@ def create_item():
         ordner_pfad=data.get("ordnerPfad"),
         erp_ab_nummer=data.get("erpAbNummer"),
         quelle=data.get("quelle", "manuell"),
+        firma_id=data.get("firmaId"),
     )
     if item.type == "auftrag":
         item.prio = data.get("prio", "gelb")
@@ -183,6 +188,12 @@ def update_item(item_id):
         item.ordner_pfad = data.get("ordnerPfad")
     if "kunde" in data and data.get("kunde"):
         item.kunde = data["kunde"]
+    if "firmaId" in data:
+        item.firma_id = data.get("firmaId") or None
+    if "adresseId" in data:
+        item.adresse_id = data.get("adresseId") or None
+    if "versandAdresseId" in data:
+        item.versand_adresse_id = data.get("versandAdresseId") or None
     if "lieferumfang" in data:
         item.lieferumfang = data.get("lieferumfang")
     db.session.commit()

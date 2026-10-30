@@ -49,6 +49,14 @@ class Item(db.Model):
     archiviert = db.Column(db.Boolean, default=False)  # manuell gesetzt, blendet den Auftrag aus der Liste aus
     asme = db.Column(db.Boolean, default=False)  # ASME-Auftrag: schaltet Lieferantenbestellungen/ASME-Dokumente frei
 
+    # Verknüpfung zur Firmenliste (siehe docs/KONZEPT-FIRMEN-CRM.md, Stufe 1).
+    # Optional — die bisherigen Freitextfelder (kunde/kunden_adresse/versand_adresse)
+    # bleiben als Fallback erhalten, solange nicht jede Anfrage/jeder Auftrag
+    # einer Firma zugeordnet ist (Assistent "Kunden zuordnen").
+    firma_id = db.Column(db.Integer, db.ForeignKey("firmen.id"), nullable=True)
+    adresse_id = db.Column(db.Integer, db.ForeignKey("firmen_adressen.id"), nullable=True)
+    versand_adresse_id = db.Column(db.Integer, db.ForeignKey("firmen_adressen.id"), nullable=True)
+
     # Auftragsbestätigung (Word-Dokument für den Kunden, siehe ab_api.py)
     unser_zeichen = db.Column(db.String(120), nullable=True)
     kunden_zeichen = db.Column(db.String(120), nullable=True)  # "Ihr Zeichen" des Kunden
@@ -94,6 +102,10 @@ class Item(db.Model):
             "kunde": self.kunde,
             "lieferumfang": self.lieferumfang,
             "ordnerPfad": self.ordner_pfad,
+            "firmaId": self.firma_id,
+            "firma": {"id": self.firma.id, "name": self.firma.name} if self.firma_id and self.firma else None,
+            "adresseId": self.adresse_id,
+            "versandAdresseId": self.versand_adresse_id,
             "erstelltAm": self.created_at.isoformat() if self.created_at else None,
             "verlauf": [v.to_dict() for v in self.verlauf],
             "phasen": [p.to_dict() for p in self.phasen],
@@ -588,3 +600,228 @@ class BestellPosition(db.Model):
             "preis": self.preis,
             "gesamt": self.gesamt(),
         }
+
+
+# ====================================================================
+# Firmen / CRM (Stufe 1, siehe docs/KONZEPT-FIRMEN-CRM.md)
+# ====================================================================
+
+class Firma(db.Model):
+    """Eine Firma (Kunde/Interessent/Lieferant/Partner, mehrere Rollen
+    möglich). Ersetzt schrittweise den Freitext an items.kunde — bestehende
+    Anfragen/Angebote/Aufträge bleiben ohne Zuordnung weiter funktionsfähig
+    (siehe Item.firma_id). Kontakte/Aktivitäten (personenbezogene Daten)
+    sind bewusst nicht Teil von Stufe 1, siehe CLAUDE.md."""
+    __tablename__ = "firmen"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    kurzname = db.Column(db.String(80), nullable=True)  # Suchbegriff, z.B. "BASF"
+    konzern_id = db.Column(db.Integer, db.ForeignKey("firmen.id"), nullable=True)
+    rollen = db.Column(db.String(120), default="kunde")  # Komma-getrennt: kunde,interessent,lieferant,partner
+    branche = db.Column(db.String(120), nullable=True)
+    land = db.Column(db.String(80), nullable=True)
+    website = db.Column(db.String(200), nullable=True)
+    lieferantenportal = db.Column(db.String(200), nullable=True)  # Name + Status, z.B. "ORLEN Connect – freigegeben"
+    quelle = db.Column(db.String(80), nullable=True)  # Messe, Bestandskunde, Visitenkarte, ...
+    status = db.Column(db.String(20), default="aktiv")  # aktiv | ruhend | kein_interesse
+    notiz = db.Column(db.Text, nullable=True)
+    # Nur für Rolle "Lieferant" relevant (siehe docs/KONZEPT-LIEFERANTEN.md):
+    warengruppe = db.Column(db.String(120), nullable=True)
+    freigabestatus = db.Column(db.String(20), nullable=True)  # freigegeben | bedingt | gesperrt | neu
+    bewertungspflichtig = db.Column(db.Boolean, default=True)
+    aktiv = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.String(120), nullable=True)
+
+    konzern = db.relationship("Firma", remote_side=[id])
+    adressen = db.relationship(
+        "FirmaAdresse", backref="firma", cascade="all, delete-orphan",
+        order_by="FirmaAdresse.id",
+        foreign_keys="FirmaAdresse.firma_id",
+    )
+    items = db.relationship("Item", backref="firma", foreign_keys="Item.firma_id")
+
+    def rollen_liste(self):
+        return [r.strip() for r in (self.rollen or "").split(",") if r.strip()]
+
+    def to_dict(self, detail=False):
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "kurzname": self.kurzname,
+            "konzernId": self.konzern_id,
+            "konzernName": self.konzern.name if self.konzern else None,
+            "rollen": self.rollen_liste(),
+            "branche": self.branche,
+            "land": self.land,
+            "website": self.website,
+            "lieferantenportal": self.lieferantenportal,
+            "quelle": self.quelle,
+            "status": self.status,
+            "notiz": self.notiz,
+            "warengruppe": self.warengruppe,
+            "freigabestatus": self.freigabestatus,
+            "bewertungspflichtig": bool(self.bewertungspflichtig),
+            "aktiv": bool(self.aktiv),
+            "erstelltAm": self.created_at.isoformat() if self.created_at else None,
+        }
+        if detail:
+            data["adressen"] = [a.to_dict() for a in self.adressen]
+            data["anzahlAuftraege"] = sum(1 for i in self.items if i.type == "auftrag")
+            data["anzahlAngebote"] = sum(1 for i in self.items if i.type == "angebot")
+            data["anzahlAnfragen"] = sum(1 for i in self.items if i.type == "anfrage")
+        return data
+
+
+class FirmaAdresse(db.Model):
+    """Eine Adresse einer Firma (Haupt/Rechnung/Lieferung/Werk). Eine Firma
+    kann mehrere haben, z.B. Rechnungsadresse der Zentrale + Lieferadresse
+    eines Werks."""
+    __tablename__ = "firmen_adressen"
+    id = db.Column(db.Integer, primary_key=True)
+    firma_id = db.Column(db.Integer, db.ForeignKey("firmen.id"), nullable=False)
+    art = db.Column(db.String(20), default="haupt")  # haupt | rechnung | lieferung | werk
+    zeilen = db.Column(db.Text, nullable=False)  # mehrzeilig, wie bisher items.kunden_adresse
+    standard = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "firmaId": self.firma_id,
+            "art": self.art,
+            "zeilen": self.zeilen,
+            "standard": bool(self.standard),
+        }
+
+
+# ====================================================================
+# Lieferantenbewertung (Stufe 1, siehe docs/KONZEPT-LIEFERANTEN.md)
+# ====================================================================
+
+class BewertungKriterium(db.Model):
+    """Ein Bewertungskriterium (Lieferung oder Jahr) mit Gewicht und den vier
+    Notendefinitionen. Startbestand siehe lieferanten_daten.py. Kriterien
+    werden nie gelöscht, nur deaktiviert (aktiv=False) — siehe Konzept 2.3."""
+    __tablename__ = "bewertung_kriterien"
+    id = db.Column(db.Integer, primary_key=True)
+    ebene = db.Column(db.String(20), nullable=False)  # "lieferung" | "jahr"
+    reihenfolge = db.Column(db.Integer, default=0)
+    bezeichnung = db.Column(db.String(200), nullable=False)
+    gewicht = db.Column(db.Float, nullable=False)  # Prozent, z.B. 30.0
+    note1_text = db.Column(db.Text, nullable=True)
+    note2_text = db.Column(db.Text, nullable=True)
+    note3_text = db.Column(db.Text, nullable=True)
+    note4_text = db.Column(db.Text, nullable=True)
+    aktiv = db.Column(db.Boolean, default=True)
+    katalog_version = db.Column(db.Integer, default=1)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "ebene": self.ebene,
+            "reihenfolge": self.reihenfolge,
+            "bezeichnung": self.bezeichnung,
+            "gewicht": self.gewicht,
+            "noteText": {"1": self.note1_text, "2": self.note2_text, "3": self.note3_text, "4": self.note4_text},
+            "aktiv": bool(self.aktiv),
+            "katalogVersion": self.katalog_version,
+        }
+
+
+class BewertungEinstellung(db.Model):
+    """Generische Schlüssel/Wert-Einstellungen der Bewertungsrechnung
+    (Notenwerte, Klassengrenzen, Anteil Lieferung/Jahr, Vorwarnzeit
+    Zertifikate). Noch ohne Einstellungs-Oberfläche (Stufe 3) — Startbestand
+    aus lieferanten_daten.py, Werte liegen als String (Zahl oder JSON) vor."""
+    __tablename__ = "bewertung_einstellungen"
+    key = db.Column(db.String(60), primary_key=True)
+    value = db.Column(db.String(200), nullable=False)
+
+
+class Lieferungsbewertung(db.Model):
+    """Bewertung einer einzelnen Lieferung (Wareneingang)."""
+    __tablename__ = "lieferungsbewertungen"
+    id = db.Column(db.Integer, primary_key=True)
+    firma_id = db.Column(db.Integer, db.ForeignKey("firmen.id"), nullable=False)
+    datum = db.Column(db.Date, nullable=False)
+    bestell_nr = db.Column(db.String(60), nullable=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=True)  # optionale Kommission
+    bewerter = db.Column(db.String(120), nullable=True)
+    bemerkung = db.Column(db.Text, nullable=True)
+    katalog_version = db.Column(db.Integer, default=1)
+    ergebnis_gespeichert = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    firma = db.relationship("Firma")
+    item = db.relationship("Item")
+
+    def noten_liste(self):
+        return BewertungNote.query.filter_by(bewertung_typ="lieferung", bewertung_id=self.id).all()
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "firmaId": self.firma_id,
+            "firmaName": self.firma.name if self.firma else None,
+            "datum": self.datum.isoformat() if self.datum else None,
+            "bestellNr": self.bestell_nr,
+            "itemId": self.item_id,
+            "kommission": self.item.kommission if self.item else None,
+            "bewerter": self.bewerter,
+            "bemerkung": self.bemerkung,
+            "katalogVersion": self.katalog_version,
+            "ergebnis": self.ergebnis_gespeichert,
+            "noten": {n.kriterium_id: n.note for n in self.noten_liste()},
+            "erstelltAm": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class Jahresbewertung(db.Model):
+    """Jahresbewertung eines Lieferanten (1x pro Firma und Jahr)."""
+    __tablename__ = "jahresbewertungen"
+    __table_args__ = (db.UniqueConstraint("firma_id", "jahr", name="uq_jahresbewertung_firma_jahr"),)
+    id = db.Column(db.Integer, primary_key=True)
+    firma_id = db.Column(db.Integer, db.ForeignKey("firmen.id"), nullable=False)
+    jahr = db.Column(db.Integer, nullable=False)
+    datum = db.Column(db.Date, nullable=False)
+    bewerter = db.Column(db.String(120), nullable=True)
+    bemerkung = db.Column(db.Text, nullable=True)
+    katalog_version = db.Column(db.Integer, default=1)
+    ergebnis_gespeichert = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    firma = db.relationship("Firma")
+
+    def noten_liste(self):
+        return BewertungNote.query.filter_by(bewertung_typ="jahr", bewertung_id=self.id).all()
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "firmaId": self.firma_id,
+            "firmaName": self.firma.name if self.firma else None,
+            "jahr": self.jahr,
+            "datum": self.datum.isoformat() if self.datum else None,
+            "bewerter": self.bewerter,
+            "bemerkung": self.bemerkung,
+            "katalogVersion": self.katalog_version,
+            "ergebnis": self.ergebnis_gespeichert,
+            "noten": {n.kriterium_id: n.note for n in self.noten_liste()},
+            "erstelltAm": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class BewertungNote(db.Model):
+    """Eine einzelne Note (1-4) zu einem Kriterium, zu einer Lieferungs- oder
+    Jahresbewertung gehörig (bewertung_typ unterscheidet, da zwei mögliche
+    Elterntabellen). Nur tatsächlich bewertete Kriterien bekommen eine Zeile
+    — nicht bewertete zählen bei der Berechnung nicht mit (siehe Konzept 2.2)."""
+    __tablename__ = "bewertung_noten"
+    id = db.Column(db.Integer, primary_key=True)
+    bewertung_typ = db.Column(db.String(20), nullable=False)  # "lieferung" | "jahr"
+    bewertung_id = db.Column(db.Integer, nullable=False)
+    kriterium_id = db.Column(db.Integer, db.ForeignKey("bewertung_kriterien.id"), nullable=False)
+    note = db.Column(db.Integer, nullable=False)  # 1-4
+
+    kriterium = db.relationship("BewertungKriterium")

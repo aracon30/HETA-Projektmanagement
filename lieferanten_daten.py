@@ -1,0 +1,85 @@
+"""Startbestand für die Lieferantenbewertung (Stufe 1, siehe
+docs/KONZEPT-LIEFERANTEN.md): Kriterienkatalog v1 und Grundeinstellungen der
+Berechnung. Quelle/Vorbild: Lieferantenbewertung_HETA.xlsx (liegt nicht in
+diesem Repo). Die Gewichte/Notendefinitionen sind laut Konzept ein Vorschlag
+("Katalog v1") zur Abstimmung mit QM/Einkauf — bei Bedarf hier anpassen und
+seed_lieferanten.py erneut laufen lassen (legt nur fehlende Kriterien an,
+überschreibt nichts Vorhandenes).
+"""
+
+# ebene, reihenfolge, bezeichnung, gewicht (%), note1, note2, note3, note4
+KRITERIEN = [
+    ("lieferung", 1, "Termintreue", 30.0,
+     "termingerecht",
+     "bis 3 Arbeitstage Verzug, vorher angekündigt",
+     "4–10 Arbeitstage Verzug oder Verzug nicht angekündigt",
+     "mehr als 10 Arbeitstage Verzug oder Auftragstermin dadurch gefährdet"),
+    ("lieferung", 2, "Mengentreue", 15.0,
+     "Menge exakt wie bestellt",
+     "Abweichung bis 2 % bzw. bis 5 Stück (kleinerer Wert), ohne Auswirkung auf den Auftrag",
+     "Abweichung über 2 % bzw. Mehr-/Minderlieferung ohne vorherige Abstimmung",
+     "Abweichung gefährdet den Auftragstermin oder Lieferung musste zurückgewiesen werden"),
+    ("lieferung", 3, "Anlieferqualität", 35.0,
+     "einwandfrei, keine Beanstandung bei der Wareneingangsprüfung",
+     "kleine Mängel ohne Einfluss auf die Verwendbarkeit (z. B. Verpackung, Kennzeichnung), keine Nacharbeit nötig",
+     "Mängel, die Nacharbeit, Sortierung oder Teilrückweisung erfordern",
+     "Lieferung ganz oder in wesentlichen Teilen zurückgewiesen bzw. Reklamation"),
+    ("lieferung", 4, "Dokumentation & Zeugnisse", 20.0,
+     "vollständig, korrekt und termingerecht mit der Lieferung",
+     "kleine Mängel (z. B. Formfehler), auf Nachfrage kurzfristig nachgereicht",
+     "unvollständig oder fehlerhaft, mehrfache Nachfrage nötig",
+     "fehlt ganz oder wesentliche Angabe falsch (z. B. falsches Werkstoffzeugnis)"),
+
+    ("jahr", 1, "Preisniveau / Preis-Leistung", 20.0,
+     "marktgerecht bis günstig, gutes Preis-Leistungs-Verhältnis",
+     "im Marktvergleich leicht über Durchschnitt, aber durch Qualität/Service gerechtfertigt",
+     "spürbar über Marktniveau ohne erkennbaren Mehrwert",
+     "deutlich überteuert, Alternativangebote klar günstiger"),
+    ("jahr", 2, "Kommunikation", 15.0,
+     "schnell erreichbar, informiert von sich aus bei Abweichungen",
+     "erreichbar, reagiert zeitnah auf Anfragen",
+     "schwer erreichbar oder reagiert erst auf Nachfrage/Eskalation",
+     "Kommunikation unzuverlässig, Zusagen werden nicht eingehalten"),
+    ("jahr", 3, "Flexibilität", 15.0,
+     "geht auf kurzfristige Änderungen (Menge, Termin) zuverlässig ein",
+     "geht meist auf Änderungen ein, teils mit Einschränkungen",
+     "reagiert nur ungern oder mit deutlichem Aufpreis auf Änderungen",
+     "keine Flexibilität, lehnt Änderungen grundsätzlich ab"),
+    ("jahr", 4, "Reklamationsabwicklung", 15.0,
+     "schnelle, unkomplizierte und nachhaltige Abstellung",
+     "Abstellung erfolgt, aber mit Verzögerung oder Nachfassen nötig",
+     "schleppende oder unvollständige Abstellung",
+     "keine oder unzureichende Reaktion auf Reklamationen"),
+    ("jahr", 5, "Technische Kompetenz", 10.0,
+     "berät aktiv, bringt eigene Verbesserungsvorschläge ein",
+     "ausreichendes technisches Know-how, beantwortet Rückfragen kompetent",
+     "technisches Wissen reicht für Standardfälle, bei Sonderfällen unsicher",
+     "technische Rückfragen können nicht zufriedenstellend beantwortet werden"),
+    ("jahr", 6, "Zertifizierungen & Nachweise", 15.0,
+     "alle relevanten Zertifikate vorhanden und gültig, unaufgefordert aktuell gehalten",
+     "Zertifikate vorhanden, Aktualisierung muss gelegentlich angefordert werden",
+     "Zertifikate unvollständig oder häufig abgelaufen",
+     "erforderliche Zertifizierung fehlt ganz"),
+    ("jahr", 7, "Nachhaltigkeit & Lieferkette", 10.0,
+     "eigene Nachhaltigkeitsstandards/Zertifikate (z. B. ISO 14001), transparente Lieferkette",
+     "erste Nachweise/Selbstauskunft vorhanden, Lieferkette im Wesentlichen bekannt",
+     "keine Nachweise, auf Nachfrage nur unvollständige Auskunft",
+     "keine Auskunft oder bekannte Verstöße (z. B. Menschenrechte, Umwelt)"),
+]
+
+# Rechenregeln (Konzept 2.2) — noch ohne Einstellungs-Oberfläche (Stufe 3),
+# hier als Startbestand in bewertung_einstellungen hinterlegt.
+EINSTELLUNGEN = {
+    "notenwert_1": "100",
+    "notenwert_2": "70",
+    "notenwert_3": "30",
+    "notenwert_4": "0",
+    "klasse_a_min": "90",
+    "klasse_b_min": "75",
+    "konsequenz_a": "Bevorzugter Lieferant",
+    "konsequenz_b": "Gespräch zu Schwachstellen führen",
+    "konsequenz_c": "Maßnahmenplan, ggf. bedingte Freigabe/Sperre",
+    "anteil_lieferung": "0.6",
+    "anteil_jahr": "0.4",
+    "zertifikat_warn_tage": "90",
+}
