@@ -3,9 +3,14 @@ Description=HETA Projektbesprechung Tool (Gunicorn)
 After=network.target
 
 [Service]
-# Anpassen: Nutzer, unter dem der Dienst laufen soll
-User=www-data
-Group=www-data
+# Bei HETA läuft der Dienst unter dem eigenen Nutzer "heta" (Projektpfad
+# /opt/projektbesprechung gehört heta:heta, siehe CLAUDE.md) — www-data war
+# nur der generische Platzhalter dieser Vorlage und hat auf dem
+# Produktiv-Server am 03.11.2026 zu "attempt to write a readonly database"
+# geführt (Dienst lief als www-data, DB-Datei gehörte aber heta mit 644).
+# Bei einem anderen Deployment entsprechend anpassen.
+User=heta
+Group=heta
 WorkingDirectory=/opt/projektbesprechung
 Environment="PATH=/opt/projektbesprechung/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 

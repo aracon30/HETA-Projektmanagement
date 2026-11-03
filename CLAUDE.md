@@ -613,6 +613,22 @@ Absolut-Positionierung) und blieb unverändert.
   `sudo chown -R heta:heta /opt/projektbesprechung` **ausführen** — sonst
   crasht Gunicorn beim Neustart mit `PermissionError`, weil `sudo cp`
   Dateien als `root` anlegt, der Dienst aber als Nutzer `heta` läuft.
+- **Fund 03.11.2026, Produktiv-Server: Der Dienst lief tatsächlich als
+  `www-data`, nicht als `heta`** — `/etc/systemd/system/projektbesprechung.service`
+  wurde beim Ersteinrichten (19.10.2026) nie von der generischen
+  Vorlage (`User=www-data`) auf `heta` umgestellt (`deploy/projektbesprechung.service`
+  im Repo ist jetzt auf `User=heta`/`Group=heta` korrigiert). Folge: `INSERT`s
+  in die SQLite-DB scheiterten mit `attempt to write a readonly database`
+  (`projektbesprechung.db` gehört `heta:heta` mit `644`, `www-data` darf sie
+  nur lesen) — **"Eintrag/Update konnte nicht gespeichert werden"** in der
+  Oberfläche. Reine Leseoperationen (Anzeigen, Suchen) funktionierten
+  die ganze Zeit normal, daher fiel es nicht sofort auf. Fix:
+  `sudo sed -i 's/^User=www-data/User=heta/; s/^Group=www-data/Group=heta/'
+  /etc/systemd/system/projektbesprechung.service && sudo systemctl daemon-reload
+  && sudo systemctl restart projektbesprechung` (mit `systemctl show
+  projektbesprechung -p User -p Group` prüfen). **Den Testserver auf denselben
+  Fehler prüfen** — gleicher Aufbau laut diesem Dokument, vermutlich dieselbe
+  nie angepasste `.service`-Datei.
 - Nach mehreren schnellen Fehlstarts blockiert systemd mit
   "Start request repeated too quickly" — vorher
   `sudo systemctl reset-failed projektbesprechung` ausführen.
