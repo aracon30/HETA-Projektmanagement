@@ -25,7 +25,7 @@ import subprocess
 import tempfile
 from datetime import date, datetime, timedelta
 
-from flask import Blueprint, jsonify, request, send_file, send_from_directory
+from flask import Blueprint, current_app, jsonify, request, send_file, send_from_directory
 from docxtpl import DocxTemplate
 
 from models import Item
@@ -150,23 +150,48 @@ def api_versandliste_pdf():
         doc.save(docx_pfad)
         profil_pfad = os.path.join(tmp, "lo_profile")
         try:
-            subprocess.run(
+            ergebnis = subprocess.run(
                 [
                     "soffice", "--headless", "--norestore",
                     f"-env:UserInstallation=file://{profil_pfad}",
                     "--convert-to", "pdf", "--outdir", tmp, docx_pfad,
                 ],
-                check=True, timeout=60, capture_output=True,
+                timeout=60, capture_output=True,
             )
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+        except FileNotFoundError:
+            current_app.logger.error("Versandliste-PDF: 'soffice' ist nicht installiert (FileNotFoundError).")
             return jsonify({
-                "error": "PDF konnte nicht erzeugt werden (LibreOffice/soffice fehlt auf dem Server "
-                         "oder die Konvertierung ist fehlgeschlagen)."
+                "error": "PDF konnte nicht erzeugt werden: LibreOffice (soffice) ist auf dem Server nicht "
+                         "installiert. Siehe Server-Log (journalctl) für Details, Abhilfe in README.md."
+            }), 500
+        except subprocess.TimeoutExpired:
+            current_app.logger.error("Versandliste-PDF: soffice-Aufruf nach 60s abgebrochen (TimeoutExpired).")
+            return jsonify({"error": "PDF konnte nicht erzeugt werden: Zeitüberschreitung bei der Konvertierung."}), 500
+        except OSError as exc:
+            current_app.logger.error("Versandliste-PDF: Fehler beim Aufruf von soffice: %s", exc)
+            return jsonify({"error": f"PDF konnte nicht erzeugt werden: {exc}"}), 500
+
+        if ergebnis.returncode != 0:
+            current_app.logger.error(
+                "Versandliste-PDF: soffice beendet mit Code %s\nSTDOUT: %s\nSTDERR: %s",
+                ergebnis.returncode,
+                ergebnis.stdout.decode("utf-8", "replace"),
+                ergebnis.stderr.decode("utf-8", "replace"),
+            )
+            return jsonify({
+                "error": f"PDF konnte nicht erzeugt werden (soffice-Fehlercode {ergebnis.returncode}). "
+                         "Details im Server-Log (journalctl -u projektbesprechung)."
             }), 500
 
         pdf_pfad = os.path.join(tmp, "Versandliste.pdf")
         if not os.path.isfile(pdf_pfad):
-            return jsonify({"error": "PDF konnte nicht erzeugt werden."}), 500
+            current_app.logger.error(
+                "Versandliste-PDF: soffice lief durch (Code 0), aber keine PDF-Datei im Ausgabeordner.\n"
+                "STDOUT: %s\nSTDERR: %s",
+                ergebnis.stdout.decode("utf-8", "replace"),
+                ergebnis.stderr.decode("utf-8", "replace"),
+            )
+            return jsonify({"error": "PDF konnte nicht erzeugt werden (keine Ausgabedatei)."}), 500
 
         with open(pdf_pfad, "rb") as f:
             inhalt = f.read()
