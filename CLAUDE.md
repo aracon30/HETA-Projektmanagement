@@ -565,6 +565,23 @@ eigenes, temporäres LibreOffice-Nutzerprofil (`-env:UserInstallation=...` auf
 ein Temp-Verzeichnis), damit mehrere gleichzeitige PDF-Anfragen sich nicht
 gegenseitig über einen gesperrten Profil-Ordner blockieren.
 
+**Stolperfalle gefunden (03.11.2026, Produktiv-Server):** Nach Installation
+von `libreoffice-writer` schlug der PDF-Button trotzdem mit
+"FileNotFoundError" fehl — Ursache war nicht das fehlende Paket, sondern
+`deploy/projektbesprechung.service`: `Environment="PATH=/opt/projektbesprechung/venv/bin"`
+überschreibt den PATH des Dienstes komplett, `/usr/bin` (wo `soffice` liegt)
+war für den unter `gunicorn` laufenden Prozess dadurch unsichtbar — unabhängig
+davon, ob LibreOffice installiert ist. Die `.service`-Datei ergänzt PATH jetzt
+um die üblichen System-Pfade (`/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`).
+**Wichtig: Die auf dem Server unter `/etc/systemd/system/projektbesprechung.service`
+liegende Kopie wird NICHT automatisch durch `git pull`/`update.sh` aktualisiert**
+(das ist eine separate Datei, kein Symlink ins Repo) — nach diesem Fix einmalig
+`sudo cp deploy/projektbesprechung.service /etc/systemd/system/ && sudo systemctl daemon-reload
+&& sudo systemctl restart projektbesprechung` nötig, danach reicht wieder
+der normale `update.sh`-Weg. Zusätzlich sucht `versandliste_api.py` (`soffice_pfad()`)
+jetzt auch über `shutil.which()` + feste Fallback-Pfade (`/usr/bin/soffice`),
+als zweite Absicherung unabhängig von der Service-PATH-Konfiguration.
+
 **Vorlage auf Wunsch von Philipp aus dem offiziellen HETA-Blanko-Briefbogen
 gebaut** (`vorlagen/versandliste/Blanco_Querformat.docx`, Original A4
 Querformat), auf **A3 Querformat** umgestellt — mehr Platz für die vielen
