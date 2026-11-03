@@ -95,9 +95,8 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
   ungespeicherten Eingabe (`hasOpenComposeForm()` prüft aktives Inline-Edit,
   offenes Modal, "+ Neuer Eintrag"/"+ Update"/Update-Bearbeiten-Formular) —
   sonst würde ein Re-Render mitten im Tippen die Eingabe löschen. Deckt
-  Anfragen/Aufträge/Angebote, Gantt- und Aufgaben-Reiter ab; der
-  Prozesse-Reiter ist bewusst ausgenommen (eigener, komplexerer State aus
-  Baum/Formularen, Risiko für Seiteneffekte beim Blind-Neurendern). Echtes
+  Anfragen/Aufträge/Angebote, Zeitplan- (ehem. „Gantt", s.u.) und
+  Aufgaben-Reiter ab. Echtes
   Server-Push (WebSocket) wurde bewusst nicht gewählt — der Server läuft nur
   mit 2 synchronen Gunicorn-Workern, offene Push-Verbindungen würden die
   schnell blockieren; 10s Verzögerung ist für ein Besprechungs-Vorbereitungs-
@@ -107,10 +106,16 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
 - "Aufgabe erstellen" — legt bei konfigurierter Graph-Anbindung eine echte
   Aufgabe in der **persönlichen** Microsoft-To-Do-Liste (`Auftragspipeline`)
   der zuständigen Person an; ohne Konfiguration nur lokale Markierung
-- **Gantt-Tab**: alle offenen Aufträge als Balken (Start = Erstelldatum,
-  Ende = Liefertermin), farbig nach Priorität, Klick auf Balken öffnet
-  Dialog zum Ändern des Liefertermins (kein Drag-Resize, bewusst einfach
-  gehalten für Robustheit)
+- **„Zeitplan"-Tab** (bis 03.11.2026 „Gantt" genannt, intern weiterhin
+  `data-tab="gantt"`/`renderGanttBoard()` — nur das Label in der Nav wurde
+  geändert, damit auch ohne Gantt-Vorwissen klar ist, was der Tab zeigt):
+  alle offenen Aufträge als Balken (Start = Erstelldatum, Ende =
+  Liefertermin), farbig nach Priorität, Klick auf Balken öffnet Dialog zum
+  Ändern des Liefertermins (kein Drag-Resize, bewusst einfach gehalten für
+  Robustheit). **Namensüberschneidung bewusst in Kauf genommen:** der
+  "Zeitplan"-Abschnitt in der Auftrags-Detailansicht (nächster Punkt) heißt
+  zufällig genauso, meint aber etwas anderes (Phasen eines einzelnen
+  Auftrags statt aller Aufträge) — beides eigenständig, nicht verwechseln.
 - **Detailliertes Gantt je Auftrag** (im "Zeitplan"-Abschnitt der
   Auftrags-Detailansicht, nur für Aufträge, nicht für Angebote): frei
   anlegbare/bearbeitbare/löschbare `Phase`n als Balken (eigener Start/Ende),
@@ -119,6 +124,25 @@ Ausnahme Philipp Schreiber: `p.schreiber@heta.de`).
   Verlaufseinträge erscheint ein Hinweistext statt eines leeren Diagramms.
 - Ordner-Pfad (K-Laufwerk) wird pro Auftrag/Angebot als Tooltip angezeigt
   (nur Anzeige, kein echtes Öffnen aus dem Browser)
+- **Hauptnavigation** (`static/index.html`, `.tabbar`): Anfragen, Angebote,
+  Aufträge (Standard beim Öffnen, `let currentTab = "auftrag"`), Zeitplan,
+  Versandliste, Aufgaben, Firmen. „Versandliste" ist dabei kein echter
+  App-Tab, sondern ein `<a href="/versandliste" target="_blank">` im
+  Tab-Look — öffnet die eigenständige Werkstatt-Seite (siehe Abschnitt
+  „Versandliste") bewusst in einem **neuen** Browser-Tab, statt sie in die
+  App einzubetten, damit kein zweiter Satz Versandlisten-Code entsteht und
+  die Werkstatt-Seite ihr bewusst schlankes, App-chrome-freies Layout
+  behält. Der generische Klick-Handler (`document.querySelectorAll(".tab-btn")`)
+  überspringt Elemente ohne `data-tab` — wichtig bei künftigen weiteren
+  externen Links in der Nav, sonst ruft er `activateTab(undefined)` auf.
+  **„Prozesse" ist seit 03.11.2026 aus dieser Nav entfernt** (auf Wunsch,
+  Reiter wurde zu unübersichtlich) — Code (`prozesse_api.py`,
+  `renderProzesse*`, `openProzesseTab()`), Datenbanktabellen und
+  `seed_prozesse.py` bleiben vollständig erhalten und werden von
+  `update.sh` weiter eingespielt, der Tab ist nur über die Oberfläche nicht
+  mehr erreichbar (kein Button mehr, `activateTab("prozesse")` würde aber
+  nach wie vor funktionieren). Bei Bedarf einfach den Button in der
+  `.tabbar` wieder ergänzen.
 
 ## Ausdrücklich NICHT gewollt / entfernt
 
@@ -613,6 +637,22 @@ Absolut-Positionierung) und blieb unverändert.
   `sudo chown -R heta:heta /opt/projektbesprechung` **ausführen** — sonst
   crasht Gunicorn beim Neustart mit `PermissionError`, weil `sudo cp`
   Dateien als `root` anlegt, der Dienst aber als Nutzer `heta` läuft.
+- **Fund 03.11.2026, Produktiv-Server: Der Dienst lief tatsächlich als
+  `www-data`, nicht als `heta`** — `/etc/systemd/system/projektbesprechung.service`
+  wurde beim Ersteinrichten (19.10.2026) nie von der generischen
+  Vorlage (`User=www-data`) auf `heta` umgestellt (`deploy/projektbesprechung.service`
+  im Repo ist jetzt auf `User=heta`/`Group=heta` korrigiert). Folge: `INSERT`s
+  in die SQLite-DB scheiterten mit `attempt to write a readonly database`
+  (`projektbesprechung.db` gehört `heta:heta` mit `644`, `www-data` darf sie
+  nur lesen) — **"Eintrag/Update konnte nicht gespeichert werden"** in der
+  Oberfläche. Reine Leseoperationen (Anzeigen, Suchen) funktionierten
+  die ganze Zeit normal, daher fiel es nicht sofort auf. Fix:
+  `sudo sed -i 's/^User=www-data/User=heta/; s/^Group=www-data/Group=heta/'
+  /etc/systemd/system/projektbesprechung.service && sudo systemctl daemon-reload
+  && sudo systemctl restart projektbesprechung` (mit `systemctl show
+  projektbesprechung -p User -p Group` prüfen). **Den Testserver auf denselben
+  Fehler prüfen** — gleicher Aufbau laut diesem Dokument, vermutlich dieselbe
+  nie angepasste `.service`-Datei.
 - Nach mehreren schnellen Fehlstarts blockiert systemd mit
   "Start request repeated too quickly" — vorher
   `sudo systemctl reset-failed projektbesprechung` ausführen.

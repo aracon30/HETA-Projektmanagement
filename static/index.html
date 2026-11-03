@@ -45,7 +45,7 @@
 
   .tabbar{ grid-column:1 / -1; display:flex; gap:2px; background:var(--steel); padding:0 24px; overflow-x:auto; min-width:0; }
   .tab-btn{ flex-shrink:0; }
-  .tab-btn{ background:none; border:none; color:#CFE0E7; padding:10px 18px; font-size:0.85rem; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; }
+  .tab-btn{ background:none; border:none; color:#CFE0E7; padding:10px 18px; font-size:0.85rem; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; text-decoration:none; display:inline-block; }
   .tab-btn:hover{color:#fff;}
   .tab-btn:focus-visible{outline:2px solid #fff; outline-offset:-2px;}
   .tab-btn.active{ color:#fff; border-bottom-color:var(--sage); }
@@ -762,11 +762,11 @@
 
   <div class="tabbar" role="tablist" aria-label="Bereich wählen">
     <button class="tab-btn" data-tab="anfrage" role="tab" aria-selected="false">Anfragen</button>
-    <button class="tab-btn active" data-tab="auftrag" role="tab" aria-selected="true">Aufträge</button>
     <button class="tab-btn" data-tab="angebot" role="tab" aria-selected="false">Angebote</button>
-    <button class="tab-btn" data-tab="gantt" role="tab" aria-selected="false">Gantt</button>
+    <button class="tab-btn active" data-tab="auftrag" role="tab" aria-selected="true">Aufträge</button>
+    <button class="tab-btn" data-tab="gantt" role="tab" aria-selected="false">Zeitplan</button>
+    <a class="tab-btn" href="/versandliste" target="_blank" rel="noopener" role="tab" title="Öffnet die Versandliste in einem neuen Tab">Versandliste</a>
     <button class="tab-btn" data-tab="wartend" role="tab" aria-selected="false">Aufgaben</button>
-    <button class="tab-btn" data-tab="prozesse" role="tab" aria-selected="false">Prozesse</button>
     <button class="tab-btn" data-tab="firmen" role="tab" aria-selected="false">Firmen</button>
   </div>
 
@@ -1325,6 +1325,7 @@ function _activateTabNow(tab){
 }
 
 document.querySelectorAll(".tab-btn").forEach(btn => {
+  if(!btn.dataset.tab) return; // z.B. Versandliste: eigener Link, öffnet in neuem Tab statt activateTab()
   btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
 
