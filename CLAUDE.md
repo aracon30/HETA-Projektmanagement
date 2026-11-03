@@ -69,7 +69,11 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
 
 `Item` deckt sowohl Aufträge als auch Angebote ab (`type` = `auftrag`/`angebot`),
 mit typ-spezifischen Feldern:
-- Auftrag: `prio` (rot/gelb/gruen), `liefertermin`, `auftrag_status` (offen/erledigt)
+- Auftrag: `prio` (rot/gelb/gruen), `liefertermin`, `auftrag_status`
+  (neu/in_bearbeitung/in_fertigung/versandbereit/versendet/erledigt —
+  „versendet" seit 03.11.2026: Auftrag ist raus, aber noch nicht formal
+  abgeschlossen, z.B. wegen Nachbesserung; die Versandliste blendet
+  „versendet" genau wie „erledigt" aus, da er dort nicht mehr hingehört)
 - Angebot: `angebot_status` (in_bearbeitung/versendet/wiedervorlage/gewonnen/verloren),
   `wert`, `wiedervorlage`
 

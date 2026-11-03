@@ -39,7 +39,7 @@ class Item(db.Model):
     prio = db.Column(db.String(10), nullable=True)          # rot | gelb | gruen
     liefertermin = db.Column(db.Date, nullable=True)
     bestelleingang = db.Column(db.Date, nullable=True)  # Datum, an dem die Kundenbestellung einging
-    auftrag_status = db.Column(db.String(20), nullable=True)  # neu | in_bearbeitung | in_fertigung | versandbereit | erledigt
+    auftrag_status = db.Column(db.String(20), nullable=True)  # neu | in_bearbeitung | in_fertigung | versandbereit | versendet | erledigt
     lieferbedingungen = db.Column(db.String(200), nullable=True)  # z.B. Incoterm an den Kunden
     ursprungsauftrag = db.Column(db.String(60), nullable=True)  # Referenz auf den Auftrag, aus dem dieser hervorgegangen ist
     zul_geliefert = db.Column(db.String(60), nullable=True)  # Spalte "zul. geliefert" aus dem ERP-Dashboard
