@@ -10,6 +10,7 @@ from asme_api import bp as asme_bp
 from ab_api import bp as ab_bp
 from firmen_api import bp as firmen_bp
 from lieferanten_api import bp as lieferanten_bp
+from versandliste_api import bp as versandliste_bp
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -22,6 +23,7 @@ app.register_blueprint(asme_bp)
 app.register_blueprint(ab_bp)
 app.register_blueprint(firmen_bp)
 app.register_blueprint(lieferanten_bp)
+app.register_blueprint(versandliste_bp)
 
 
 def parse_date(value):

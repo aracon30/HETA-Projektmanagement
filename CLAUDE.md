@@ -58,6 +58,8 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
 | `lieferanten_api.py` | Lieferantenbewertung Stufe 1: Bewertungslogik, Lieferung/Jahresbewertung, Auswertung |
 | `lieferanten_daten.py` | Startbestand Kriterienkatalog + Einstellungen der Lieferantenbewertung |
 | `seed_lieferanten.py` | Spielt den Lieferantenbewertungs-Startbestand idempotent ein |
+| `versandliste_api.py` | Versandliste: `/versandliste` (Live-Seite), JSON- und PDF-Export für Fertigung/Versand |
+| `vorlagen/versandliste/` | HETA-Blanko-Briefbogen + docxtpl-Vorlage (A3 Querformat) der Versandliste |
 | `requirements.txt` | Python-Abhängigkeiten |
 | `deploy/projektbesprechung.service` | systemd-Unit-Vorlage |
 | `deploy/nginx-projektbesprechung.conf` | nginx-Reverse-Proxy-Vorlage |
@@ -517,6 +519,63 @@ Lieferungs-Formular für die nächste Bewertung offen (Noten/Bemerkung
 zurückgesetzt, Firma/Datum/Bewerter bleiben stehen) und zeigt den Hinweis aus
 `result.hinweis`, noch ohne Button „Maßnahme anlegen" (das wäre Stufe 2,
 siehe oben).
+
+## Versandliste (umgesetzt 03.11.2026)
+
+Ziel: Fertigung/Versand sollen jederzeit sehen, welche Aufträge als Nächstes
+fertig werden müssen (nach Liefertermin) — bisher gab es dafür nur einen
+Ausdruck aus dem Dashboard, der nie aktuell war. Statt eines neuen Tabs in
+der Haupt-App (die Werkstatt bedient das Tool nicht aktiv) eine **eigene,
+schlanke Seite `/versandliste`**, gedacht für einen Bildschirm/Drucker in der
+Werkstatt: live aus der DB, kein App-Chrome (Sidebar/Tabs), Auto-Refresh alle
+60 Sekunden (pausiert bei `document.hidden`, wie beim Live-Polling der
+Haupt-App). Zusätzlich ein **„PDF erzeugen"-Button**, falls doch ein Zettel
+gedruckt werden soll — das PDF entsteht bei jedem Klick frisch aus der
+aktuellen DB, ist also nie der alte Stand.
+
+Code: `versandliste_api.py` (eigener Blueprint, kein Item-bezogener, daher
+nicht in `firmen_api.py`/`app.py`-Routen-Mustern, sondern eigene Datei wie
+`asme_api.py`/`ab_api.py`), Frontend `static/versandliste.html` (eigenständige
+HTML-Datei, **kein** Teil von `static/index.html`/`KIND_CONFIG`). Routen:
+`GET /versandliste` (Seite), `GET /api/versandliste` (JSON,
+Query-Parameter `von`/`bis`, beide optional), `GET /api/versandliste/pdf`
+(gleiche Parameter, liefert das PDF zum Download).
+
+**Zeitraum-Logik:** `bis` ist standardmäßig heute + 14 Tage. `von` ist
+**bewusst standardmäßig NICHT gesetzt** (nicht „heute") — ein bereits
+überschrittener Liefertermin soll in der Liste nicht verschwinden, sondern
+rot hervorgehoben weiter auftauchen, bis der Auftrag erledigt/archiviert ist
+(sonst würde ausgerechnet das dringendste Problem — ein verpasster Termin —
+aus der Liste fallen). Nur offene Aufträge (`auftrag_status != "erledigt"`,
+nicht archiviert) mit gesetztem Liefertermin, sortiert aufsteigend. Wer
+gezielt nur ein Zeitfenster sehen will, setzt „von" selbst über das
+Datumsfeld in der Live-Ansicht. In der Live-Ansicht sind Zeilen mit bereits
+überschrittenem Liefertermin rot hinterlegt, Zeilen mit Liefertermin in den
+nächsten 3 Tagen gelb.
+
+**PDF-Erzeugung** (`vorlagen/versandliste/Versandliste.docx`, docxtpl +
+`soffice --headless --convert-to pdf`, siehe `vorlagen/versandliste/README.md`
+für Details zur Vorlage): braucht **LibreOffice Writer auf dem Server**
+(`apt-get install -y libreoffice-writer`, siehe README.md „Deployment") — wie
+schon beim PDF-Vorschau-Workflow der Auftragsbestätigung (siehe dort), nur
+diesmal nicht nur zur Entwicklungszeit, sondern als echte Laufzeit-Abhängigkeit
+des Features. Ohne das Paket funktioniert die Live-Ansicht trotzdem, nur der
+PDF-Button schlägt mit einer Fehlermeldung fehl. Jeder Aufruf nutzt ein
+eigenes, temporäres LibreOffice-Nutzerprofil (`-env:UserInstallation=...` auf
+ein Temp-Verzeichnis), damit mehrere gleichzeitige PDF-Anfragen sich nicht
+gegenseitig über einen gesperrten Profil-Ordner blockieren.
+
+**Vorlage auf Wunsch von Philipp aus dem offiziellen HETA-Blanko-Briefbogen
+gebaut** (`vorlagen/versandliste/Blanco_Querformat.docx`, Original A4
+Querformat), auf **A3 Querformat** umgestellt — mehr Platz für die vielen
+Spalten. Dabei einen echten Darstellungsfehler gefunden und behoben: die
+Original-Fußzeile ist ein absolut positioniertes EMF-Bild, dessen Verankerung
+bei A3 nicht mehr zur neuen Seitenbreite passt und beim PDF-Export über
+`soffice` zwei überlappende Kopien des Fußzeilentexts erzeugt (im A4-Original
+tritt das nicht auf) — ersetzt durch echten, kurzen Fußzeilentext (siehe
+`vorlagen/versandliste/README.md`). Der Kopf (Logo + Firmenname) ist davon
+nicht betroffen (echter Text + normales Bild, keine fragile
+Absolut-Positionierung) und blieb unverändert.
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 

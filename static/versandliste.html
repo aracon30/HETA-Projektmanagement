@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Versandliste — HETA Verfahrenstechnik</title>
+<link rel="icon" href="/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --heta-blau: #023560;
+    --rot: #c0392b;
+    --gelb: #b8860b;
+    --gruen: #1e7a3c;
+    --line: #dcdfe4;
+    --paper: #f4f6f8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--paper);
+    color: #1a1a1a;
+  }
+  header {
+    background: var(--heta-blau);
+    color: #fff;
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  header .sub {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+  }
+  .controls label { opacity: 0.9; }
+  .controls input[type="date"] {
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: none;
+    font-size: 0.9rem;
+  }
+  .btn {
+    background: #fff;
+    color: var(--heta-blau);
+    border: none;
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn:hover { background: #e8eef5; }
+  .btn.ghost {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.6);
+  }
+  .btn.ghost:hover { background: rgba(255,255,255,0.12); }
+  main { padding: 20px 28px 40px; }
+  .meta-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+    color: #555;
+    font-size: 0.88rem;
+  }
+  .meta-bar b { color: #1a1a1a; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  thead th {
+    background: var(--heta-blau);
+    color: #fff;
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    position: sticky;
+    top: 0;
+  }
+  tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 1rem;
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.due-overdue { background: #fdecea; }
+  tbody tr.due-soon { background: #fff6e0; }
+  .prio-dot {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .prio-rot { background: var(--rot); }
+  .prio-gelb { background: var(--gelb); }
+  .prio-gruen { background: var(--gruen); }
+  .liefertermin-zelle { white-space: nowrap; font-weight: 600; }
+  .empty-hinweis {
+    padding: 40px;
+    text-align: center;
+    color: #777;
+    background: #fff;
+  }
+  .error-hinweis {
+    padding: 14px 18px;
+    background: #fdecea;
+    color: #8a2419;
+    border-radius: 4px;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+  }
+  footer.hinweis {
+    margin-top: 18px;
+    font-size: 0.78rem;
+    color: #888;
+  }
+  @media print {
+    header .controls, .btn { display: none !important; }
+    body { background: #fff; }
+    main { padding: 0; }
+    table { box-shadow: none; }
+    @page { size: A3 landscape; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Versandliste</h1>
+    <div class="sub" id="metaSub">lädt…</div>
+  </div>
+  <div class="controls">
+    <label for="vonInput">von</label>
+    <input type="date" id="vonInput" title="Leer lassen = auch bereits überschrittene Liefertermine anzeigen">
+    <label for="bisInput">bis</label>
+    <input type="date" id="bisInput">
+    <button class="btn ghost" id="refreshBtn">Aktualisieren</button>
+    <button class="btn" id="pdfBtn">PDF erzeugen (A3)</button>
+  </div>
+</header>
+<main>
+  <div id="errorBox"></div>
+  <div class="meta-bar">
+    <span>Zeitraum <b id="zeitraumLabel">—</b></span>
+    <span>Stand <b id="standLabel">—</b> · aktualisiert sich automatisch alle 60 s</span>
+  </div>
+  <div id="tableWrap"></div>
+  <footer class="hinweis">
+    Nur offene Aufträge (nicht erledigt/archiviert) mit Liefertermin im gewählten Zeitraum, sortiert nach Liefertermin.
+    Rot hinterlegt = Liefertermin bereits überschritten, gelb hinterlegt = in den nächsten 3 Tagen fällig.
+  </footer>
+</main>
+<script>
+const vonInput = document.getElementById("vonInput");
+const bisInput = document.getElementById("bisInput");
+let pollTimer = null;
+
+function heuteIso(offsetTage = 0){
+  const d = new Date();
+  d.setDate(d.getDate() + offsetTage);
+  return d.toISOString().slice(0, 10);
+}
+
+function fmtDatumDE(iso){
+  if(!iso) return "—";
+  const [y, m, t] = iso.split("-");
+  return `${t}.${m}.${y}`;
+}
+
+function initDates(){
+  const params = new URLSearchParams(location.search);
+  vonInput.value = params.get("von") || "";
+  bisInput.value = params.get("bis") || heuteIso(14);
+}
+
+function queryString(){
+  const teile = [];
+  if(vonInput.value) teile.push(`von=${encodeURIComponent(vonInput.value)}`);
+  if(bisInput.value) teile.push(`bis=${encodeURIComponent(bisInput.value)}`);
+  return teile.join("&");
+}
+
+async function ladeListe(){
+  const errorBox = document.getElementById("errorBox");
+  errorBox.innerHTML = "";
+  let data;
+  try{
+    const res = await fetch(`/api/versandliste?${queryString()}`);
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    data = await res.json();
+  }catch(err){
+    errorBox.innerHTML = `<div class="error-hinweis">Versandliste konnte nicht geladen werden (${err.message}). Nächster automatischer Versuch in 60 Sekunden.</div>`;
+    return;
+  }
+  document.getElementById("zeitraumLabel").textContent = data.zeitraumText;
+  document.getElementById("standLabel").textContent = data.erzeugtAm;
+  document.getElementById("metaSub").textContent = `${data.auftraege.length} Auftrag/Aufträge im Zeitraum`;
+
+  const wrap = document.getElementById("tableWrap");
+  if(data.auftraege.length === 0){
+    wrap.innerHTML = `<div class="empty-hinweis">Keine offenen Aufträge mit Liefertermin in diesem Zeitraum.</div>`;
+    return;
+  }
+  const heute = heuteIso(0);
+  const inDreiTagen = heuteIso(3);
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Liefertermin</th>
+          <th>Kommission</th>
+          <th>Kunde</th>
+          <th>Lieferumfang</th>
+          <th>Priorität</th>
+          <th>Status</th>
+          <th>Lieferbedingungen</th>
+          <th>Projektleiter</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.auftraege.map(a => {
+          let cls = "";
+          if(a.liefertermin < heute) cls = "due-overdue";
+          else if(a.liefertermin <= inDreiTagen) cls = "due-soon";
+          return `
+            <tr class="${cls}">
+              <td class="liefertermin-zelle">${a.liefertermin_de}</td>
+              <td>${a.kommission || "—"}</td>
+              <td>${a.kunde || "—"}</td>
+              <td>${a.lieferumfang || "—"}</td>
+              <td>${a.prio ? `<span class="prio-dot prio-${a.prio}"></span>` : ""}${a.prioLabel}</td>
+              <td>${a.statusLabel}</td>
+              <td>${a.lieferbedingungen || "—"}</td>
+              <td>${a.projektleiter || "—"}</td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function schedulePoll(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => {
+    if(document.hidden) return;
+    ladeListe();
+  }, 60000);
+}
+
+document.getElementById("refreshBtn").addEventListener("click", ladeListe);
+document.getElementById("pdfBtn").addEventListener("click", () => {
+  window.open(`/api/versandliste/pdf?${queryString()}`, "_blank");
+});
+vonInput.addEventListener("change", ladeListe);
+bisInput.addEventListener("change", ladeListe);
+
+initDates();
+ladeListe();
+schedulePoll();
+</script>
+</body>
+</html>

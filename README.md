@@ -37,6 +37,16 @@ Für den produktiven Dauerbetrieb: Backup dieser Datei regelmäßig einplanen
 (z.B. per Cronjob auf ein Netzlaufwerk kopieren), bis eine "echte"
 Datenbank (Postgres) im Rahmen der nächsten Ausbaustufe angebunden wird.
 
+**Zusätzlich auf dem Server nötig: LibreOffice Writer** (für die
+PDF-Erzeugung der Versandliste, `versandliste_api.py` ruft `soffice
+--headless --convert-to pdf` auf):
+```bash
+sudo apt-get install -y libreoffice-writer
+```
+Ohne dieses Paket funktioniert alles andere im Tool weiter normal — nur der
+Button „PDF erzeugen“ in der Versandliste (`/versandliste`) schlägt dann mit
+einer Fehlermeldung fehl.
+
 ### 3. Als Dienst einrichten (systemd + Gunicorn)
 
 ```bash
