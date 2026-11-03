@@ -70,6 +70,7 @@ STATUS_LABEL = {
     "in_bearbeitung": "In Bearbeitung",
     "in_fertigung": "In Fertigung",
     "versandbereit": "Versandbereit",
+    "versendet": "Versendet",
     "erledigt": "Erledigt",
 }
 
@@ -106,11 +107,14 @@ def zeitraum_text(von, bis):
 
 
 def hole_auftraege(von, bis):
+    """"versendet" ausgeschlossen wie "erledigt": sobald ein Auftrag raus ist,
+    gehört er nicht mehr in die Versandliste, auch wenn er wegen Nachbesserung
+    o.ä. noch nicht formal "erledigt" ist (siehe CLAUDE.md)."""
     bedingungen = [
         Item.type == "auftrag",
         Item.liefertermin.isnot(None),
         Item.liefertermin <= bis,
-        Item.auftrag_status != "erledigt",
+        Item.auftrag_status.notin_(["erledigt", "versendet"]),
         Item.archiviert.isnot(True),
     ]
     if von:
