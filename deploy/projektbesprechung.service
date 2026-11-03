@@ -7,7 +7,7 @@ After=network.target
 User=www-data
 Group=www-data
 WorkingDirectory=/opt/projektbesprechung
-Environment="PATH=/opt/projektbesprechung/venv/bin"
+Environment="PATH=/opt/projektbesprechung/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 # Für die Microsoft-To-Do-Anbindung: Werte von IT/Heiko eintragen.
 # Solange diese leer/auskommentiert sind, läuft das Tool normal weiter,
