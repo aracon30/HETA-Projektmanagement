@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Board-Pflege — HETA</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --paper:#F4F5F6; --panel:#FFFFFF; --ink:#1B2430; --steel:#00335F; --steel-deep:#001F3D; --steel-soft:#E3E9EF; --slate:#6C7A85; --line:#DCDFDA; --copper:#9C5A34; --red:#B0432E; --radius:3px; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Barlow',sans-serif;}
+  .topbar{background:var(--steel-deep);color:#EDEFEA;padding:12px 20px;display:flex;align-items:center;gap:16px;}
+  .topbar h1{margin:0;font-size:1.2rem;font-weight:800;}
+  .topbar a{margin-left:auto;color:#C7D3D8;font-size:.85rem;}
+  .wrap{max-width:900px;margin:24px auto;padding:0 16px;}
+  .panel{background:var(--panel);padding:18px 20px;border-radius:var(--radius);box-shadow:0 1px 2px rgba(27,36,48,.06);margin-bottom:20px;}
+  h2{margin:0 0 14px;font-size:1rem;color:var(--steel);}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;}
+  label{font-size:.75rem;color:var(--slate);font-weight:600;display:block;}
+  input,select,textarea{width:100%;font-family:inherit;font-size:.9rem;padding:7px 9px;border:1px solid var(--line);border-radius:var(--radius);margin-top:3px;background:var(--paper);color:var(--ink);}
+  .breit{grid-column:span 4;} .halb{grid-column:span 2;}
+  button{font-family:inherit;font-weight:600;font-size:.85rem;padding:8px 16px;border-radius:var(--radius);border:none;cursor:pointer;background:var(--steel);color:#fff;}
+  .hinweis{font-size:.78rem;color:var(--slate);margin-left:10px;}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;}
+  th{text-align:left;font-size:.7rem;text-transform:uppercase;color:var(--slate);padding:6px 8px;border-bottom:2px solid var(--line);}
+  td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .typ{font-size:.7rem;font-weight:600;text-transform:uppercase;padding:2px 8px;border-radius:20px;background:var(--steel-soft);color:var(--steel);}
+  .alt td{color:var(--slate);}
+  .del{background:none;color:var(--red);padding:2px 6px;}
+  .mono{font-family:'IBM Plex Mono',monospace;font-size:.8rem;}
+  @media (max-width:640px){ .row{grid-template-columns:1fr 1fr;} .breit,.halb{grid-column:span 2;} }
+</style>
+</head>
+<body>
+<div class="topbar"><h1>Board-Pflege · News, Besucher, Termine</h1><a href="/board" target="_blank">Board ansehen ↗</a></div>
+<div class="wrap">
+  <div class="panel">
+    <h2>Neuer Eintrag</h2>
+    <form id="form">
+      <div class="row">
+        <div><label>Art<select name="typ" id="typ">
+          <option value="news">News</option><option value="besucher">Besucher</option><option value="termin">Termin</option>
+        </select></label></div>
+        <div class="halb"><label id="titelLabel">Überschrift<input name="titel" required maxlength="200"></label></div>
+        <div><label>Datum<input type="date" name="datum"></label></div>
+        <div class="breit"><label>Text (optional)<textarea name="text" rows="2"></textarea></label></div>
+        <div><label>Uhrzeit (optional)<input name="uhrzeit" placeholder="z.B. 10:00"></label></div>
+        <div><label>Anzeigen bis (optional)<input type="date" name="sichtbarBis"></label></div>
+      </div>
+      <button type="submit">Speichern</button>
+      <span class="hinweis" id="hinweis"></span>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Einträge</h2>
+    <table><thead><tr><th>Art</th><th>Titel</th><th>Datum</th><th>Anzeigen bis</th><th></th></tr></thead><tbody id="liste"></tbody></table>
+  </div>
+</div>
+<script>
+const TYPEN = {news:"News", besucher:"Besucher", termin:"Termin"};
+const TITEL = {news:"Überschrift", besucher:"Besucher (Name, Firma)", termin:"Termin"};
+const HINWEIS = {
+  news: "News ohne „Anzeigen bis“ bleiben bis zum Löschen sichtbar.",
+  besucher: "Am Besuchstag erscheint ein Willkommen-Banner, danach verschwindet der Eintrag automatisch.",
+  termin: "Verschwindet nach dem Termindatum automatisch vom Board.",
+};
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = iso => iso ? iso.split("-").reverse().join(".") : "–";
+const heute = new Date().toISOString().slice(0, 10);
+
+function typWechsel(){
+  const t = document.getElementById("typ").value;
+  document.getElementById("titelLabel").firstChild.textContent = TITEL[t];
+  document.getElementById("hinweis").textContent = HINWEIS[t];
+}
+
+function abgelaufen(m){
+  return (m.sichtbarBis && m.sichtbarBis < heute) || (m.typ !== "news" && m.datum && m.datum < heute);
+}
+
+async function laden(){
+  const liste = await (await fetch("/api/board/meldungen")).json();
+  document.getElementById("liste").innerHTML = liste.length ? liste.map(m => `
+    <tr class="${abgelaufen(m) ? "alt" : ""}" title="${abgelaufen(m) ? "Wird nicht mehr angezeigt" : ""}">
+      <td><span class="typ">${TYPEN[m.typ]}</span></td>
+      <td><b>${esc(m.titel)}</b>${m.text ? `<br>${esc(m.text)}` : ""}</td>
+      <td class="mono">${fmt(m.datum)}${m.uhrzeit ? " " + esc(m.uhrzeit) : ""}</td>
+      <td class="mono">${fmt(m.sichtbarBis)}</td>
+      <td><button class="del" onclick="loeschen(${m.id})">Löschen</button></td>
+    </tr>`).join("") : `<tr><td colspan="5">Noch keine Einträge.</td></tr>`;
+}
+
+async function loeschen(id){
+  if (!confirm("Eintrag wirklich löschen?")) return;
+  await fetch(`/api/board/meldungen/${id}`, {method:"DELETE"});
+  laden();
+}
+
+document.getElementById("typ").addEventListener("change", typWechsel);
+document.getElementById("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const daten = Object.fromEntries(new FormData(e.target));
+  if (daten.typ !== "news" && !daten.datum) { alert("Bitte ein Datum angeben."); return; }
+  const r = await fetch("/api/board/meldungen", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(daten)});
+  if (!r.ok) { alert((await r.json()).error || "Speichern fehlgeschlagen"); return; }
+  e.target.reset(); typWechsel(); laden();
+});
+typWechsel();
+laden();
+</script>
+</body>
+</html>

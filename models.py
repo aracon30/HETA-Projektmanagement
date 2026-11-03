@@ -942,3 +942,28 @@ class BewertungNote(db.Model):
     note = db.Column(db.Integer, nullable=False)  # 1-4
 
     kriterium = db.relationship("BewertungKriterium")
+
+
+class BoardMeldung(db.Model):
+    """Info für das digitale Board (/board): News, Besucher oder Termin."""
+    __tablename__ = "board_meldungen"
+    id = db.Column(db.Integer, primary_key=True)
+    typ = db.Column(db.String(20), nullable=False)  # news | besucher | termin
+    titel = db.Column(db.String(200), nullable=False)
+    text = db.Column(db.Text, nullable=True)
+    datum = db.Column(db.Date, nullable=True)  # Besuchs-/Termindatum
+    uhrzeit = db.Column(db.String(20), nullable=True)  # frei, z.B. "10:00" oder "10–12 Uhr"
+    sichtbar_bis = db.Column(db.Date, nullable=True)  # leer = bis gelöscht (Besucher/Termine verschwinden nach ihrem Datum)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "typ": self.typ,
+            "titel": self.titel,
+            "text": self.text,
+            "datum": self.datum.isoformat() if self.datum else None,
+            "uhrzeit": self.uhrzeit,
+            "sichtbarBis": self.sichtbar_bis.isoformat() if self.sichtbar_bis else None,
+            "erstelltAm": self.created_at.isoformat() + "Z" if self.created_at else None,
+        }

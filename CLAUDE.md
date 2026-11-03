@@ -58,6 +58,9 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
 | `lieferanten_api.py` | Lieferantenbewertung Stufe 1: Bewertungslogik, Lieferung/Jahresbewertung, Auswertung |
 | `lieferanten_daten.py` | Startbestand Kriterienkatalog + Einstellungen der Lieferantenbewertung |
 | `seed_lieferanten.py` | Spielt den Lieferantenbewertungs-Startbestand idempotent ein |
+| `board_api.py` | Digitales Board (`/board`, `/board/pflege`): Daten-API + News/Besucher/Termine |
+| `static/board.html`, `static/board-pflege.html` | Board-Anzeige für den Wandbildschirm bzw. Pflegeseite |
+| `deploy/board-kiosk.md` | Einrichtung Raspberry Pi als Board-Bildschirm (Kiosk-Modus) |
 | `requirements.txt` | Python-Abhängigkeiten |
 | `deploy/projektbesprechung.service` | systemd-Unit-Vorlage |
 | `deploy/nginx-projektbesprechung.conf` | nginx-Reverse-Proxy-Vorlage |
@@ -517,6 +520,25 @@ Lieferungs-Formular für die nächste Bewertung offen (Noten/Bemerkung
 zurückgesetzt, Firma/Datum/Bewerter bleiben stehen) und zeigt den Hinweis aus
 `result.hinweis`, noch ohne Button „Maßnahme anlegen" (das wäre Stufe 2,
 siehe oben).
+
+## Digitales Board (Stufe 1 umgesetzt, 03.11.2026)
+
+Reine Lese-Ansicht für einen Wandbildschirm (Büro/Werkstatt) unter `/board`,
+eigene Seite `static/board.html` (nicht Teil von `index.html`, kein Login,
+kein Mauszeiger). Wechselt alle 20 s zwischen vier Seiten: **Aufträge**
+(offen, nicht archiviert, Liefertermin ≤ 14 Tage oder Prio rot),
+**Aufgaben** (offene Verlaufseinträge, fällig ≤ 7 Tage inkl. überfällig),
+**Kennzahlen** (aus denselben Daten berechnet, keine eigene Pflege) und
+**Infos** (News/Besucher/Termine). `/board?seite=N` hält eine Seite fest.
+Bewusst als Tabellen/Listen, **kein Kanban** (siehe oben). Daten: `GET
+/api/board` (`board_api.py`). Nur die Infos werden eigens gepflegt:
+Modell `BoardMeldung` (Tabelle `board_meldungen`), Pflegeseite
+`/board/pflege`. Besucher/Termine verschwinden nach ihrem Datum
+automatisch, News nach „Anzeigen bis“ (leer = bis gelöscht); Besucher am
+heutigen Tag erscheinen als „Herzlich willkommen“-Banner. Die neue Tabelle
+legt `db.create_all()` in `seed_lieferanten.py` beim normalen `update.sh`
+an, `migrate.py` musste dafür nicht erweitert werden. Pi-Einrichtung:
+`deploy/board-kiosk.md`.
 
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 

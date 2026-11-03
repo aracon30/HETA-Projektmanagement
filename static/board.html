@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HETA Board</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F5F6; --panel:#FFFFFF; --ink:#1B2430;
+    --steel:#00335F; --steel-deep:#001F3D; --steel-soft:#E3E9EF;
+    --slate:#6C7A85; --line:#DCDFDA;
+    --copper:#9C5A34;
+    --red:#B0432E; --red-soft:#F6E1DC;
+    --amber:#C4872A; --amber-soft:#F6EAD5;
+    --green:#4B7A56; --green-soft:#DFEBE2;
+    font-size:1.6vh; /* alles skaliert mit der Bildschirmhöhe */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:'Barlow',sans-serif;cursor:none;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  header{height:9vh;background:var(--steel-deep);color:#EDEFEA;display:flex;align-items:center;gap:2.5rem;padding:0 3vw;}
+  header img{height:4.5vh;background:#fff;padding:.5vh .8vh;border-radius:3px;}
+  header h1{margin:0;font-size:2.6rem;font-weight:800;letter-spacing:.01em;}
+  .tabs{display:flex;gap:.6rem;margin-left:1rem;}
+  .tabs span{font-size:1.15rem;font-weight:600;padding:.4rem 1rem;border-radius:2rem;color:#9FB0BE;}
+  .tabs span.on{background:rgba(255,255,255,.14);color:#fff;}
+  .clock{margin-left:auto;text-align:right;}
+  .clock .t{font-size:2.8rem;font-weight:600;line-height:1;}
+  .clock .d{font-size:1.1rem;color:#9FB0BE;margin-top:.3rem;}
+  .progress{height:.5vh;background:var(--steel);transform-origin:left;}
+
+  main{height:90.5vh;padding:3vh 3vw;}
+  .slide{display:none;height:100%;flex-direction:column;}
+  .slide.on{display:flex;}
+  h2{margin:0 0 2.2vh;font-size:2.4rem;font-weight:800;color:var(--steel);display:flex;align-items:baseline;gap:1.2rem;}
+  h2 small{font-size:1.2rem;font-weight:500;color:var(--slate);}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);box-shadow:0 1px 2px rgba(27,36,48,.06);}
+  th{text-align:left;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;color:var(--slate);font-weight:600;padding:1.2vh 1.2rem;border-bottom:2px solid var(--line);}
+  td{font-size:1.45rem;padding:1.3vh 1.2rem;border-bottom:1px solid var(--line);vertical-align:top;}
+  td.komm{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--steel);white-space:nowrap;}
+  td.sub{color:var(--slate);font-size:1.2rem;}
+  td.datum{font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+  .ueber{color:var(--red);font-weight:700;}
+  .heute{color:var(--amber);font-weight:700;}
+  .dot{display:inline-block;width:1.1rem;height:1.1rem;border-radius:50%;vertical-align:middle;}
+  .dot.rot{background:var(--red);} .dot.gelb{background:var(--amber);} .dot.gruen{background:var(--green);} .dot.leer{background:var(--line);}
+  .badge{font-size:1rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:.25rem .7rem;border-radius:2rem;background:var(--steel-soft);color:var(--steel);white-space:nowrap;}
+  .mehr{margin-top:1.4vh;color:var(--slate);font-size:1.2rem;}
+
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:2.5vh 2vw;flex:1;}
+  .kpi{background:var(--panel);border-top:.6vh solid var(--steel);padding:3vh 2vw;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 2px rgba(27,36,48,.06);}
+  .kpi .wert{font-size:8rem;font-weight:800;line-height:1;color:var(--steel);}
+  .kpi .label{font-size:1.7rem;font-weight:600;}
+  .kpi.warn{border-top-color:var(--red);} .kpi.warn .wert{color:var(--red);}
+  .kpi.ok .wert{color:var(--green);}
+
+  .infos{display:grid;grid-template-columns:1fr 1.3fr;gap:2.5vw;flex:1;min-height:0;}
+  .spalte h3{margin:0 0 1.5vh;font-size:1.3rem;text-transform:uppercase;letter-spacing:.05em;color:var(--slate);}
+  .karte{background:var(--panel);padding:2vh 1.6rem;margin-bottom:1.5vh;border-left:.5vw solid var(--steel);box-shadow:0 1px 2px rgba(27,36,48,.06);}
+  .karte.besucher{border-left-color:var(--copper);}
+  .karte .wann{font-family:'IBM Plex Mono',monospace;font-size:1.25rem;color:var(--copper);font-weight:600;}
+  .karte .titel{font-size:1.9rem;font-weight:700;margin-top:.3rem;}
+  .karte .text{font-size:1.35rem;color:var(--slate);margin-top:.5rem;white-space:pre-line;}
+  .karte.news .titel{font-size:2.2rem;}
+  .leer{color:var(--slate);font-size:1.5rem;padding:2vh 0;}
+  .willkommen{background:var(--steel);color:#fff;padding:2.2vh 1.6rem;margin-bottom:1.5vh;}
+  .willkommen .label{font-size:1.1rem;text-transform:uppercase;letter-spacing:.06em;color:#9FB0BE;}
+  .willkommen .titel{font-size:2.4rem;font-weight:800;margin-top:.3rem;}
+  .fehler{position:fixed;bottom:1vh;right:1.5vw;font-size:1rem;color:var(--red);}
+</style>
+</head>
+<body>
+<header>
+  <img src="/heta-logo.png" alt="HETA">
+  <h1>Board</h1>
+  <div class="tabs" id="tabs"></div>
+  <div class="clock"><div class="t mono" id="uhr"></div><div class="d" id="datum"></div></div>
+</header>
+<div class="progress" id="progress"></div>
+<main id="main"></main>
+<div class="fehler" id="fehler"></div>
+
+<script>
+const SEITE_SEK = 20;   // Anzeigedauer je Seite
+const DATEN_SEK = 60;   // Daten neu laden
+const MAX_ZEILEN = 11;  // Tabellenzeilen je Seite (Rest als "+ x weitere")
+const STATUS = {neu:"Neu", in_bearbeitung:"In Bearbeitung", in_fertigung:"In Fertigung", versandbereit:"Versandbereit"};
+
+let daten = null, seite = 0, seitenStart = Date.now();
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = iso => { const [y,m,d] = iso.split("-"); return `${d}.${m}.${y.slice(2)}`; };
+function terminKlasse(iso){ return iso < daten.heute ? "ueber" : iso === daten.heute ? "heute" : ""; }
+function wochentag(iso){ return new Date(iso + "T12:00").toLocaleDateString("de-DE", {weekday:"short", day:"2-digit", month:"2-digit"}); }
+function mehr(n){ return n > MAX_ZEILEN ? `<div class="mehr">+ ${n - MAX_ZEILEN} weitere</div>` : ""; }
+
+function seiteAuftraege(){
+  const a = daten.auftraege;
+  if (!a.length) return `<h2>Aufträge</h2><div class="leer">Keine Aufträge mit Liefertermin in den nächsten 14 Tagen.</div>`;
+  return `<h2>Aufträge <small>Liefertermin in den nächsten 14 Tagen oder Priorität rot</small></h2>
+  <table><tr><th></th><th>Kommission</th><th>Kunde / Lieferumfang</th><th>Status</th><th>Projektleiter</th><th>Liefertermin</th></tr>
+  ${a.slice(0, MAX_ZEILEN).map(x => `<tr>
+    <td><span class="dot ${x.prio || "leer"}"></span></td>
+    <td class="komm">${esc(x.kommission)}</td>
+    <td>${esc(x.kunde)}<br><span class="sub">${esc((x.lieferumfang || "").split("\n")[0].slice(0, 90))}</span></td>
+    <td>${x.status ? `<span class="badge">${esc(STATUS[x.status] || x.status)}</span>` : ""}</td>
+    <td>${esc(x.projektleiter)}</td>
+    <td class="datum ${x.liefertermin ? terminKlasse(x.liefertermin) : ""}">${x.liefertermin ? fmt(x.liefertermin) : "–"}</td>
+  </tr>`).join("")}</table>${mehr(a.length)}`;
+}
+
+function seiteAufgaben(){
+  const a = daten.aufgaben;
+  if (!a.length) return `<h2>Aufgaben</h2><div class="leer">Keine offenen Aufgaben fällig in den nächsten 7 Tagen.</div>`;
+  return `<h2>Aufgaben <small>offen, fällig bis in 7 Tagen</small></h2>
+  <table><tr><th>Fällig</th><th>Aufgabe</th><th>Kommission / Kunde</th><th>Verantwortlich</th></tr>
+  ${a.slice(0, MAX_ZEILEN).map(x => `<tr>
+    <td class="datum ${terminKlasse(x.faelligkeit)}">${fmt(x.faelligkeit)}</td>
+    <td>${esc(x.text.slice(0, 120))}</td>
+    <td><span class="komm mono">${esc(x.kommission)}</span><br><span class="sub">${esc(x.kunde)}</span></td>
+    <td>${esc(x.verantwortlich || "–")}</td>
+  </tr>`).join("")}</table>${mehr(a.length)}`;
+}
+
+function seiteKennzahlen(){
+  const k = daten.kennzahlen;
+  const kpi = (wert, label, warnBei0 = false) =>
+    `<div class="kpi ${warnBei0 ? (wert > 0 ? "warn" : "ok") : ""}"><div class="wert">${wert}</div><div class="label">${label}</div></div>`;
+  return `<h2>Kennzahlen <small>Stand heute</small></h2><div class="kpis">
+    ${kpi(k.auftraegeOffen, "Offene Aufträge")}
+    ${kpi(k.lieferungDieseWoche, "Liefertermine diese Woche")}
+    ${kpi(k.angeboteOffen, "Offene Angebote")}
+    ${kpi(k.auftraegeUeberfaellig, "Aufträge über Liefertermin", true)}
+    ${kpi(k.prioRot, "Aufträge Priorität rot", true)}
+    ${kpi(k.aufgabenUeberfaellig, "Überfällige Aufgaben", true)}
+  </div>`;
+}
+
+function karte(m){
+  const wann = m.datum ? `${wochentag(m.datum)}${m.uhrzeit ? " · " + esc(m.uhrzeit) : ""}` : esc(m.uhrzeit || "");
+  return `<div class="karte ${m.typ}">${wann ? `<div class="wann">${wann}</div>` : ""}
+    <div class="titel">${esc(m.titel)}</div>${m.text ? `<div class="text">${esc(m.text)}</div>` : ""}</div>`;
+}
+
+function seiteInfos(){
+  const m = daten.meldungen;
+  const besucherHeute = m.filter(x => x.typ === "besucher" && x.datum === daten.heute);
+  const termine = m.filter(x => x.typ !== "news" && !besucherHeute.includes(x)).slice(0, 5);
+  const news = m.filter(x => x.typ === "news").sort((a, b) => b.id - a.id).slice(0, 4);
+  return `<h2>Infos</h2><div class="infos">
+    <div class="spalte"><h3>Besucher &amp; Termine</h3>
+      ${besucherHeute.map(b => `<div class="willkommen"><div class="label">Herzlich willkommen${b.uhrzeit ? " · " + esc(b.uhrzeit) : ""}</div><div class="titel">${esc(b.titel)}</div></div>`).join("")}
+      ${termine.length ? termine.map(karte).join("") : (besucherHeute.length ? "" : `<div class="leer">Keine anstehenden Termine.</div>`)}
+    </div>
+    <div class="spalte"><h3>News</h3>${news.length ? news.map(karte).join("") : `<div class="leer">Keine aktuellen News.</div>`}</div>
+  </div>`;
+}
+
+const SEITEN = [["Aufträge", seiteAuftraege], ["Aufgaben", seiteAufgaben], ["Kennzahlen", seiteKennzahlen], ["Infos", seiteInfos]];
+
+function zeichnen(){
+  if (!daten) return;
+  document.getElementById("tabs").innerHTML = SEITEN.map(([n], i) => `<span class="${i === seite ? "on" : ""}">${n}</span>`).join("");
+  document.getElementById("main").innerHTML = `<section class="slide on">${SEITEN[seite][1]()}</section>`;
+}
+
+async function laden(){
+  try {
+    const r = await fetch("/api/board");
+    if (!r.ok) throw new Error(r.status);
+    daten = await r.json();
+    document.getElementById("fehler").textContent = "";
+    zeichnen();
+  } catch (e) {
+    document.getElementById("fehler").textContent = "Verbindung zum Server unterbrochen – letzte Daten werden angezeigt";
+  }
+}
+
+function takt(){
+  const jetzt = new Date();
+  document.getElementById("uhr").textContent = jetzt.toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"});
+  document.getElementById("datum").textContent = jetzt.toLocaleDateString("de-DE", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
+  if (festeSeite) return;
+  const anteil = (Date.now() - seitenStart) / (SEITE_SEK * 1000);
+  if (anteil >= 1) { seite = (seite + 1) % SEITEN.length; seitenStart = Date.now(); zeichnen(); }
+  document.getElementById("progress").style.transform = `scaleX(${Math.min(anteil, 1)})`;
+}
+
+// Seite per URL festhalten, z.B. /board?seite=2 für einen zweiten Bildschirm nur mit Kennzahlen
+const fest = new URLSearchParams(location.search).get("seite");
+const festeSeite = fest !== null;
+if (festeSeite) seite = Math.max(0, Math.min(SEITEN.length - 1, (parseInt(fest, 10) || 1) - 1));
+
+laden();
+setInterval(laden, DATEN_SEK * 1000);
+setInterval(takt, 250);
+takt();
+// Einmal nachts neu laden, damit Browser-Speicher und neue Board-Versionen sauber übernommen werden
+const neuladen = new Date(); neuladen.setHours(27, 0, 0, 0); // morgen 03:00
+setTimeout(() => location.reload(), neuladen - Date.now());
+</script>
+</body>
+</html>
