@@ -622,6 +622,53 @@ tritt das nicht auf) — ersetzt durch echten, kurzen Fußzeilentext (siehe
 nicht betroffen (echter Text + normales Bild, keine fragile
 Absolut-Positionierung) und blieb unverändert.
 
+## Tablet/Handy-Darstellung der Haupt-App (umgesetzt 04.11.2026)
+
+Anlass: Darstellung auf dem in der Werkstatt genutzten Samsung Galaxy Tab
+Active5 (8", ca. 600×960 CSS-Pixel im Hochformat) war nicht nutzbar — anders
+als die eigens dafür gebaute Versandliste (siehe oben) soll hier die
+**gesamte** Haupt-App auf Tablet/Handy anzeig- UND bedienbar sein, nicht nur
+anschaubar.
+
+**Gefundener Fehler:** Unter 880px kollabierte die 3. Grid-Zeile von `.app`
+auf ~1px, wodurch `.sidebar` (die Auftrags-/Angebots-/Anfragenliste)
+praktisch unsichtbar wurde. Ursache: `.app` reduziert bei schmaler Breite
+`grid-template-columns` von 2 auf 1 Spalte, ohne `.sidebar`/`#main` dabei
+explizit neu zu platzieren — beide landeten dadurch in einer gemeinsamen,
+automatisch höhenbemessenen Grid-Zeile, und `.sidebar`s innerer `flex:1`-
+Container hat ohne definierten Höhenkontext in so einer Zeile keine
+sinnvolle Höhe, wodurch die Zeile auf quasi nichts zusammenschrumpfte.
+
+**Fix (Muster für alle Listen+Detail-Ansichten):** Liste und Detail liegen
+unter 880px bewusst in **derselben** Grid-Zelle übereinander
+(`grid-row`/`grid-column` beider Elemente explizit gleich gesetzt), sichtbar
+ist per `!important`-Regel abwechselnd nur eine Seite, gesteuert über eine
+Modifier-Klasse, die den Umschalt-Status hält:
+- Haupt-App (Anfragen/Angebote/Aufträge): `.app.mobile-detail-open`, gesetzt
+  von `updateMobileDetailView()` (`static/index.html`) je nachdem, ob
+  `selectedId[currentTab]` gesetzt ist. Ein neuer `← Liste`-Button
+  (`#mobileBackBtn`, Klasse `.mobile-back-btn`) oben im (sticky) Auftragskopf
+  setzt die Auswahl zurück und schaltet so zur Liste zurück.
+- Firmen-Reiter (`.fm-firmen-layout`, eigenes Muster, nicht Teil von
+  `KIND_CONFIG`): analog über `.fm-firmen-layout.detail-open`, gesteuert von
+  `updateFmMobileView()`, Rückkehr-Button `#fmMobileBackBtn`. Vorher stapelte
+  sich hier unter 880px nur die Liste (max. 40vh) über dem Steckbrief — lief
+  zwar nicht in den obigen 1px-Bug, zwang aber dazu, bei jeder Firma erst an
+  der Liste vorbeizuscrollen, um den (oft langen) Steckbrief mit Kontakten/
+  Zeitstrahl/Bewertungen zu sehen.
+- Die `.mobile-back-btn`-Basisklasse (`display:none`, erst ab 880px über
+  `!important` sichtbar) ist geteilt — ein neues "Zurück"-Element für eine
+  künftige dritte Liste+Detail-Ansicht kann sie einfach mitnutzen.
+
+**Geprüft, aber kein Fix nötig:** Zeitplan-Tab (Gantt), Aufgaben-Tab
+(Warteliste) und alle Modal-Dialoge (`.modal-backdrop`/`.modal`) waren schon
+vorher für schmale Breiten brauchbar (volle Breite, `overflow`-Scroll wo
+nötig, keine horizontale Seiten-Überlauf) — mit Playwright bei 600×960
+(Tablet Hochformat), 960×600 (Tablet Querformat, liegt über der 880px-
+Schwelle und zeigt dadurch bewusst weiter das normale Zweispalten-Layout)
+und 390×844 (Handy) nachgestellt und per `document.documentElement.
+scrollWidth`-Vergleich auf horizontalen Überlauf geprüft (überall 0px).
+
 ## Wichtige Betriebs-Hinweise / Stolperfallen
 
 - **Deployment per Git:** `/opt/projektbesprechung` ist ein Git-Checkout
