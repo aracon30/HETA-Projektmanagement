@@ -367,6 +367,8 @@ def update_verlauf(eintrag_id):
         eintrag.status_changed_at = datetime.utcnow()
     if "text" in data:
         eintrag.text = data["text"]
+    if "erstelltVon" in data:
+        eintrag.erstellt_von = data["erstelltVon"]
     if "verantwortlich" in data:
         eintrag.verantwortlich = data["verantwortlich"]
     if "faelligkeit" in data:
