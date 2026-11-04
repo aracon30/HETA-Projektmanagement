@@ -29,8 +29,20 @@
   .display{font-family:'Barlow', sans-serif; font-weight:800;}
   a{color:inherit;} button{font-family:inherit;}
 
-  .app{ display:grid; grid-template-columns:clamp(300px, 20vw, 400px) 1fr; grid-template-rows:auto auto 1fr; height:100vh; }
-  @media (max-width: 880px){ .app{grid-template-columns:1fr;} .sidebar{border-right:none; border-bottom:1px solid var(--line);} }
+  .app{ display:grid; grid-template-columns:clamp(300px, 20vw, 400px) 1fr; grid-template-rows:auto auto 1fr; height:100vh; height:100dvh; }
+  /* Unter 880px (Tablet/Handy) zeigen Liste und Detail abwechselnd den vollen Bildschirm statt
+     nebeneinander — sonst kollabiert die 3. Grid-Zeile auf ~1px, weil .sidebar (flex:1 im Inneren)
+     und #main sich sonst ohne definierte Höhe ein "auto"-Grid-Row teilen (Fund 04.11.2026, Samsung
+     Galaxy Tab Active5). Beide liegen hier bewusst in derselben Grid-Zelle (grid-row:3) übereinander,
+     sichtbar ist je nach .app.mobile-detail-open nur eine Seite — siehe updateMobileDetailView(). */
+  @media (max-width: 880px){
+    .app{grid-template-columns:1fr; grid-template-rows:auto auto 1fr;}
+    .sidebar{border-right:none; border-bottom:1px solid var(--line); grid-row:3; grid-column:1; min-height:0;}
+    #main{grid-row:3; grid-column:1;}
+    .app.mobile-detail-open .sidebar{display:none !important;}
+    .app:not(.mobile-detail-open) #main{display:none !important;}
+    .mobile-back-btn{display:inline-flex !important;}
+  }
 
   .topbar{ grid-column:1 / -1; display:flex; align-items:center; gap:14px; padding:14px 24px; background:var(--steel-deep); color:#EDEFEA; flex-wrap:wrap; }
   .topbar .mark{ display:flex; align-items:center; }
@@ -120,6 +132,7 @@
   }
 
   .order-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding-bottom:16px; margin-bottom:18px; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; background:var(--paper); }
+  .mobile-back-btn{ display:none; align-items:center; gap:6px; margin-bottom:10px; padding:8px 4px; font-size:0.86rem; }
   .order-head .komm{ display:inline-block; font-size:1rem; font-family:'IBM Plex Mono', monospace; font-weight:700; letter-spacing:0.02em; color:var(--steel); background:var(--steel-soft); padding:5px 14px; border-radius:20px; margin-bottom:9px; }
   .order-head h2{ font-size:1.55rem; margin:0; display:flex; align-items:center; gap:8px; }
   .prio-tag{ display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; font-size:0.76rem; font-weight:600; white-space:nowrap; margin-top:2px; border:none; font-family:inherit; }
@@ -572,7 +585,17 @@
   .fm-subnav-btn.active{ color:var(--steel); border-bottom-color:var(--steel); }
   .fm-content{ min-height:0; overflow:hidden; display:grid; }
   .fm-firmen-layout{ display:grid; grid-template-columns:clamp(280px, 22vw, 380px) minmax(0, 1fr); min-height:0; min-width:0; }
-  @media (max-width: 880px){ .fm-firmen-layout{grid-template-columns:minmax(0, 1fr); overflow-y:auto;} .fm-list{border-right:none; border-bottom:1px solid var(--line); max-height:40vh;} .fm-detail{overflow-y:visible;} }
+  /* Unter 880px (Tablet/Handy): Liste und Detail abwechselnd statt nebeneinander, gleiches Muster
+     wie .app (siehe dortigen Kommentar) — sonst müsste man an jeder Firma erst an einer bis zu
+     40vh hohen Liste vorbeiscrollen, um den oft langen Steckbrief zu sehen (Fund 04.11.2026).
+     Toggle über .fm-firmen-layout.detail-open, siehe updateFmMobileView(). */
+  @media (max-width: 880px){
+    .fm-firmen-layout{ grid-template-columns:1fr; grid-template-rows:1fr; overflow-y:auto; }
+    .fm-list{ grid-row:1; grid-column:1; border-right:none; min-height:0; }
+    .fm-detail{ grid-row:1; grid-column:1; overflow-y:visible; }
+    .fm-firmen-layout.detail-open .fm-list{display:none !important;}
+    .fm-firmen-layout:not(.detail-open) .fm-detail{display:none !important;}
+  }
   .fm-list{ border-right:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; min-height:0; overflow:hidden; }
   .fm-list-controls{ padding:14px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
   .fm-list-items{ overflow-y:auto; flex:1; padding:8px; }
@@ -1276,6 +1299,17 @@ function sortItems(list){
 function activateTab(tab){
   if(tab !== currentTab && activeInlineEdit){ guardUnsavedInlineEdit(() => _activateTabNow(tab)); return; }
   _activateTabNow(tab);
+}
+
+// Unter 880px (Tablet/Handy) zeigen Liste und Detail abwechselnd den vollen
+// Bildschirm (siehe CSS .app.mobile-detail-open) statt nebeneinander — diese
+// Klasse steuert, welche Seite gerade sichtbar ist. Für Board-Tabs (Gantt/
+// Aufgaben/Firmen/Prozesse) ohne Wirkung, die blenden Liste/Detail ohnehin
+// komplett eigenständig ein/aus.
+function updateMobileDetailView(){
+  const app = document.querySelector(".app");
+  if(!app) return;
+  app.classList.toggle("mobile-detail-open", !!selectedId[currentTab]);
 }
 
 function _activateTabNow(tab){
@@ -2378,6 +2412,7 @@ function renderMain(){
   const item = itemsCache[currentTab].find(o => o.id === selectedId[currentTab]);
   if(!item){
     main.innerHTML = `<div class="no-selection">${cfg.itemLabel} aus der Liste wählen, um den Verlauf zu sehen.</div>`;
+    updateMobileDetailView();
     return;
   }
 
@@ -2390,6 +2425,7 @@ function renderMain(){
       <div class="order-detail-core">
         <div class="order-head">
           <div>
+            <button class="btn text mobile-back-btn" id="mobileBackBtn">← Liste</button>
             ${item.kommission ? `<div class="komm mono">${item.kommission}</div>` : ""}
             <h2 class="display"><span id="kundeTextEl">${item.kunde}</span><button class="icon-edit-btn" id="kundeBtn" title="Kundenname bearbeiten" aria-label="Kundenname bearbeiten">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2422,6 +2458,12 @@ function renderMain(){
     </div>
   `;
 
+  document.getElementById("mobileBackBtn").addEventListener("click", () => {
+    selectedId[currentTab] = null;
+    renderList();
+    renderMain();
+  });
+  updateMobileDetailView();
   document.getElementById("deleteItemBtn").addEventListener("click", () => openDeleteConfirm(item));
   document.getElementById("newEntryBtn").addEventListener("click", () => renderNewEntryForm(item));
   document.getElementById("kundeBtn").addEventListener("click", (ev) => startInlineFieldEdit(item, {
@@ -5494,6 +5536,7 @@ async function renderFmDetail(){
   if(!el) return;
   if(!selectedFirmaId){
     el.innerHTML = `<div class="no-selection">Firma auswählen oder „+ Neue Firma" anlegen.</div>`;
+    updateFmMobileView();
     return;
   }
   let firma, kontakte, aktivitaeten;
@@ -5509,6 +5552,7 @@ async function renderFmDetail(){
   }
   const istLieferant = firma.rollen.includes("lieferant");
   el.innerHTML = `
+    <button class="btn text mobile-back-btn" id="fmMobileBackBtn">← Firmenliste</button>
     <div class="timeline-head">
       <h2>${firma.name} <button class="pz-icon-btn" id="fmEditBtn" title="Firma bearbeiten">✎</button></h2>
     </div>
@@ -5614,6 +5658,7 @@ async function renderFmDetail(){
       <div id="fmFirmaBewertungen"><div class="sub">Lädt…</div></div>
     ` : ""}
   `;
+  document.getElementById("fmMobileBackBtn").addEventListener("click", () => { selectedFirmaId = null; renderFmList(); renderFmDetail(); });
   document.getElementById("fmEditBtn").addEventListener("click", () => openFirmaModal(firma));
   document.getElementById("fmAddAdresseBtn").addEventListener("click", () => openAdresseModal(firma, null));
   el.querySelectorAll("[data-open-item]").forEach(btn => {
@@ -5652,6 +5697,13 @@ async function renderFmDetail(){
     });
   });
   if(istLieferant) renderFmFirmaBewertungen(firma.id);
+  updateFmMobileView();
+}
+
+function updateFmMobileView(){
+  const layout = document.getElementById("fmContent")?.querySelector(".fm-firmen-layout");
+  if(!layout) return;
+  layout.classList.toggle("detail-open", !!selectedFirmaId);
 }
 
 function fmKontaktwegLabel(v){
