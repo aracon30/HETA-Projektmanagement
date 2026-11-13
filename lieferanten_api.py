@@ -5,19 +5,24 @@ docs/KONZEPT-LIEFERANTEN.md): Lieferung bewerten, Jahresbewertung, Auswertung
 Lieferantenbewertung_HETA.xlsx (siehe Testfälle in berechne_ergebnis()).
 
 Noch nicht Teil von Stufe 1 (siehe CLAUDE.md): Maßnahmenverwaltung mit
-Mail-Versand, Zertifikate mit Ablaufwarnung, Einstellungs-Oberfläche mit
-Katalogversionierung — dafür existieren schon Felder (katalog_version), aber
-noch keine Bedienoberfläche.
+Mail-Versand, Einstellungs-Oberfläche mit Katalogversionierung — dafür
+existieren schon Felder (katalog_version), aber noch keine Bedienoberfläche.
+
+Zertifikate mit Ablaufwarnung (FB-0019, siehe weiter unten und
+docs/KONZEPT-LIEFERANTEN-ZERTIFIKATE.md) sind seit 13.11.2026 umgesetzt.
 """
 import csv
 import io
-from datetime import date
+from datetime import date, datetime
 
-from flask import Blueprint, jsonify, request, Response
+from flask import Blueprint, jsonify, request, Response, send_file
+from openpyxl import Workbook
+from openpyxl.styles import Font
 
 from models import (
     db, Firma, BewertungKriterium, BewertungEinstellung,
     Lieferungsbewertung, Jahresbewertung, BewertungNote,
+    LieferantenZertifizierung, ALLE_ZERTIFIKAT_FELDER, WARN_TAGE_ZERTIFIKATE,
 )
 
 bp = Blueprint("lieferanten", __name__, url_prefix="/api")
@@ -355,3 +360,155 @@ def auswertung():
         "konsequenz": z["konsequenz"],
         "avgJeKriterium": z["avgJeKriterium"],
     } for z in zeilen])
+
+
+# ====================================================================
+# Zertifikate (FB-0019 "Liste freigegebener Lieferanten", siehe
+# docs/KONZEPT-LIEFERANTEN-ZERTIFIKATE.md) — 13.11.2026 umgesetzt
+# ====================================================================
+
+def zertifizierung_aus_dict(data, z=None):
+    z = z or LieferantenZertifizierung()
+    if "firmaId" in data:
+        z.firma_id = data.get("firmaId")
+    if "warengruppe" in data:
+        z.warengruppe = data.get("warengruppe")
+    for feld, json_key, _ in ALLE_ZERTIFIKAT_FELDER:
+        if json_key in data:
+            setattr(z, feld, parse_date(data.get(json_key)))
+    if "sperrDatum" in data:
+        z.sperr_datum = parse_date(data.get("sperrDatum"))
+    if "info" in data:
+        z.info = data.get("info")
+    if "letzteBestellungJahr" in data:
+        z.letzte_bestellung_jahr = data.get("letzteBestellungJahr") or None
+    if "letzteBewertungAm" in data:
+        z.letzte_bewertung_am = parse_date(data.get("letzteBewertungAm"))
+    return z
+
+
+@bp.route("/lieferanten/zertifikate/normen")
+def zertifikat_normen():
+    """Feste Liste der 12 Datumsfelder (ISO 9001 + 11 Normen) fürs
+    Detailformular im Frontend — eine Quelle statt Duplikat in JS."""
+    return jsonify([{"feld": json_key, "label": label} for _, json_key, label in ALLE_ZERTIFIKAT_FELDER])
+
+
+@bp.route("/lieferanten/zertifikate", methods=["GET"])
+def list_zertifikate():
+    q = LieferantenZertifizierung.query
+    firma_id = request.args.get("firmaId", type=int)
+    if firma_id:
+        q = q.filter_by(firma_id=firma_id)
+    zeilen = q.join(Firma).order_by(Firma.name, LieferantenZertifizierung.warengruppe).all()
+
+    status_filter = request.args.get("status")
+    term = (request.args.get("q") or "").strip().lower()
+    ergebnisse = []
+    for z in zeilen:
+        if status_filter == "gesperrt":
+            if not z.gesperrt():
+                continue
+        elif status_filter:
+            if z.status() != status_filter:
+                continue
+        if term and term not in (z.firma.name or "").lower() and term not in (z.warengruppe or "").lower():
+            continue
+        ergebnisse.append(z.to_dict())
+    return jsonify(ergebnisse)
+
+
+@bp.route("/lieferanten/zertifikate/dashboard")
+def zertifikate_dashboard():
+    """Kennzahlen wie im Excel-Dashboard: Gesamt / Okay / Bald ablaufend /
+    Kritisch (abgelaufen) / Gesperrt."""
+    zeilen = LieferantenZertifizierung.query.all()
+    return jsonify({
+        "gesamt": len(zeilen),
+        "okay": sum(1 for z in zeilen if z.status() == "okay"),
+        "baldAblaufend": sum(1 for z in zeilen if z.status() == "bald_ablaufend"),
+        "kritisch": sum(1 for z in zeilen if z.status() == "abgelaufen"),
+        "gesperrt": sum(1 for z in zeilen if z.gesperrt()),
+        "warnTage": WARN_TAGE_ZERTIFIKATE,
+    })
+
+
+@bp.route("/lieferanten/zertifikate", methods=["POST"])
+def add_zertifikat():
+    data = request.get_json(force=True)
+    firma_id = data.get("firmaId")
+    if not firma_id or not Firma.query.get(firma_id):
+        return jsonify({"error": "Firma ist ein Pflichtfeld."}), 400
+    z = zertifizierung_aus_dict(data)
+    z.created_at = datetime.utcnow()
+    db.session.add(z)
+    db.session.commit()
+    return jsonify(z.to_dict()), 201
+
+
+@bp.route("/lieferanten/zertifikate/<int:zertifizierung_id>", methods=["PATCH"])
+def update_zertifikat(zertifizierung_id):
+    z = LieferantenZertifizierung.query.get_or_404(zertifizierung_id)
+    data = request.get_json(force=True)
+    zertifizierung_aus_dict(data, z)
+    db.session.commit()
+    return jsonify(z.to_dict())
+
+
+@bp.route("/lieferanten/zertifikate/<int:zertifizierung_id>", methods=["DELETE"])
+def delete_zertifikat(zertifizierung_id):
+    z = LieferantenZertifizierung.query.get_or_404(zertifizierung_id)
+    db.session.delete(z)
+    db.session.commit()
+    return "", 204
+
+
+@bp.route("/lieferanten/zertifikate/export")
+def export_zertifikate():
+    """Excel-Export für Audits (Entscheidung 12.11.2026: Excel statt PDF wie
+    bei der Versandliste, da reine Datentabelle ohne Briefkopf)."""
+    zeilen = LieferantenZertifizierung.query.join(Firma).order_by(
+        Firma.name, LieferantenZertifizierung.warengruppe
+    ).all()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Zertifikate"
+    header = ["Lieferant", "Warengruppe", "Status", "Tage bis Ablauf", "Gesperrt seit"] + \
+        [label for _, _, label in ALLE_ZERTIFIKAT_FELDER] + \
+        ["Info", "Letzte Bestellung (Jahr)", "Letzte Bewertung"]
+    ws.append(header)
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    status_label = {"okay": "Okay", "bald_ablaufend": "Bald ablaufend", "abgelaufen": "Abgelaufen"}
+    for z in zeilen:
+        zeile = [
+            z.firma.name if z.firma else "",
+            z.warengruppe or "",
+            status_label.get(z.status(), "") if z.status() else "",
+            z.tage_bis_ablauf(),
+            z.sperr_datum.strftime("%d.%m.%Y") if z.sperr_datum else "",
+        ]
+        for feld, _, _ in ALLE_ZERTIFIKAT_FELDER:
+            wert = getattr(z, feld)
+            zeile.append(wert.strftime("%d.%m.%Y") if wert else "—")
+        zeile += [
+            z.info or "",
+            z.letzte_bestellung_jahr or "",
+            z.letzte_bewertung_am.strftime("%d.%m.%Y") if z.letzte_bewertung_am else "",
+        ]
+        ws.append(zeile)
+
+    for col in ws.columns:
+        laenge = max((len(str(c.value)) for c in col if c.value is not None), default=10)
+        ws.column_dimensions[col[0].column_letter].width = min(max(laenge + 2, 10), 40)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    dateiname = f"FB-0019_Liste_freigegebener_Lieferanten_{date.today().isoformat()}.xlsx"
+    return send_file(
+        buf, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True, download_name=dateiname,
+    )

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Auftragspipeline — Projektbesprechung</title>
+<title>HETA Cockpit — Projektbesprechung</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -630,6 +630,19 @@
   .fm-ampel-mail{ background:var(--green); }
   .fm-ampel-telefon{ background:var(--amber); }
   .fm-ampel-anfrage{ background:var(--slate-light); }
+  .zert-dashboard{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
+  .zert-stat{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:10px 18px; min-width:110px; }
+  .zert-stat .zert-stat-num{ font-size:1.4rem; font-weight:700; font-family:'IBM Plex Mono', monospace; }
+  .zert-stat .zert-stat-label{ font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.02em; }
+  .zert-stat.okay .zert-stat-num{ color:var(--green); }
+  .zert-stat.bald .zert-stat-num{ color:var(--amber); }
+  .zert-stat.kritisch .zert-stat-num{ color:var(--red); }
+  .zert-stat.gesperrt .zert-stat-num{ color:var(--steel); }
+  .zert-status-badge{ display:inline-block; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; margin-right:4px; white-space:nowrap; }
+  .zert-status-badge.okay{ background:var(--green-soft); color:var(--green); }
+  .zert-status-badge.bald_ablaufend{ background:var(--amber-soft); color:var(--amber); }
+  .zert-status-badge.abgelaufen{ background:var(--red-soft); color:var(--red); }
+  .zert-status-badge.gesperrt{ background:var(--steel-soft); color:var(--steel); }
   .dot.pz-vorgeschlagen{background:var(--slate-light);} .dot.pz-laut_aa{background:var(--amber);}
   .dot.pz-aufgenommen{background:var(--steel);} .dot.pz-bestaetigt{background:var(--green);} .dot.pz-anforderungen{background:var(--copper);}
   .status-badge.pz-vorgeschlagen{background:#ECEEEB; color:var(--slate);}
@@ -776,7 +789,7 @@
     <div class="mark">
       <img src="/heta-logo.png" alt="HETA" height="30">
     </div>
-    <h1 class="display">Auftragspipeline</h1>
+    <h1 class="display">HETA Cockpit</h1>
     <span class="sub">Projektbesprechung · HETA Verfahrenstechnik</span>
     <div class="stat" id="statBar"></div>
     <button class="sync-btn" id="syncTodoBtn" title="Bei Microsoft To Do nachfragen, ob verknüpfte Aufgaben dort erledigt wurden">↻ To Do abgleichen</button>
@@ -5410,13 +5423,16 @@ function openPzFrageModal(p, f){
 
 /* ===================== Firmen / CRM + Lieferantenbewertung (Stufe 1) ===================== */
 let firmen = [];                 // Firmenliste, global gecacht (auch für die Kunde-Suche in Anfrage/Angebot/Auftrag)
-let fmView = "firmen";            // firmen | bewerten | jahresbewertung | auswertung
+let fmView = "firmen";            // firmen | bewerten | jahresbewertung | auswertung | zertifikate
 let fmFilterRolle = "alle";
 let fmSearch = "";
 let selectedFirmaId = null;
 let bewertungKatalog = null;      // { kriterien, einstellungen }, einmal geladen
 let fmNoten = {};                 // aktuelles Bewertungsformular: kriteriumId -> Note (1-4)
 let fmAuswertungJahr = new Date().getFullYear();
+let fmZertNormen = null;          // [{feld, label}], einmal von /lieferanten/zertifikate/normen geladen
+let fmZertSearch = "";
+let fmZertStatusFilter = "alle";  // alle | okay | bald_ablaufend | abgelaufen | gesperrt
 let fmAuswertungDaten = [];
 
 async function loadFirmen(){
@@ -5441,6 +5457,7 @@ async function openFirmenTab(){
         <button class="fm-subnav-btn" data-fm-view="bewerten">Lieferung bewerten</button>
         <button class="fm-subnav-btn" data-fm-view="jahresbewertung">Jahresbewertung</button>
         <button class="fm-subnav-btn" data-fm-view="auswertung">Auswertung</button>
+        <button class="fm-subnav-btn" data-fm-view="zertifikate">Zertifikate</button>
       </div>
       <div class="fm-content" id="fmContent"></div>`;
     board.querySelectorAll("[data-fm-view]").forEach(btn => {
@@ -5464,6 +5481,7 @@ function switchFmView(view){
   else if(view === "bewerten") renderFmBewertenView();
   else if(view === "jahresbewertung") renderFmJahresbewertungView();
   else if(view === "auswertung") renderFmAuswertungView();
+  else if(view === "zertifikate") renderFmZertifikateView();
 }
 
 /* ---------- Firmenliste + Steckbrief ---------- */
@@ -5678,6 +5696,11 @@ async function renderFmDetail(){
         <h3>Bewertungen</h3>
       </div>
       <div id="fmFirmaBewertungen"><div class="sub">Lädt…</div></div>
+      <div class="timeline-head" style="margin-top:28px;">
+        <h3>Zertifikate</h3>
+        <button class="btn ghost small" id="fmFirmaZertifikateLink">→ Zertifikate-Ansicht</button>
+      </div>
+      <div id="fmFirmaZertifikate"><div class="sub">Lädt…</div></div>
     ` : ""}
   `;
   document.getElementById("fmMobileBackBtn").addEventListener("click", () => { selectedFirmaId = null; renderFmList(); renderFmDetail(); });
@@ -5718,7 +5741,11 @@ async function renderFmDetail(){
       renderFmDetail();
     });
   });
-  if(istLieferant) renderFmFirmaBewertungen(firma.id);
+  if(istLieferant){
+    renderFmFirmaBewertungen(firma.id);
+    renderFmFirmaZertifikate(firma.id);
+    document.getElementById("fmFirmaZertifikateLink").addEventListener("click", () => switchFmView("zertifikate"));
+  }
   updateFmMobileView();
 }
 
@@ -5759,6 +5786,42 @@ async function renderFmFirmaBewertungen(firmaId){
       <tbody>${lieferungen.map(l => `<tr><td>${fmtDatumDE(l.datum)}</td><td>${l.bestellNr || '—'}</td><td>${l.ergebnis != null ? l.ergebnis + ' %' : '—'}</td><td>${l.bewerter || '—'}</td><td>${l.hinweis || '—'}</td></tr>`).join("")}</tbody>
     </table>
   `;
+}
+
+async function renderFmFirmaZertifikate(firmaId){
+  const el = document.getElementById("fmFirmaZertifikate");
+  if(!el) return;
+  const zeilen = await apiGet(`/lieferanten/zertifikate?firmaId=${firmaId}`);
+  if(zeilen.length === 0){
+    el.innerHTML = `<div class="sub">Noch keine Zertifizierung erfasst.</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <table class="fm-table">
+      <thead><tr><th>Warengruppe</th><th>ISO 9001 bis</th><th>Status</th><th>Tage bis Ablauf</th><th></th></tr></thead>
+      <tbody>
+        ${zeilen.map(z => `
+          <tr>
+            <td>${z.warengruppe || '—'}</td>
+            <td>${z.iso9001GueltigBis ? fmtDatumDE(z.iso9001GueltigBis) : '—'}</td>
+            <td>
+              ${z.status ? `<span class="zert-status-badge ${z.status}">${ZERT_STATUS_LABEL[z.status]}</span>` : '<span class="sub">—</span>'}
+              ${z.gesperrt ? `<span class="zert-status-badge gesperrt">Gesperrt</span>` : ''}
+            </td>
+            <td>${z.tageBisAblauf != null ? z.tageBisAblauf : '—'}</td>
+            <td><button class="btn text small" data-edit-zert-steckbrief="${z.id}">Bearbeiten</button></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+  el.querySelectorAll("[data-edit-zert-steckbrief]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if(!fmZertNormen) fmZertNormen = await apiGet("/lieferanten/zertifikate/normen");
+      const z = zeilen.find(x => x.id === parseInt(btn.dataset.editZertSteckbrief, 10));
+      openZertifikatModal(z);
+    });
+  });
 }
 
 function fmtDatumDE(iso){
@@ -6439,6 +6502,219 @@ async function renderFmAuswertungView(){
       switchFmView("firmen");
     });
   });
+}
+
+/* ---------- Zertifikate (FB-0019, siehe docs/KONZEPT-LIEFERANTEN-ZERTIFIKATE.md) ---------- */
+let fmZertDaten = [];  // ungefilterte Zeilen, einmal pro Ansicht geladen, Suche/Filter laufen clientseitig
+const ZERT_STATUS_LABEL = { okay: "Okay", bald_ablaufend: "Bald ablaufend", abgelaufen: "Abgelaufen" };
+
+async function renderFmZertifikateView(){
+  const content = document.getElementById("fmContent");
+  content.innerHTML = `<div class="fm-detail" style="max-width:none;"><div class="sub">Lädt…</div></div>`;
+
+  if(!fmZertNormen) fmZertNormen = await apiGet("/lieferanten/zertifikate/normen");
+  fmZertDaten = await apiGet("/lieferanten/zertifikate");
+
+  content.innerHTML = `
+    <div class="fm-detail" style="max-width:none;">
+      <div class="timeline-head">
+        <h2>Zertifikate</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <a class="btn ghost small" href="${API}/lieferanten/zertifikate/export">Excel-Export</a>
+          <button class="btn small" id="fmZertNeuBtn">+ Neue Zertifizierung</button>
+        </div>
+      </div>
+      <div id="fmZertStats"></div>
+      <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+        <input type="text" class="search" id="fmZertSearchInput" placeholder="Lieferant/Warengruppe suchen…" value="${fmZertSearch}" style="max-width:280px;">
+        <select id="fmZertStatusSelect">
+          <option value="alle">Alle Status</option>
+          <option value="okay">Okay</option>
+          <option value="bald_ablaufend">Bald ablaufend</option>
+          <option value="abgelaufen">Abgelaufen</option>
+          <option value="gesperrt">Gesperrt</option>
+        </select>
+      </div>
+      <div id="fmZertTableWrap"></div>
+    </div>
+  `;
+  document.getElementById("fmZertStatusSelect").value = fmZertStatusFilter;
+  document.getElementById("fmZertSearchInput").addEventListener("input", (ev) => { fmZertSearch = ev.target.value; renderFmZertTabelle(); });
+  document.getElementById("fmZertStatusSelect").addEventListener("change", (ev) => { fmZertStatusFilter = ev.target.value; renderFmZertTabelle(); });
+  document.getElementById("fmZertNeuBtn").addEventListener("click", () => openZertifikatModal(null));
+  renderFmZertTabelle();
+}
+
+function renderFmZertTabelle(){
+  const statsEl = document.getElementById("fmZertStats");
+  const wrapEl = document.getElementById("fmZertTableWrap");
+  if(!statsEl || !wrapEl) return;
+
+  const gesamt = fmZertDaten.length;
+  const okay = fmZertDaten.filter(z => z.status === "okay").length;
+  const bald = fmZertDaten.filter(z => z.status === "bald_ablaufend").length;
+  const kritisch = fmZertDaten.filter(z => z.status === "abgelaufen").length;
+  const gesperrt = fmZertDaten.filter(z => z.gesperrt).length;
+  statsEl.innerHTML = `
+    <div class="zert-dashboard">
+      <div class="zert-stat"><div class="zert-stat-num">${gesamt}</div><div class="zert-stat-label">Gesamt</div></div>
+      <div class="zert-stat okay"><div class="zert-stat-num">${okay}</div><div class="zert-stat-label">Okay</div></div>
+      <div class="zert-stat bald"><div class="zert-stat-num">${bald}</div><div class="zert-stat-label">Bald ablaufend</div></div>
+      <div class="zert-stat kritisch"><div class="zert-stat-num">${kritisch}</div><div class="zert-stat-label">Kritisch</div></div>
+      <div class="zert-stat gesperrt"><div class="zert-stat-num">${gesperrt}</div><div class="zert-stat-label">Gesperrt</div></div>
+    </div>
+  `;
+
+  const term = fmZertSearch.trim().toLowerCase();
+  let zeilen = fmZertDaten;
+  if(fmZertStatusFilter === "gesperrt") zeilen = zeilen.filter(z => z.gesperrt);
+  else if(fmZertStatusFilter !== "alle") zeilen = zeilen.filter(z => z.status === fmZertStatusFilter);
+  if(term) zeilen = zeilen.filter(z => (z.firmaName || "").toLowerCase().includes(term) || (z.warengruppe || "").toLowerCase().includes(term));
+
+  if(zeilen.length === 0){
+    wrapEl.innerHTML = `<div class="no-selection">Keine Zertifizierungen gefunden.</div>`;
+    return;
+  }
+  wrapEl.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table class="fm-table">
+        <thead><tr>
+          <th>Lieferant</th><th>Warengruppe</th><th>ISO 9001 bis</th><th>Status</th><th>Tage bis Ablauf</th><th>Info</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${zeilen.map(z => `
+            <tr>
+              <td><button class="btn text small" data-open-firma="${z.firmaId}">${z.firmaName}</button></td>
+              <td>${z.warengruppe || '—'}</td>
+              <td>${z.iso9001GueltigBis ? fmtDatumDE(z.iso9001GueltigBis) : '—'}</td>
+              <td>
+                ${z.status ? `<span class="zert-status-badge ${z.status}">${ZERT_STATUS_LABEL[z.status]}</span>` : '<span class="sub">—</span>'}
+                ${z.gesperrt ? `<span class="zert-status-badge gesperrt">Gesperrt</span>` : ''}
+              </td>
+              <td>${z.tageBisAblauf != null ? z.tageBisAblauf : '—'}</td>
+              <td>${z.info || '—'}</td>
+              <td><button class="btn text small" data-edit-zert="${z.id}">Bearbeiten</button></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+  wrapEl.querySelectorAll("[data-open-firma]").forEach(btn => {
+    btn.addEventListener("click", () => { selectedFirmaId = parseInt(btn.dataset.openFirma, 10); switchFmView("firmen"); });
+  });
+  wrapEl.querySelectorAll("[data-edit-zert]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const z = fmZertDaten.find(x => x.id === parseInt(btn.dataset.editZert, 10));
+      openZertifikatModal(z);
+    });
+  });
+}
+
+function refreshNachZertifikatAenderung(firmaId){
+  if(fmView === "zertifikate") renderFmZertifikateView();
+  else if(fmView === "firmen" && selectedFirmaId === firmaId) renderFmFirmaZertifikate(firmaId);
+}
+
+function openZertifikatModal(zert){
+  const isEdit = !!zert;
+  const root = document.getElementById("modalRoot");
+  const lieferantenOptionen = firmen.filter(f => f.rollen.includes("lieferant"));
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modalBackdrop">
+      <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="zertModalTitle">
+        <h3 id="zertModalTitle">${isEdit ? "Zertifizierung bearbeiten" : "Neue Zertifizierung"}</h3>
+        <div class="sub">${isEdit ? (zert.firmaName + (zert.warengruppe ? " — " + zert.warengruppe : "")) : "FB-0019 — Liste freigegebener Lieferanten"}</div>
+        <div class="form-grid">
+          ${isEdit ? "" : `
+          <div class="form-row" style="grid-column:1 / -1;">
+            <label for="zertFirmaInput">Lieferant</label>
+            <input type="text" id="zertFirmaInput" list="zertFirmaList" placeholder="Firma suchen…">
+            <datalist id="zertFirmaList">${lieferantenOptionen.map(f => `<option value="${f.name}" data-id="${f.id}">`).join("")}</datalist>
+          </div>
+          `}
+          <div class="form-row">
+            <label for="zertWarengruppe">Warengruppe</label>
+            <input type="text" id="zertWarengruppe" value="${isEdit ? (zert.warengruppe || "") : ""}">
+          </div>
+          <div class="form-row">
+            <label for="zertSperrDatum">Sperr-Datum (optional)</label>
+            <input type="date" id="zertSperrDatum" value="${isEdit ? (zert.sperrDatum || "") : ""}">
+          </div>
+          ${fmZertNormen.map(n => `
+            <div class="form-row">
+              <label for="zertFeld-${n.feld}">${n.label}</label>
+              <input type="date" id="zertFeld-${n.feld}" value="${isEdit ? (zert[n.feld] || "") : ""}">
+            </div>
+          `).join("")}
+          <div class="form-row" style="grid-column:1 / -1;">
+            <label for="zertInfo">Info</label>
+            <textarea id="zertInfo" rows="2">${isEdit ? (zert.info || "") : ""}</textarea>
+          </div>
+          <div class="form-row">
+            <label for="zertLetzteBestellung">Letzte Bestellung (Jahr, Altdaten)</label>
+            <input type="number" id="zertLetzteBestellung" value="${isEdit && zert.letzteBestellungJahr != null ? zert.letzteBestellungJahr : ""}">
+          </div>
+          <div class="form-row">
+            <label for="zertLetzteBewertung">Letzte Bewertung (Altdaten)</label>
+            <input type="date" id="zertLetzteBewertung" value="${isEdit ? (zert.letzteBewertungAm || "") : ""}">
+          </div>
+        </div>
+        <div class="modal-actions" style="justify-content:space-between;">
+          <div>${isEdit ? `<button class="btn text" id="zertDeleteBtn" style="color:var(--red);">Löschen</button>` : ""}</div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn text" id="zertCancelBtn">Abbrechen</button>
+            <button class="btn" id="zertSaveBtn">Speichern</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("zertCancelBtn").addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop").addEventListener("click", (ev) => { if(ev.target.id === "modalBackdrop") closeModal(); });
+  if(isEdit){
+    document.getElementById("zertDeleteBtn").addEventListener("click", async () => {
+      if(!confirm(`Diese Zertifizierungszeile (${zert.firmaName}${zert.warengruppe ? " — " + zert.warengruppe : ""}) wirklich löschen?`)) return;
+      await apiDelete(`/lieferanten/zertifikate/${zert.id}`);
+      closeModal();
+      refreshNachZertifikatAenderung(zert.firmaId);
+      showToast("Zertifizierung gelöscht.");
+    });
+  }
+  document.getElementById("zertSaveBtn").addEventListener("click", async () => {
+    const body = {
+      warengruppe: document.getElementById("zertWarengruppe").value.trim() || null,
+      sperrDatum: document.getElementById("zertSperrDatum").value || null,
+      info: document.getElementById("zertInfo").value.trim() || null,
+      letzteBestellungJahr: document.getElementById("zertLetzteBestellung").value ? parseInt(document.getElementById("zertLetzteBestellung").value, 10) : null,
+      letzteBewertungAm: document.getElementById("zertLetzteBewertung").value || null,
+    };
+    fmZertNormen.forEach(n => { body[n.feld] = document.getElementById(`zertFeld-${n.feld}`).value || null; });
+
+    if(!isEdit){
+      const input = document.getElementById("zertFirmaInput");
+      const treffer = lieferantenOptionen.find(f => f.name.toLowerCase() === input.value.trim().toLowerCase());
+      if(!treffer){
+        showToast("Bitte einen Lieferanten aus der Liste wählen.", true);
+        return;
+      }
+      body.firmaId = treffer.id;
+    }
+
+    const saveBtn = document.getElementById("zertSaveBtn");
+    saveBtn.disabled = true;
+    try{
+      if(isEdit) await apiPatch(`/lieferanten/zertifikate/${zert.id}`, body);
+      else await apiPost("/lieferanten/zertifikate", body);
+      closeModal();
+      refreshNachZertifikatAenderung(isEdit ? zert.firmaId : body.firmaId);
+      showToast(isEdit ? "Zertifizierung gespeichert." : "Zertifizierung angelegt.");
+    }catch(err){
+      showToast("Zertifizierung konnte nicht gespeichert werden.", true);
+      saveBtn.disabled = false;
+    }
+  });
+  document.addEventListener("keydown", escCloseOnce);
 }
 
 /* ===================== Toast ===================== */

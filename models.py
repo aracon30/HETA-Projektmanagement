@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
@@ -942,3 +942,122 @@ class BewertungNote(db.Model):
     note = db.Column(db.Integer, nullable=False)  # 1-4
 
     kriterium = db.relationship("BewertungKriterium")
+
+
+# ====================================================================
+# Lieferanten-Zertifikate (FB-0019 "Liste freigegebener Lieferanten",
+# siehe docs/KONZEPT-LIEFERANTEN-ZERTIFIKATE.md)
+# ====================================================================
+
+WARN_TAGE_ZERTIFIKATE = 90  # fest im Code, wie in der Excel (Entscheidung 13.11.2026)
+
+# Die 11 zusätzlichen Normen aus dem Excel-Blatt "Cert_Daten", je
+# (DB-Spalte, JSON-Schlüssel, Anzeigename) — feste Liste statt eines
+# pflegbaren Katalogs (Entscheidung 12.11.2026, siehe Konzept Abschnitt 3.1).
+# Einzige Quelle für diese Zuordnung: API, Import-Skript und Export nutzen
+# dieselbe Liste, damit nichts auseinanderläuft.
+ZERTIFIKAT_NORMEN = [
+    ("ad2000_hp0_bis", "ad2000HP0Bis", "AD 2000 HP0"),
+    ("ad2000_w0_bis", "ad2000W0Bis", "AD 2000 W0"),
+    ("dgrl_bis", "dgrlBis", "DGRL 2014/68/EU"),
+    ("en_iso_3834_bis", "enIso3834Bis", "EN ISO 3834-2, 3834-3"),
+    ("asme_u_bis", "asmeUBis", "ASME U"),
+    ("kta1401_bis", "kta1401Bis", "KTA 1401"),
+    ("iso14001_bis", "iso14001Bis", "DIN EN ISO 14001:2015"),
+    ("iso45001_bis", "iso45001Bis", "DIN EN ISO 45001:2018"),
+    ("iso17025_bis", "iso17025Bis", "DIN EN ISO/IEC 17025:2018"),
+    ("iso50001_bis", "iso50001Bis", "DIN EN ISO 50001:2018"),
+    ("whg_bis", "whgBis", "WHG"),
+]
+
+# ISO 9001 + die 11 Normen zusammen — für Detailformular/Export, wo alle 12
+# Datumsfelder gleich behandelt werden. ISO 9001 bleibt zusätzlich einzeln
+# zugreifbar, weil sie den Status (status()) der Zeile bestimmt.
+ALLE_ZERTIFIKAT_FELDER = [
+    ("iso9001_gueltig_bis", "iso9001GueltigBis", "DIN EN ISO 9001:2015"),
+] + ZERTIFIKAT_NORMEN
+
+
+class LieferantenZertifizierung(db.Model):
+    """Eine Warengruppen-Zeile eines Lieferanten mit Zertifikats-/Normen-
+    Ablaufdaten. Grundlage: FB-0019 "Liste freigegebener Lieferanten"
+    (Excel, Stand 12.11.2026, einmalig importiert — das Tool ist seitdem
+    alleinige Quelle, siehe Konzept). 1 Firma : n Zeilen, da 26 Firmen in der
+    Excel mehrfach mit unterschiedlicher Warengruppe gelistet waren
+    (Schlüssel dort: Lieferant|Warengruppe) — `warengruppe` hier ist bewusst
+    NICHT dasselbe Feld wie Firma.warengruppe (das bleibt unberührt)."""
+    __tablename__ = "lieferanten_zertifizierungen"
+    id = db.Column(db.Integer, primary_key=True)
+    firma_id = db.Column(db.Integer, db.ForeignKey("firmen.id"), nullable=False)
+    warengruppe = db.Column(db.String(200), nullable=True)
+
+    iso9001_gueltig_bis = db.Column(db.Date, nullable=True)
+    ad2000_hp0_bis = db.Column(db.Date, nullable=True)
+    ad2000_w0_bis = db.Column(db.Date, nullable=True)
+    dgrl_bis = db.Column(db.Date, nullable=True)
+    en_iso_3834_bis = db.Column(db.Date, nullable=True)
+    asme_u_bis = db.Column(db.Date, nullable=True)
+    kta1401_bis = db.Column(db.Date, nullable=True)
+    iso14001_bis = db.Column(db.Date, nullable=True)
+    iso45001_bis = db.Column(db.Date, nullable=True)
+    iso17025_bis = db.Column(db.Date, nullable=True)
+    iso50001_bis = db.Column(db.Date, nullable=True)
+    whg_bis = db.Column(db.Date, nullable=True)
+
+    # Gesperrt gilt laut Konzept 3.2 bewusst nur für diese Zeile/Warengruppe,
+    # nicht automatisch für die ganze Firma (Firma.freigabestatus bleibt
+    # unangetastet) — die Sperr-Granularität war beim Konzept noch offen,
+    # das hier ist der risikoärmere Default (lässt sich später verknüpfen).
+    sperr_datum = db.Column(db.Date, nullable=True)
+    info = db.Column(db.Text, nullable=True)
+
+    # Altdaten aus der Excel, nur Anzeige (Konzept Abschnitt 3.2) — keine
+    # Verrechnung mit lieferungsbewertungen/jahresbewertungen.
+    letzte_bestellung_jahr = db.Column(db.Integer, nullable=True)
+    letzte_bewertung_am = db.Column(db.Date, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    firma = db.relationship("Firma")
+
+    def status(self):
+        """Wie die Status-Formel in Supplier_Master der Excel: kein Datum ->
+        kein Status, sonst abgelaufen / bald_ablaufend (< WARN_TAGE_ZERTIFIKATE
+        Tage) / okay. Wird nicht gespeichert, sondern bei jedem Abruf live
+        berechnet, damit der Status nie veraltet."""
+        if not self.iso9001_gueltig_bis:
+            return None
+        heute = date.today()
+        if self.iso9001_gueltig_bis < heute:
+            return "abgelaufen"
+        if self.iso9001_gueltig_bis < heute + timedelta(days=WARN_TAGE_ZERTIFIKATE):
+            return "bald_ablaufend"
+        return "okay"
+
+    def tage_bis_ablauf(self):
+        if not self.iso9001_gueltig_bis:
+            return None
+        return max(0, (self.iso9001_gueltig_bis - date.today()).days)
+
+    def gesperrt(self):
+        return self.sperr_datum is not None
+
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "firmaId": self.firma_id,
+            "firmaName": self.firma.name if self.firma else None,
+            "warengruppe": self.warengruppe,
+            "status": self.status(),
+            "tageBisAblauf": self.tage_bis_ablauf(),
+            "sperrDatum": self.sperr_datum.isoformat() if self.sperr_datum else None,
+            "gesperrt": self.gesperrt(),
+            "info": self.info,
+            "letzteBestellungJahr": self.letzte_bestellung_jahr,
+            "letzteBewertungAm": self.letzte_bewertung_am.isoformat() if self.letzte_bewertung_am else None,
+            "erstelltAm": self.created_at.isoformat() if self.created_at else None,
+        }
+        for feld, json_key, _ in ALLE_ZERTIFIKAT_FELDER:
+            wert = getattr(self, feld)
+            data[json_key] = wert.isoformat() if wert else None
+        return data

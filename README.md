@@ -1,4 +1,9 @@
-# Auftragspipeline — Projektbesprechung (Prototyp mit Backend)
+# HETA Cockpit — Projektbesprechung (Prototyp mit Backend)
+
+*(früher „Auftragspipeline" — reine Anzeige-Umbenennung zum 13.11.2026, da
+der Funktionsumfang längst über die Auftragsverfolgung hinausgeht; Domain,
+Dateinamen und Pfade auf dem Server wurden bewusst NICHT mit umbenannt, siehe
+CLAUDE.md.)
 
 Flask-Backend (SQLite) + statisches Frontend. Läuft lokal per `python app.py`
 oder produktiv über Gunicorn + nginx als Reverse-Proxy.

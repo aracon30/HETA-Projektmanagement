@@ -1,15 +1,29 @@
-# HETA Projektbesprechung / Auftragspipeline — Übergabe
+# HETA Projektbesprechung / HETA Cockpit — Übergabe
 
 Dieses Dokument fasst den Stand aus einer längeren Konzeptions- und
 Umsetzungs-Session mit Claude (claude.ai) zusammen, damit hier nahtlos
 weitergearbeitet werden kann.
+
+**Umbenennung (13.11.2026):** Das Tool hieß bisher „Auftragspipeline" — der
+Name passte nicht mehr, nachdem Firmen-CRM, Lieferantenbewertung,
+ASME-Dokumente, Auftragsbestätigung, Versandliste und Prozessaufnahme dazu
+gekommen sind. Neuer Anzeigename: **„HETA Cockpit"** (Topbar-Überschrift,
+Browser-Tab-Titel). Bewusst **nur** der sichtbare Name geändert — Domain
+(`projektbesprechung.paco.local`), systemd-Dienst, Projektpfad
+(`/opt/projektbesprechung`), Datenbankdatei und die Absenderadresse der
+Aufgaben-Mails (`auftragspipeline@heta.de`) bleiben unverändert, um nicht an
+Zertifikat/DNS/Bookmarks/Mail-Relay-Regeln rühren zu müssen. Ältere
+Abschnitte in diesem Dokument nennen das Tool weiterhin „Auftragspipeline"
+(Stand zum jeweiligen Zeitpunkt) — das ist Absicht, keine Inkonsistenz.
 
 ## Ziel des Tools
 
 Internes Web-Tool für HETA Verfahrenstechnik GmbH zur Vorbereitung/Durchführung
 der Projektbesprechung: laufende Aufträge und Angebote abteilungsübergreifend
 verfolgen, Verlauf dokumentieren, Aufgaben an Kolleg:innen verteilen — ersetzt
-eine bisherige Excel→OneNote-Kopie-Lösung.
+eine bisherige Excel→OneNote-Kopie-Lösung. Inzwischen deutlich gewachsen
+(Firmen-CRM, Lieferantenbewertung, ASME, Auftragsbestätigung, Versandliste),
+daher der neue Name „HETA Cockpit" (s. o.).
 
 ## Tech-Stack
 
@@ -55,9 +69,11 @@ eine bisherige Excel→OneNote-Kopie-Lösung.
 | `ab_api.py` | Auftragsbestätigung: Formularerzeugung aus Word-Vorlage (docxtpl) |
 | `vorlagen/auftragsbestaetigung/DE\|EN/` | Word-Vorlagen der Auftragsbestätigung je Sprache (Jinja-Platzhalter) |
 | `firmen_api.py` | Firmen-CRM Stufe 1: Firmenliste, Adressen, Assistent "Kunden zuordnen" |
-| `lieferanten_api.py` | Lieferantenbewertung Stufe 1: Bewertungslogik, Lieferung/Jahresbewertung, Auswertung |
+| `lieferanten_api.py` | Lieferantenbewertung + Zertifikate (FB-0019): Bewertungslogik, Lieferung/Jahresbewertung, Auswertung, Zertifikate-CRUD/Export |
 | `lieferanten_daten.py` | Startbestand Kriterienkatalog + Einstellungen der Lieferantenbewertung |
 | `seed_lieferanten.py` | Spielt den Lieferantenbewertungs-Startbestand idempotent ein |
+| `import_lieferanten_zertifikate.py` | Einmaliger Import der FB-0019-Excel in `LieferantenZertifizierung` (Dry-Run + `--commit`) |
+| `pruefe_zertifikate_faelligkeiten.py` | Wöchentliche Erinnerungsmail an `einkauf@heta.de` für bald ablaufende/abgelaufene Zertifikate (braucht Cron-Eintrag, s. u.) |
 | `versandliste_api.py` | Versandliste: `/versandliste` (Live-Seite), JSON- und PDF-Export für Fertigung/Versand |
 | `vorlagen/versandliste/` | HETA-Blanko-Briefbogen + docxtpl-Vorlage (A3 Querformat) der Versandliste |
 | `requirements.txt` | Python-Abhängigkeiten |
@@ -497,10 +513,11 @@ Firmenliste auf (Rolle „Lieferant", kein eigenes `lieferanten`-Modell).
 Jahresbewertung, Auswertung + CSV-Export, Kriterienkatalog als Startbestand.
 **Noch nicht umgesetzt** (Stufe 2/3, siehe Konzept Abschnitt 6):
 Maßnahmenverwaltung mit Mail-Versand und Einbindung in den Reiter „Aufgaben",
-Zertifikate mit Ablaufwarnung, Einstellungs-Oberfläche mit
-Katalogversionierung — dafür existieren in den Modellen schon vorbereitete
-Felder (`katalog_version`, `bewertung_einstellungen`-Tabelle), aber noch
-keine Bedienoberfläche.
+Einstellungs-Oberfläche mit Katalogversionierung — dafür existieren in den
+Modellen schon vorbereitete Felder (`katalog_version`,
+`bewertung_einstellungen`-Tabelle), aber noch keine Bedienoberfläche.
+**Zertifikate mit Ablaufwarnung sind seit 13.11.2026 umgesetzt** — siehe
+eigenen Abschnitt „Lieferanten-Zertifikate" weiter unten.
 
 Rechenlogik (`lieferanten_api.py`, `berechne_ergebnis()`/
 `berechne_jahresergebnis()`) übernimmt exakt die Vorgabe aus dem Konzept:
@@ -554,6 +571,81 @@ Lieferungs-Formular für die nächste Bewertung offen (Noten/Bemerkung
 zurückgesetzt, Firma/Datum/Bewerter bleiben stehen) und zeigt den Hinweis aus
 `result.hinweis`, noch ohne Button „Maßnahme anlegen" (das wäre Stufe 2,
 siehe oben).
+
+## Lieferanten-Zertifikate (FB-0019, umgesetzt 13.11.2026)
+
+Konzept: `docs/KONZEPT-LIEFERANTEN-ZERTIFIKATE.md` (ausführliche Herleitung,
+Datenmodell-Begründung, Entscheidungen). Grundlage: QM-Formblatt FB-0019
+„Liste freigegebener Lieferanten" (Excel, bis dahin separat von QM gepflegt,
+314 Zeilen über 269 Firmen) — **einmalig importiert, das Portal ist seitdem
+alleinige Quelle**, keine Excel-Parallelpflege mehr vorgesehen.
+
+**Datenmodell:** `LieferantenZertifizierung` (`models.py`) — bewusst **1
+Firma : n Zeilen**, nicht 1:1, weil 26 Firmen in der Excel mehrfach mit
+unterschiedlicher Warengruppe gelistet waren (eigenes `warengruppe`-Feld auf
+der Zeile, **nicht** dasselbe wie `Firma.warengruppe`). ISO 9001 +
+11 weitere Normen (AD 2000 HP0/W0, DGRL 2014/68/EU, EN ISO 3834-2/3834-3,
+ASME U, KTA 1401, ISO 14001/45001/17025/50001, WHG) sind **feste
+Modellfelder, kein pflegbarer Katalog** (anders als bei den
+Bewertungskriterien) — eine neue Norm braucht künftig Migration + Code.
+`ZERTIFIKAT_NORMEN`/`ALLE_ZERTIFIKAT_FELDER` in `models.py` sind die einzige
+Quelle für diese Zuordnung (Feldname/JSON-Schlüssel/Anzeigename), API und
+Frontend lesen beide daraus. Status (`okay`/`bald_ablaufend`/`abgelaufen`)
+wird **live berechnet**, nie gespeichert (`WARN_TAGE_ZERTIFIKATE = 90`, fest
+im Code, wie in der Excel-Formel). „Gesperrt" hängt bewusst nur an der
+einzelnen Zeile (`sperr_datum`) — **nicht** automatisch an
+`Firma.freigabestatus` gekoppelt, da beim Konzept offen war, ob eine Sperre
+immer firmenweit gelten soll oder nur für die betroffene Warengruppe; lässt
+sich später verknüpfen, ohne das Datenmodell zu ändern.
+
+**API:** `lieferanten_api.py` — `GET/POST /api/lieferanten/zertifikate`,
+`PATCH/DELETE /api/lieferanten/zertifikate/<id>`,
+`GET /api/lieferanten/zertifikate/dashboard` (Kennzahlen Gesamt/Okay/Bald
+ablaufend/Kritisch/Gesperrt, wie im Excel-Dashboard),
+`GET /api/lieferanten/zertifikate/normen` (liefert die feste Feldliste fürs
+Frontend-Formular), `GET /api/lieferanten/zertifikate/export` (Excel-Export
+für Audits — **Entscheidung 12.11.2026: Excel statt PDF** wie bei der
+Versandliste, da reine Datentabelle ohne Briefkopf).
+
+**Import** (`import_lieferanten_zertifikate.py`, einmalig, **nicht**
+idempotent wie `seed_lieferanten.py` — bricht ab, wenn schon Zeilen
+existieren, außer `--force`): liest `Supplier_Master` + `Cert_Daten` aus der
+Excel, gleicht Lieferantennamen gegen bestehende Firmen ab (**exakt
+dieselbe** Ähnlichkeitslogik wie der Assistent „Kunden zuordnen" —
+`firmen_api.normalisiere()` direkt importiert, Schwelle 0.84), legt fehlende
+Firmen mit Rolle „Lieferant" an, schlägt die vier Test-Lieferanten zur
+Löschung vor (nur falls unverknüpft). `--dry-run` ist der Standard
+(kein Flag nötig), `--commit` schreibt wirklich. Gegen die echte Excel
+verifiziert: importierte Dashboard-Zahlen (314/160/15/48/9) stimmen exakt
+mit den Formelergebnissen der Excel überein.
+
+**Frontend:** neue Unteransicht „Zertifikate" im Reiter „Firmen"
+(`fm-subnav`, neben Lieferung bewerten/Jahresbewertung/Auswertung) —
+Kennzahlen-Kacheln, Tabelle mit Suche/Status-Filter (clientseitig über einmal
+geladene Daten, wie bei der Firmenliste — kein Re-Fetch pro Tastendruck),
+Detailformular mit allen 12 Datumsfeldern. Zusätzlich eine kompakte
+Zertifikats-Tabelle im Firma-Steckbrief selbst (nur bei Rolle Lieferant,
+analog zum Bewertungen-Block), mit Link „→ Zertifikate-Ansicht".
+
+**Erinnerungsmail an den Einkauf** (`pruefe_zertifikate_faelligkeiten.py`,
+**erster wiederkehrender Hintergrund-Job im Tool** — bisher lief alles
+nutzergetrieben oder per Live-Polling): wöchentlich an `einkauf@heta.de`,
+Inhalt „bald ablaufend" + „abgelaufen" (gesperrte Lieferanten bewusst nicht
+mit drin — eine Sperre ist eine bewusste Entscheidung, kein übersehener
+Ablauf), immer der volle aktuelle Stand ohne Wiederholungs-Tracking (ein
+liegen gebliebener Fall taucht bewusst jede Woche wieder auf). Nutzt die neue
+generische `mail_client.send_mail()` (die bisherige `send_task_mail()` ruft
+sie jetzt intern auf). **Braucht einen Cron-Eintrag auf dem Server**
+(`crontab -e` für Nutzer `heta`, z. B. montags 7 Uhr: `0 7 * * 1 cd
+/opt/projektbesprechung && ./venv/bin/python
+pruefe_zertifikate_faelligkeiten.py`) — läuft nicht von selbst, `update.sh`
+kann das nicht übernehmen, da es nur bei einem manuellen Update läuft, nicht
+als Dauer-Prozess. Einmalig auf Produktiv- **und** Testserver einzurichten.
+
+**Noch offen** (siehe Konzept Abschnitt 8): Sperr-Granularität (pro
+Warengruppe oder ganze Firma — intern bei HETA noch zu klären), wer die
+Liste künftig pflegt (vermutlich QM/Einkauf, relevant für eine spätere
+Rechteeinschränkung).
 
 ## Versandliste (umgesetzt 03.11.2026)
 

@@ -578,6 +578,35 @@ def main():
     else:
         print("Tabelle bewertung_noten existiert bereits.")
 
+    if not table_exists(cur, "lieferanten_zertifizierungen"):
+        cur.execute("""
+            CREATE TABLE lieferanten_zertifizierungen (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                firma_id INTEGER NOT NULL REFERENCES firmen(id),
+                warengruppe VARCHAR(200),
+                iso9001_gueltig_bis DATE,
+                ad2000_hp0_bis DATE,
+                ad2000_w0_bis DATE,
+                dgrl_bis DATE,
+                en_iso_3834_bis DATE,
+                asme_u_bis DATE,
+                kta1401_bis DATE,
+                iso14001_bis DATE,
+                iso45001_bis DATE,
+                iso17025_bis DATE,
+                iso50001_bis DATE,
+                whg_bis DATE,
+                sperr_datum DATE,
+                info TEXT,
+                letzte_bestellung_jahr INTEGER,
+                letzte_bewertung_am DATE,
+                created_at DATETIME
+            )
+        """)
+        print("Tabelle lieferanten_zertifizierungen angelegt (FB-0019, siehe docs/KONZEPT-LIEFERANTEN-ZERTIFIKATE.md).")
+    else:
+        print("Tabelle lieferanten_zertifizierungen existiert bereits.")
+
     # Bekannte Nutzer mit E-Mail-Adresse befüllen (nur wenn noch leer)
     cur.execute("SELECT id, name, email FROM users")
     updated = 0

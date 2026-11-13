@@ -1,6 +1,10 @@
 # Konzept: Zertifikatsliste je Lieferant (FB-0019 „Liste freigegebener Lieferanten“)
 
-**Status:** Entwurf zur Abstimmung (noch nicht umgesetzt)
+**Status:** Umgesetzt (13.11.2026) — siehe auch CLAUDE.md Abschnitt
+„Lieferanten-Zertifikate“ für den Stand nach der Implementierung. Die
+Entscheidungen unten sind das Konzept, wie es vor der Umsetzung ausgearbeitet
+und bestätigt wurde; abweichende Details während der Umsetzung sind in
+CLAUDE.md vermerkt, nicht hier nachträglich reingeschrieben.
 **Grundlage:** hochgeladene Excel `FB_16.01_Liste_freigegebener_Lieferanten_01.xlsx`
 (Stand 12.11.2026, offizielles QM-Formblatt FB-0019), 314 Zeilen über 269
 Firmen. Setzt die in `docs/KONZEPT-LIEFERANTEN.md` Abschnitt 6 (Stufe 2)
@@ -191,7 +195,7 @@ nicht als Dauer-Prozess.
    noch intern zu klären — bis dahin bleibt `sperr_datum` nur auf der
    Zertifizierungszeile gespeichert, `Firma.freigabestatus` unangetastet. Lässt
    sich später verknüpfen, ohne das Datenmodell zu ändern.
-2. **Export-Format:** Excel (Vorschlag oben) oder PDF wie Versandliste?
+2. ~~Export-Format~~ — **entschieden:** Excel (wie oben vorgeschlagen), umgesetzt.
 3. ~~Warnschwelle 90 Tage~~ — **entschieden (13.11.2026):** fest im Code,
    `WARN_TAGE = 90`, wie in der Excel. Passt zur Entscheidung „Normen fest im
    Code" — keine Einstellungs-Oberfläche dafür.
