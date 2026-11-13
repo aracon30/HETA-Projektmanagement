@@ -143,7 +143,48 @@ ein PDF sein?*
 
 ---
 
-## 7. Offene Punkte (bitte vor der Umsetzung klären)
+## 7. Erinnerungsmail an den Einkauf (13.11.2026 ergänzt)
+
+**Ziel:** `einkauf@heta.de` soll automatisch benachrichtigt werden, wenn bei
+der Zertifikatsliste etwas zu tun ist — niemand soll die Unteransicht erst
+manuell aufrufen müssen, um einen bald ablaufenden Nachweis zu bemerken.
+
+**Kanal:** dieselbe SMTP-Infrastruktur wie bei der Aufgaben-Benachrichtigung
+(`mail_client.py`, `SMTP_HOST=192.168.80.30`, s. CLAUDE.md) — `mail_client.py`
+bekommt dafür eine generische `send_mail(to, subject, body_text)`-Funktion
+(die bestehende `send_task_mail()` ruft sie dann intern auch auf), damit
+nicht zweimal dieselbe SMTP-Verbindungslogik existiert.
+
+**Neu für dieses Tool: der erste wiederkehrende Hintergrund-Job.** Bisher
+passiert in der Auftragspipeline alles nutzergetrieben (Klick → Aktion) oder
+per Live-Polling vom Browser aus — es gibt noch keinen serverseitigen
+Zeitplan. Vorschlag: ein neues, eigenständiges Skript
+`pruefe_zertifikate_faelligkeiten.py` (Muster wie `seed_lieferanten.py` —
+direkt ausführbar, nutzt dieselbe Flask-App/DB), das:
+
+1. alle `LieferantenZertifizierung`-Zeilen mit Status `bald_ablaufend` oder
+   `abgelaufen` sammelt (gesperrte Lieferanten bewusst **nicht** mit in
+   dieser Mail — eine Sperre ist eine bewusste Entscheidung, kein
+   übersehener Ablauf),
+2. daraus eine Übersichtsmail an `einkauf@heta.de` zusammenstellt — **immer
+   der volle aktuelle Stand**, kein Abgleich gegen die letzte Mail (einfacher,
+   kein zusätzlicher "zuletzt gemeldet"-Stand nötig; ein liegen gebliebener
+   Fall taucht dadurch bewusst jede Woche wieder auf, bis er erledigt ist),
+3. nur verschickt, wenn es mindestens einen Fall gibt (keine leeren
+   "alles in Ordnung"-Mails).
+
+Das Skript selbst läuft nicht von allein — es braucht einen **Cron-Eintrag
+auf dem Server** (`crontab -e` für den Nutzer `heta`, **wöchentlich, montags
+7 Uhr**: `0 7 * * 1 cd /opt/projektbesprechung && ./venv/bin/python
+pruefe_zertifikate_faelligkeiten.py`). Das ist einmalig von Hand auf
+Produktiv- **und** Testserver einzurichten (wie bei den anderen
+Server-Stolperfallen in CLAUDE.md dokumentiert) — `update.sh` kann das nicht
+automatisch übernehmen, weil es selbst nur bei einem manuellen Update läuft,
+nicht als Dauer-Prozess.
+
+---
+
+## 8. Offene Punkte (bitte vor der Umsetzung klären)
 
 1. **Sperr-Granularität:** Gilt eine Sperre nur für die betroffene
    Warengruppen-Zeile, oder immer gleich für die ganze Firma? Laut Rückmeldung
@@ -151,10 +192,14 @@ ein PDF sein?*
    Zertifizierungszeile gespeichert, `Firma.freigabestatus` unangetastet. Lässt
    sich später verknüpfen, ohne das Datenmodell zu ändern.
 2. **Export-Format:** Excel (Vorschlag oben) oder PDF wie Versandliste?
-3. **Warnschwelle 90 Tage:** wie in der Excel übernehmen, oder soll das
-   einstellbar sein (ähnlich `bewertung_einstellungen`)? Vorschlag: fest im
-   Code, passend zur Entscheidung „Normen fest im Code“.
+3. ~~Warnschwelle 90 Tage~~ — **entschieden (13.11.2026):** fest im Code,
+   `WARN_TAGE = 90`, wie in der Excel. Passt zur Entscheidung „Normen fest im
+   Code" — keine Einstellungs-Oberfläche dafür.
 4. **Wer pflegt künftig?** Vermutlich QM/Einkauf — relevant für die Frage, ob
    die neue Unteransicht wie die übrige Lieferantenbewertung ganz normal im
    Reiter „Firmen“ für jeden sichtbar ist, oder ob da (später, mit Login)
    Rechte eingeschränkt werden sollten.
+5. ~~Häufigkeit/Inhalt/Wiederholung der Erinnerungsmail~~ — **entschieden
+   (13.11.2026):** wöchentlich (montags 7 Uhr), Inhalt „bald ablaufend" +
+   „abgelaufen" (gesperrte Lieferanten nicht mit drin), immer der volle
+   aktuelle Stand ohne Wiederholungs-Tracking.
