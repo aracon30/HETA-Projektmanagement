@@ -414,7 +414,14 @@ Code: `firmen_api.py` (Blueprint), Modelle `Firma`/`FirmaAdresse`/`Kontakt`/
 Tab-Board wie „Prozesse", nicht Teil des Item-Listen-Musters/`KIND_CONFIG`):
 Firmenliste mit Suche/Rollen-Filter links, Steckbrief (Stammdaten, Adressen,
 Anfragen/Angebote/Aufträge, Kontakte, Zeitstrahl, bei Rolle Lieferant
-zusätzlich die Bewertungen) rechts. **Bewusst aus dem Live-Polling
+zusätzlich die Bewertungen) rechts. **Firmenliste bei „Alle Rollen" nach
+Rolle gruppiert** (seit 13.11.2026, `FM_ROLLEN_REIHENFOLGE` =
+Kunde/Lieferant/Interessent/Partner in `renderFmList()`): eigene
+Abschnittsüberschrift je Rolle mit Anzahl, damit Kunden und Lieferanten
+nicht ununterscheidbar in einer Liste stehen — eine Firma mit mehreren
+Rollen erscheint bewusst in jeder passenden Gruppe (keine Sortierung "primäre
+Rolle"). Bei aktivem Rollen-Filter (nicht „Alle") bleibt die bisherige
+flache Liste, da dort ohnehin nur eine Gruppe sichtbar ist. **Bewusst aus dem Live-Polling
 ausgenommen** (wie der Prozesse-Reiter) — eigener, komplexerer Formular-State
 (Bewertungs-Noten-Buttons), Risiko für Seiteneffekte beim Blind-Neurendern.
 

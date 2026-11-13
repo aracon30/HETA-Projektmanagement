@@ -605,6 +605,8 @@
   .fm-item .fm-item-name{ font-weight:600; font-size:0.88rem; }
   .fm-item .fm-item-meta{ font-size:0.74rem; color:var(--slate); display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
   .fm-rolle-chip{ display:inline-block; font-size:0.65rem; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; padding:1px 6px; border-radius:10px; background:var(--steel-soft); color:var(--steel); }
+  .fm-list-group-header{ padding:14px 10px 6px; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:var(--slate); }
+  .fm-list-group-header:first-child{ padding-top:4px; }
   .fm-rolle-chip.lieferant{ background:var(--copper-soft); color:var(--copper); }
   .fm-klasse{ font-weight:700; font-family:'IBM Plex Mono', monospace; }
   .fm-klasse.A{ color:var(--green); } .fm-klasse.B{ color:var(--amber); } .fm-klasse.C{ color:var(--red); }
@@ -5504,6 +5506,20 @@ function renderFmFirmenView(){
   renderFmDetail();
 }
 
+const FM_ROLLEN_REIHENFOLGE = ["kunde", "lieferant", "interessent", "partner"];
+
+function fmItemHtml(f){
+  return `
+    <button class="fm-item ${f.id === selectedFirmaId ? 'selected' : ''}" data-firma-id="${f.id}">
+      <span class="fm-item-name">${f.name}</span>
+      <span class="fm-item-meta">
+        ${f.rollen.map(r => `<span class="fm-rolle-chip ${r}">${fmRolleLabel(r)}</span>`).join("")}
+        ${f.freigabestatus ? `<span>${f.freigabestatus}</span>` : ""}
+      </span>
+    </button>
+  `;
+}
+
 function renderFmList(){
   const el = document.getElementById("fmListItems");
   if(!el) return;
@@ -5517,15 +5533,21 @@ function renderFmList(){
     el.innerHTML = `<div class="no-selection" style="padding-top:30px;">Keine Firmen gefunden.</div>`;
     return;
   }
-  el.innerHTML = gefiltert.map(f => `
-    <button class="fm-item ${f.id === selectedFirmaId ? 'selected' : ''}" data-firma-id="${f.id}">
-      <span class="fm-item-name">${f.name}</span>
-      <span class="fm-item-meta">
-        ${f.rollen.map(r => `<span class="fm-rolle-chip ${r}">${fmRolleLabel(r)}</span>`).join("")}
-        ${f.freigabestatus ? `<span>${f.freigabestatus}</span>` : ""}
-      </span>
-    </button>
-  `).join("");
+
+  // Bei "Alle Rollen" nach Rolle gruppiert mit Überschriften, damit Kunden und
+  // Lieferanten nicht ununterscheidbar in einer Liste stehen (Fund 13.11.2026).
+  // Eine Firma mit mehreren Rollen erscheint bewusst in jeder passenden Gruppe.
+  // Bei aktivem Rollen-Filter ist ohnehin nur eine Gruppe sichtbar, da reicht
+  // die bisherige flache Liste.
+  if(fmFilterRolle === "alle"){
+    el.innerHTML = FM_ROLLEN_REIHENFOLGE.map(rolle => {
+      const gruppe = gefiltert.filter(f => f.rollen.includes(rolle));
+      if(!gruppe.length) return "";
+      return `<div class="fm-list-group-header">${fmRolleLabel(rolle)} (${gruppe.length})</div>` + gruppe.map(fmItemHtml).join("");
+    }).join("");
+  } else {
+    el.innerHTML = gefiltert.map(fmItemHtml).join("");
+  }
   el.querySelectorAll("[data-firma-id]").forEach(btn => {
     btn.addEventListener("click", () => { selectedFirmaId = parseInt(btn.dataset.firmaId, 10); renderFmList(); renderFmDetail(); });
   });
